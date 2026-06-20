@@ -159,14 +159,36 @@ function startBassMusic() {
   if (!audio || bassMusic) return;
 
   const output = audio.createGain();
-  output.gain.value = 0.07;
+  output.gain.value = 0.075;
   output.connect(audio.destination);
 
-  const bassNotes = [41.2, 41.2, 55, 49, 36.7, 41.2, 61.7, 55, 41.2, 32.7, 41.2, 49, 55, 61.7, 49, 36.7];
-  const kickPattern = [1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 1, 0];
+  const bassNotes = [41.2, 49, 55, 49, 36.7, 43.7, 55, 61.7, 41.2, 55, 65.4, 61.7, 36.7, 49, 55, 73.4];
+  const chordRoots = [82.4, 73.4, 98, 65.4];
+  const kickPattern = [1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1];
   const snarePattern = [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0];
-  const hatPattern = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
+  const hatPattern = [1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1];
   let stepIndex = 0;
+
+  function playSynthVoice(frequency, duration, gainPeak, type = 'sawtooth', filterFrequency = 1400) {
+    const now = audio.currentTime;
+    const osc = audio.createOscillator();
+    const gain = audio.createGain();
+    const filter = audio.createBiquadFilter();
+
+    osc.type = type;
+    osc.frequency.setValueAtTime(frequency, now);
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(filterFrequency, now);
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(gainPeak, now + 0.018);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(output);
+    osc.start(now);
+    osc.stop(now + duration + 0.02);
+  }
 
   function playBassStep() {
     if (!bassMusic) return;
@@ -176,48 +198,59 @@ function startBassMusic() {
     const bassGain = audio.createGain();
     const bassFilter = audio.createBiquadFilter();
 
-    bass.type = 'square';
+    bass.type = 'sawtooth';
     bass.frequency.setValueAtTime(bassNotes[stepIndex % bassNotes.length], now);
     bassFilter.type = 'lowpass';
-    bassFilter.frequency.setValueAtTime(520, now);
+    bassFilter.frequency.setValueAtTime(720, now);
     bassGain.gain.setValueAtTime(0.0001, now);
-    bassGain.gain.exponentialRampToValueAtTime(0.72, now + 0.012);
-    bassGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
+    bassGain.gain.exponentialRampToValueAtTime(0.58, now + 0.012);
+    bassGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.24);
 
     bass.connect(bassFilter);
     bassFilter.connect(bassGain);
     bassGain.connect(output);
     bass.start(now);
-    bass.stop(now + 0.24);
+    bass.stop(now + 0.26);
+
+    if (stepIndex % 4 === 0) {
+      const root = chordRoots[(stepIndex / 4) % chordRoots.length];
+      playSynthVoice(root, 0.62, 0.09, 'triangle', 1800);
+      playSynthVoice(root * 1.2, 0.62, 0.055, 'sawtooth', 1600);
+      playSynthVoice(root * 1.5, 0.62, 0.045, 'triangle', 2200);
+    }
+
+    if (stepIndex % 2 === 1) {
+      playSynthVoice(bassNotes[stepIndex % bassNotes.length] * 4, 0.12, 0.035, 'square', 2600);
+    }
 
     if (kickPattern[stepIndex % kickPattern.length]) {
       const kick = audio.createOscillator();
       const kickGain = audio.createGain();
 
-      kick.type = 'square';
-      kick.frequency.setValueAtTime(92, now);
-      kick.frequency.exponentialRampToValueAtTime(34, now + 0.11);
+      kick.type = 'sine';
+      kick.frequency.setValueAtTime(115, now);
+      kick.frequency.exponentialRampToValueAtTime(32, now + 0.14);
       kickGain.gain.setValueAtTime(0.0001, now);
-      kickGain.gain.exponentialRampToValueAtTime(1.1, now + 0.006);
-      kickGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.16);
+      kickGain.gain.exponentialRampToValueAtTime(1.15, now + 0.006);
+      kickGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
       kick.connect(kickGain);
       kickGain.connect(output);
       kick.start(now);
-      kick.stop(now + 0.18);
+      kick.stop(now + 0.2);
     }
 
     if (snarePattern[stepIndex % snarePattern.length]) {
-      playNoiseBurst(0.08, 0.08, 2200, 520);
+      playNoiseBurst(0.1, 0.09, 2600, 460);
     }
 
     if (hatPattern[stepIndex % hatPattern.length]) {
-      playNoiseBurst(0.035, 0.028, 5200, 2600);
+      playNoiseBurst(0.032, 0.022, 6800, 3200);
     }
 
     stepIndex++;
   }
 
-  bassMusic = { output, interval: setInterval(playBassStep, 170) };
+  bassMusic = { output, interval: setInterval(playBassStep, 150) };
   playBassStep();
 }
 
@@ -271,7 +304,18 @@ function playRelicPunch() {
   gain.connect(audio.destination);
   thump.start(now);
   thump.stop(now + 0.22);
-  playNoiseBurst(0.12, 0.09, 520, 90);
+  playNoiseBurst(0.14, 0.12, 620, 80);
+  const crack = audio.createOscillator();
+  const crackGain = audio.createGain();
+  crack.type = 'square';
+  crack.frequency.setValueAtTime(55, now + 0.04);
+  crackGain.gain.setValueAtTime(0.0001, now + 0.04);
+  crackGain.gain.exponentialRampToValueAtTime(0.12, now + 0.055);
+  crackGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
+  crack.connect(crackGain);
+  crackGain.connect(audio.destination);
+  crack.start(now + 0.04);
+  crack.stop(now + 0.2);
 }
 
 function playEyeSquish() {
@@ -293,7 +337,19 @@ function playEyeSquish() {
   gain.connect(audio.destination);
   squelch.start(now);
   squelch.stop(now + 0.25);
-  playNoiseBurst(0.18, 0.045, 380, 120);
+  playNoiseBurst(0.2, 0.065, 420, 95);
+  const bubble = audio.createOscillator();
+  const bubbleGain = audio.createGain();
+  bubble.type = 'triangle';
+  bubble.frequency.setValueAtTime(105, now + 0.08);
+  bubble.frequency.exponentialRampToValueAtTime(48, now + 0.26);
+  bubbleGain.gain.setValueAtTime(0.0001, now + 0.08);
+  bubbleGain.gain.exponentialRampToValueAtTime(0.06, now + 0.11);
+  bubbleGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.28);
+  bubble.connect(bubbleGain);
+  bubbleGain.connect(audio.destination);
+  bubble.start(now + 0.08);
+  bubble.stop(now + 0.3);
 }
 
 function playPentagramPortal() {
@@ -322,6 +378,7 @@ function playPentagramPortal() {
   shimmer.start(now);
   portal.stop(now + 0.7);
   shimmer.stop(now + 0.7);
+  playNoiseBurst(0.42, 0.04, 3200, 360);
 }
 
 function playBottomExplosion() {

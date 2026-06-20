@@ -66,23 +66,27 @@ body::before {
 }
 h1 {
   margin: 8px 0;
-  font-family: "UnifrakturMaguntia", "Old English Text MT", "Blackletter", "Cinzel Decorative", Georgia, serif;
-  font-size: clamp(1.8rem, 5vw, 3.8rem);
-  line-height: .95;
-  color: #f3f3f3;
+  font-family: "Old English Text MT", "UnifrakturMaguntia", "Blackletter", "Cinzel Decorative", Georgia, serif;
+  font-size: clamp(2rem, 5.8vw, 4.4rem);
+  line-height: .9;
+  color: #f5f5f5;
+  letter-spacing: .035em;
   text-shadow:
-    0 0 10px rgba(190, 190, 190, .78),
-    0 0 28px rgba(120, 120, 120, .72),
-    5px 5px 0 rgba(40, 40, 40, .82);
+    0 0 6px #000,
+    0 0 18px #000,
+    0 0 34px #000,
+    6px 6px 0 rgba(0, 0, 0, .96);
 }
 #tagline {
-  color: #d6d6d6;
-  font-family: "UnifrakturMaguntia", "Old English Text MT", "Blackletter", "Cinzel Decorative", Georgia, serif;
-  font-size: 1.25rem;
-  font-weight: 800;
+  color: #e0e0e0;
+  font-family: "Old English Text MT", "UnifrakturMaguntia", "Blackletter", "Cinzel Decorative", Georgia, serif;
+  font-size: 1.35rem;
+  font-weight: 900;
+  letter-spacing: .04em;
   text-shadow:
-    0 0 8px rgba(190, 190, 190, .72),
-    0 0 18px rgba(80, 80, 80, .8);
+    0 0 6px #000,
+    0 0 18px #000,
+    3px 3px 0 rgba(0, 0, 0, .96);
 }
 .game-card, .quests, .instructions {
   background:
