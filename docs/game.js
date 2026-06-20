@@ -2,7 +2,7 @@ const canvas = document.querySelector('#game');
 const ctx = canvas.getContext('2d');
 const scoreEl = document.querySelector('#score');
 const levelEl = document.querySelector('#level');
-const statusEl = document.querySelector('#status');
+const statusEl = document.querySelector('#status') || { textContent: '' };
 const startBtn = document.querySelector('#start');
 const resetBtn = document.querySelector('#reset');
 
@@ -28,6 +28,12 @@ let screenRotation = 0;
 let frame = 0;
 let audioContext = null;
 let nextVoidWhisperAt = 0;
+
+function resetPowerupTimers(timestamp = performance.now()) {
+  lastRelicSpawn = timestamp;
+  lastEyeSpawn = timestamp;
+  lastPentagramSpawn = timestamp;
+}
 const pilotSpeed = 7;
 const dodgesPerLevel = 13;
 const speedBoostPerLevel = 1.1;
@@ -48,9 +54,7 @@ function reset() {
   speedLevel = 1;
   frame = 0;
   running = false;
-  lastRelicSpawn = 0;
-  lastEyeSpawn = 0;
-  lastPentagramSpawn = 0;
+  resetPowerupTimers();
   fateModeUntil = 0;
   levelSurgeUntil = 0;
   screenRotation = 0;
@@ -479,6 +483,7 @@ function controlKey(event) {
 function startGame() {
   getAudioContext();
   if (running) return;
+  resetPowerupTimers();
   running = true;
   statusEl.textContent = 'Dodging!';
   requestAnimationFrame(step);
