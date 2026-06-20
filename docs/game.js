@@ -6,6 +6,7 @@ const highScoreEl = document.querySelector('#high-score');
 const heroEl = document.querySelector('.hero');
 const heroTitleEl = document.querySelector('.hero h1');
 const taglineEl = document.querySelector('#tagline');
+const titleEchoesEl = document.querySelector('#title-echoes');
 const statusEl = document.querySelector('#status') || { textContent: '' };
 const startBtn = document.querySelector('#start');
 const resetBtn = document.querySelector('#reset');
@@ -34,6 +35,7 @@ let frame = 0;
 let audioContext = null;
 let bassMusic = null;
 let nextVoidWhisperAt = 0;
+let lastEchoedTitle = heroTitleEl?.textContent || '';
 
 function resetPowerupTimers(timestamp = performance.now()) {
   lastRelicSpawn = timestamp;
@@ -107,22 +109,37 @@ function updateHud() {
   updateHeroText();
 }
 
+function addTitleEcho(title) {
+  if (!titleEchoesEl || title === lastEchoedTitle) return;
+
+  const echo = document.createElement('div');
+  echo.className = 'title-echo';
+  echo.textContent = title;
+  titleEchoesEl.appendChild(echo);
+  lastEchoedTitle = title;
+}
+
 function updateHeroText() {
   if (!heroEl || !heroTitleEl || !taglineEl) return;
 
   const fade = Math.max(0, 1 - Math.min(score, 13) / 13);
+  const nextTitle = score >= 333
+    ? 'Good Job...'
+    : score >= 13
+      ? "You Can't Run..."
+      : 'You can not run from your sins. They watch.';
+
   heroEl.classList.toggle('doom-message', score >= 13);
+  heroTitleEl.textContent = nextTitle;
+  addTitleEcho(nextTitle);
 
   if (score >= 333) {
-    heroTitleEl.textContent = 'Good Job...';
     heroTitleEl.style.opacity = 1;
     taglineEl.style.opacity = 0;
   } else if (score >= 13) {
-    heroTitleEl.textContent = "You Can't Run...";
     heroTitleEl.style.opacity = 1;
     taglineEl.style.opacity = 0;
   } else {
-    heroTitleEl.textContent = 'You can not run from your sins. They watch.';
     heroTitleEl.style.opacity = fade;
     taglineEl.textContent = 'As you walk through the shadow of the valley of death';
     taglineEl.style.opacity = fade;

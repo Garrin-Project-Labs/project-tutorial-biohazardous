@@ -13,6 +13,8 @@
     </section>
 
     <div class="game-layout">
+      <aside class="title-echoes" id="title-echoes" aria-label="Past title changes"></aside>
+
       <section class="game-card" aria-label="Cosmic horror Dodge the Meteors game">
         <canvas id="game" width="720" height="420"></canvas>
         <div class="high-score">Highest score: <strong id="high-score">0</strong></div>
@@ -41,6 +43,8 @@
         <p><strong>👁️ Eye</strong>: resets game speed until the next level, without changing your level.</p>
         <p><strong>⛧ Pentagram</strong>: appears after rotation and resets the canvas angle.</p>
       </aside>
+
+      <div class="game-spacer" aria-hidden="true"></div>
     </div>
   </main>
   <script src="game.js"></script>
