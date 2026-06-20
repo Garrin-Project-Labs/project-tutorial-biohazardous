@@ -450,7 +450,26 @@ function controlKey(event) {
   return null;
 }
 
+function startGame() {
+  getAudioContext();
+  if (running) return;
+  running = true;
+  statusEl.textContent = 'Dodging!';
+  requestAnimationFrame(step);
+}
+
+function resetAndStartGame() {
+  reset();
+  startGame();
+}
+
 window.addEventListener('keydown', event => {
+  if (event.key.toLowerCase() === 'r') {
+    resetAndStartGame();
+    event.preventDefault();
+    return;
+  }
+
   const key = controlKey(event);
   if (key) {
     keys[key] = true;
@@ -466,12 +485,6 @@ window.addEventListener('keyup', event => {
   }
 });
 
-startBtn.addEventListener('click', () => {
-  getAudioContext();
-  if (running) return;
-  running = true;
-  statusEl.textContent = 'Dodging!';
-  requestAnimationFrame(step);
-});
+startBtn.addEventListener('click', startGame);
 resetBtn.addEventListener('click', reset);
 reset();
