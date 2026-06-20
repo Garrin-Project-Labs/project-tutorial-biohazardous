@@ -26,7 +26,7 @@
         <button id="start">Start rocket run</button>
         <button id="reset">Reset</button>
       </div>
-      <p class="hint">Cosmic horror mode: every 13 dodges levels you up, and each level makes the cursed stars 1.5 faster.</p>
+      <p class="hint">Cosmic horror mode: collect the green relic to summon fate text, and every 13 dodges makes the cursed stars 1.5 faster.</p>
     </section>
 
     <section class="quests">

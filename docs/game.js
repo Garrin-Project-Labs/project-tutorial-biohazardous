@@ -9,22 +9,29 @@ const resetBtn = document.querySelector('#reset');
 const pilot = { x: 340, y: 360, w: 44, h: 36, emoji: '🚀', name: 'Pilot' };
 const keys = { ArrowLeft: false, ArrowRight: false, a: false, d: false };
 let meteors = [];
+let relic = null;
 let score = 0;
 let level = 1;
 let running = false;
 let lastSpawn = 0;
+let lastRelicSpawn = 0;
+let fateModeUntil = 0;
 let frame = 0;
 const pilotSpeed = 7;
 const dodgesPerLevel = 13;
 const speedBoostPerLevel = 1.5;
+const relicBonus = 5;
 
 function reset() {
   pilot.x = canvas.width / 2 - pilot.w / 2;
   meteors = [];
+  relic = null;
   score = 0;
   level = 1;
   frame = 0;
   running = false;
+  lastRelicSpawn = 0;
+  fateModeUntil = 0;
   statusEl.textContent = 'Ready';
   updateHud();
   draw();
@@ -39,6 +46,11 @@ function spawnMeteor() {
   const size = 26 + Math.random() * 22;
   const levelSpeedBoost = (level - 1) * speedBoostPerLevel;
   meteors.push({ x: Math.random() * (canvas.width - size), y: -size, size, speed: 4.2 + Math.random() * 2.4 + levelSpeedBoost });
+}
+
+function spawnRelic() {
+  const size = 32;
+  relic = { x: Math.random() * (canvas.width - size), y: -size, size, speed: 2.8 };
 }
 
 function countSuccessfulDodges() {
@@ -79,8 +91,27 @@ function step(timestamp) {
     lastSpawn = timestamp;
   }
 
+  if (!relic && timestamp - lastRelicSpawn > 7000) {
+    spawnRelic();
+    lastRelicSpawn = timestamp;
+  }
+
   for (const meteor of meteors) meteor.y += meteor.speed;
   countSuccessfulDodges();
+
+  if (relic) {
+    relic.y += relic.speed;
+
+    if (hit(pilot, relic)) {
+      relic = null;
+      fateModeUntil = timestamp + 4200;
+      score += relicBonus;
+      statusEl.textContent = 'Relic taken: fate sees you.';
+      updateHud();
+    } else if (relic.y > canvas.height + relic.size) {
+      relic = null;
+    }
+  }
 
   for (const meteor of meteors) {
     if (hit(pilot, meteor)) {
@@ -98,10 +129,11 @@ function step(timestamp) {
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   const pulse = Math.sin(frame * 0.12) * 18;
+  const fateMode = performance.now() < fateModeUntil;
   ctx.fillStyle = '#030006';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  ctx.fillStyle = `rgba(120, 0, 24, ${0.18 + Math.abs(Math.sin(frame * 0.08)) * 0.14})`;
+  ctx.fillStyle = fateMode ? `rgba(255, 255, 255, ${0.06 + Math.abs(Math.sin(frame * 0.08)) * 0.05})` : `rgba(120, 0, 24, ${0.18 + Math.abs(Math.sin(frame * 0.08)) * 0.14})`;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   ctx.fillStyle = 'rgba(157, 255, 110, .5)';
@@ -128,6 +160,17 @@ function draw() {
   ctx.font = 'bold 18px sans-serif';
   ctx.fillText('THE VOID WATCHES', 24, 62);
 
+  if (fateMode) {
+    ctx.fillStyle = 'rgba(255, 255, 255, .9)';
+    ctx.font = 'bold 20px sans-serif';
+
+    for (let y = 34; y < canvas.height; y += 58) {
+      const x = ((frame * 5) + y * 3) % (canvas.width + 420) - 420;
+      ctx.fillText('YOU WILL NOT ESCAPE YOUR FATE', x, y);
+      ctx.fillText('YOU WILL NOT ESCAPE YOUR FATE', x + 420, y);
+    }
+  }
+
   ctx.font = '34px serif';
   ctx.fillText(pilot.emoji, pilot.x, pilot.y + pilot.h);
 
@@ -140,11 +183,17 @@ function draw() {
     ctx.fillText('🩸', meteor.x, meteor.y + meteor.size);
   }
 
+  if (relic) {
+    ctx.font = `${relic.size}px serif`;
+    ctx.fillText('🟢', relic.x, relic.y + relic.size);
+  }
+
   if (!running) {
     ctx.fillStyle = 'rgba(255,255,255,.84)';
     ctx.font = '18px sans-serif';
     ctx.fillText('Press Start, then use ←/→ or A/D to dodge.', 24, 36);
     ctx.fillText('Every 13 dodges wakes a faster level.', 24, 88);
+    ctx.fillText('Green relics reveal fate text for a few seconds.', 24, 114);
   }
 }
 
