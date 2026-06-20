@@ -153,13 +153,13 @@ function updateHeroText() {
 }
 
 function comboColor() {
-  const heat = Math.min(combo / 8, 1);
+  const heat = Math.min(combo / 69, 1);
   const cool = Math.round(255 * (1 - heat));
-  return `rgb(255, ${cool}, ${cool})`;
+  return combo >= 69 ? '#ff6a00' : `rgb(255, ${cool}, ${cool})`;
 }
 
 function awardPoints(basePoints) {
-  combo += 0.5;
+  combo = Math.min(69, combo + 0.05);
   score += Math.max(1, Math.round(basePoints * (1 + combo)));
 }
 
@@ -697,7 +697,7 @@ function step(timestamp) {
     lastEyeSpawn = timestamp;
   }
 
-  if (screenRotation && !pentagramPowerup && timestamp - lastPentagramSpawn > 9000) {
+  if (screenRotation && !pentagramPowerup && timestamp - lastPentagramSpawn > 3200) {
     spawnPentagramPowerup();
     lastPentagramSpawn = timestamp;
   }
@@ -806,8 +806,16 @@ function draw() {
 
 
   ctx.fillStyle = comboColor();
-  ctx.font = 'bold 22px Georgia, serif';
-  glowText(`COMBO ${combo.toFixed(2)}`, 22, 34, comboColor(), 10, 2, '#050006');
+  ctx.font = 'bold 13px Papyrus, \"Cinzel Decorative\", Georgia, serif';
+  if (combo >= 69) {
+    ctx.save();
+    ctx.shadowColor = '#ff2a00';
+    ctx.shadowBlur = 18 + Math.sin(frame * 0.4) * 6;
+    glowText(`COMBO ${combo.toFixed(2)}`, 22, 28, '#ff6a00', 20, 3, '#5a0000');
+    ctx.restore();
+  } else {
+    glowText(`COMBO ${combo.toFixed(2)}`, 22, 28, comboColor(), 8, 1.5, '#050006');
+  }
 
   if (fateMode) {
     ctx.fillStyle = '#050006';
