@@ -93,8 +93,13 @@ function hit(a, b) {
   return a.x < b.x + b.size && a.x + a.w > b.x && a.y < b.y + b.size && a.y + a.h > b.y;
 }
 
-function glowText(text, x, y, color, blur = 18) {
+function glowText(text, x, y, color, blur = 18, outline = 5) {
   ctx.save();
+  ctx.lineJoin = 'round';
+  ctx.miterLimit = 2;
+  ctx.strokeStyle = '#050006';
+  ctx.lineWidth = outline;
+  ctx.strokeText(text, x, y);
   ctx.shadowColor = color;
   ctx.shadowBlur = blur;
   ctx.fillText(text, x, y);
@@ -103,6 +108,8 @@ function glowText(text, x, y, color, blur = 18) {
 
 function glowRect(x, y, w, h, color, blur = 12) {
   ctx.save();
+  ctx.fillStyle = '#050006';
+  ctx.fillRect(x - 3, y - 3, w + 6, h + 6);
   ctx.shadowColor = color;
   ctx.shadowBlur = blur;
   ctx.fillRect(x, y, w, h);
@@ -192,9 +199,17 @@ function draw() {
   for (let i = 0; i < 10; i++) {
     const x = (i * 79 + frame * 0.7) % canvas.width;
     const y = (i * 43 + frame * 1.1) % canvas.height;
+    const radius = 10 + (i % 4) * 4;
     ctx.beginPath();
-    ctx.arc(x, y, 10 + (i % 4) * 4, 0, Math.PI * 2);
+    ctx.arc(x, y, radius, 0, Math.PI * 2);
+    ctx.save();
+    ctx.strokeStyle = '#050006';
+    ctx.lineWidth = 7;
+    ctx.stroke();
+    ctx.shadowColor = '#ff1744';
+    ctx.shadowBlur = 16;
     ctx.fill();
+    ctx.restore();
   }
 
   ctx.strokeStyle = `rgba(157, 255, 110, ${0.18 + Math.abs(Math.sin(frame * 0.15)) * 0.18})`;
