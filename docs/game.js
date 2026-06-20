@@ -928,6 +928,78 @@ function step(timestamp) {
   requestAnimationFrame(step);
 }
 
+function drawTentacleBorder() {
+  const variant = (level - 1) % 3;
+  const configs = [
+    { glow: '#9dff6e', dark: '#061004', width: 5, amp: 8, waves: 8 },
+    { glow: '#ff2a00', dark: '#230000', width: 9, amp: 14, waves: 10 },
+    { glow: '#b388ff', dark: '#0b0018', width: 13, amp: 20, waves: 7 }
+  ];
+  const config = configs[variant];
+  const inset = 18;
+  const steps = 64;
+
+  function borderPoint(side, t) {
+    const wobble = Math.sin(t * Math.PI * 2 * config.waves + frame * 0.035 + side) * config.amp;
+
+    if (side === 0) return { x: inset + t * (canvas.width - inset * 2), y: inset + wobble };
+    if (side === 1) return { x: canvas.width - inset + wobble, y: inset + t * (canvas.height - inset * 2) };
+    if (side === 2) return { x: canvas.width - inset - t * (canvas.width - inset * 2), y: canvas.height - inset + wobble };
+    return { x: inset + wobble, y: canvas.height - inset - t * (canvas.height - inset * 2) };
+  }
+
+  ctx.save();
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.shadowColor = config.glow;
+  ctx.shadowBlur = 16 + variant * 5;
+
+  for (let side = 0; side < 4; side++) {
+    ctx.beginPath();
+    for (let i = 0; i <= steps; i++) {
+      const point = borderPoint(side, i / steps);
+      if (i === 0) ctx.moveTo(point.x, point.y);
+      else ctx.lineTo(point.x, point.y);
+    }
+
+    ctx.strokeStyle = config.dark;
+    ctx.lineWidth = config.width + 10;
+    ctx.stroke();
+
+    ctx.strokeStyle = config.glow;
+    ctx.lineWidth = config.width;
+    ctx.stroke();
+
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = '#050006';
+    ctx.lineWidth = Math.max(2, config.width / 3);
+    ctx.stroke();
+    ctx.shadowBlur = 16 + variant * 5;
+
+    for (let i = 6; i < steps; i += 10) {
+      const point = borderPoint(side, i / steps);
+      ctx.beginPath();
+      if (variant === 1) {
+        const thorn = 7;
+        ctx.fillStyle = '#ffe0aa';
+        ctx.moveTo(point.x, point.y - thorn * 1.6);
+        ctx.lineTo(point.x + thorn, point.y + thorn);
+        ctx.lineTo(point.x - thorn, point.y + thorn);
+        ctx.closePath();
+        ctx.fill();
+      } else {
+        ctx.strokeStyle = 'rgba(255,255,255,.7)';
+        ctx.lineWidth = 1.5;
+        const r = variant === 0 ? 3 : 5;
+        ctx.arc(point.x, point.y, r, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
+  }
+
+  ctx.restore();
+}
+
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.save();
@@ -973,6 +1045,7 @@ function draw() {
     glowRect(x, y, 3, 10, i % 2 ? '#9dff6e' : bg.alt, 10);
   }
 
+  drawTentacleBorder();
 
   ctx.fillStyle = comboColor();
   ctx.font = 'bold 13px Papyrus, \"Cinzel Decorative\", Georgia, serif';
