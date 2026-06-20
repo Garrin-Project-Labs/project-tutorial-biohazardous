@@ -172,7 +172,7 @@ function resetCanvasRotation() {
 function resetGameSpeed() {
   level = 1;
   dodges = 0;
-  resetCanvasRotation();
+  levelSurgeUntil = 0;
 
   for (const meteor of meteors) {
     meteor.speed = Math.min(meteor.speed, 5.4);
@@ -357,6 +357,7 @@ function draw() {
 
   if (screenRotation) {
     ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.scale(canvas.height / canvas.width, canvas.height / canvas.width);
     ctx.rotate(screenRotation * Math.PI / 180);
     ctx.translate(-canvas.width / 2, -canvas.height / 2);
   }
