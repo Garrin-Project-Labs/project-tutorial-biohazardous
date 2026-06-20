@@ -65,6 +65,10 @@ h1 {
 }
 .game-card {
   width: 100%;
+  border: 0;
+  box-shadow:
+    0 24px 80px rgba(0, 0, 0, .44),
+    0 0 34px rgba(176, 0, 42, .34);
 }
 .instructions {
   border: 1px solid rgba(157, 255, 110, .34);
