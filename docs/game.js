@@ -409,13 +409,13 @@ function draw() {
   }
 
   if (fateMode) {
-    ctx.fillStyle = 'rgba(255, 255, 255, .9)';
+    ctx.fillStyle = '#050006';
     ctx.font = 'bold 20px sans-serif';
 
     for (let y = 34; y < canvas.height; y += 58) {
       const x = ((frame * 5) + y * 3) % (canvas.width + 420) - 420;
-      ctx.fillText('YOU WILL NOT ESCAPE YOUR FATE', x, y);
-      ctx.fillText('YOU WILL NOT ESCAPE YOUR FATE', x + 420, y);
+      glowText('YOU WILL NOT ESCAPE YOUR FATE', x, y, '#9dff6e', 12, 2);
+      glowText('YOU WILL NOT ESCAPE YOUR FATE', x + 420, y, '#9dff6e', 12, 2);
     }
   }
 
