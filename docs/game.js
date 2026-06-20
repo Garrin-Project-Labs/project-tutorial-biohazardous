@@ -16,6 +16,7 @@ let pentagramPowerup = null;
 let score = 0;
 let dodges = 0;
 let level = 1;
+let speedLevel = 1;
 let running = false;
 let lastSpawn = 0;
 let lastRelicSpawn = 0;
@@ -42,6 +43,7 @@ function reset() {
   score = 0;
   dodges = 0;
   level = 1;
+  speedLevel = 1;
   frame = 0;
   running = false;
   lastRelicSpawn = 0;
@@ -63,7 +65,7 @@ function updateHud() {
 function spawnMeteor() {
   const size = 26 + Math.random() * 22;
   const baseSpeed = 4.2 + Math.random() * 2.4;
-  const levelSpeedBoost = (level - 1) * speedBoostPerLevel;
+  const levelSpeedBoost = (speedLevel - 1) * speedBoostPerLevel;
   meteors.push({ x: Math.random() * (canvas.width - size), y: -size, size, baseSpeed, speed: baseSpeed + levelSpeedBoost, nearMissed: false });
 }
 
@@ -171,6 +173,8 @@ function resetCanvasRotation() {
 }
 
 function resetMeteorSpeed() {
+  speedLevel = 1;
+
   for (const meteor of meteors) {
     meteor.speed = meteor.baseSpeed || Math.min(meteor.speed, 5.4);
   }
@@ -213,6 +217,7 @@ function countSuccessfulDodges(timestamp) {
 
     if (dodges % dodgesPerLevel === 0) {
       level++;
+      speedLevel = level;
       statusEl.textContent = `Level ${level}: the sins move faster.`;
 
       if ((level - 1) % 3 === 0) {
@@ -313,7 +318,7 @@ function step(timestamp) {
       eyePowerup = null;
       resetMeteorSpeed();
       popups.push({ text: 'speed reset', x: pilot.x + pilot.w / 2 - 52, y: pilot.y - 12, born: timestamp });
-      statusEl.textContent = 'Floating eye collected: meteor speed reset.';
+      statusEl.textContent = 'Floating eye collected: game speed reset until the next level.';
     } else if (eyePowerup.y > canvas.height + eyePowerup.size) {
       eyePowerup = null;
     }
