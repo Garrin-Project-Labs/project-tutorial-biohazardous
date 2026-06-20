@@ -118,22 +118,12 @@ h1 {
   padding: 8px;
   position: relative;
 }
-.game-card::before, .game-card::after {
+.game-card::after {
   content: "";
   position: absolute;
   pointer-events: none;
-  inset: 0;
-  border-radius: 22px;
-}
-.game-card::before {
-  inset: 0;
-  border: 2px solid var(--tentacle-glow, #9dff6e);
-  box-shadow:
-    0 0 10px var(--tentacle-glow, #9dff6e),
-    inset 0 0 8px var(--tentacle-glow, #9dff6e);
-}
-.game-card::after {
-  inset: -2px;
+  inset: 2px;
+  border-radius: 20px;
   background:
     radial-gradient(circle at 10% 0%, var(--tentacle-glow, #9dff6e) 0 4px, transparent 5px),
     radial-gradient(circle at 90% 100%, var(--tentacle-glow, #9dff6e) 0 4px, transparent 5px),
@@ -141,7 +131,7 @@ h1 {
   opacity: .38;
   mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  padding: 7px;
+  padding: 8px;
   mask-composite: exclude;
   -webkit-mask-composite: xor;
   animation: tentacleTwist 5s linear infinite;
