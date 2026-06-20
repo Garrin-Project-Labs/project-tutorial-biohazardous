@@ -30,6 +30,7 @@ let lastEyeSpawn = 0;
 let lastPentagramSpawn = 0;
 let fateModeUntil = 0;
 let levelSurgeUntil = 0;
+let pilotSpinUntil = 0;
 let screenRotation = 0;
 let frame = 0;
 let audioContext = null;
@@ -65,6 +66,7 @@ function reset() {
   resetPowerupTimers();
   fateModeUntil = 0;
   levelSurgeUntil = 0;
+  pilotSpinUntil = 0;
   screenRotation = 0;
   nextVoidWhisperAt = 0;
   statusEl.textContent = 'Ready';
@@ -125,9 +127,11 @@ function updateHeroText() {
   const fade = Math.max(0, 1 - Math.min(score, 13) / 13);
   const nextTitle = score >= 333
     ? 'Good Job...'
-    : score >= 13
-      ? "You Can't Run..."
-      : 'You can not run from your sins. They watch.';
+    : score >= 131
+      ? 'Just Breathe...'
+      : score >= 13
+        ? "You Can't Run..."
+        : 'You can not run from your sins. They watch.';
 
   heroEl.classList.toggle('doom-message', score >= 13);
   heroTitleEl.textContent = nextTitle;
@@ -362,9 +366,9 @@ function playQuietScream() {
   const gain = audio.createGain();
 
   oscillator.type = 'sawtooth';
-  oscillator.frequency.setValueAtTime(230, now);
-  oscillator.frequency.exponentialRampToValueAtTime(340, now + 0.09);
-  oscillator.frequency.exponentialRampToValueAtTime(115, now + 0.42);
+  oscillator.frequency.setValueAtTime(185, now);
+  oscillator.frequency.exponentialRampToValueAtTime(270, now + 0.09);
+  oscillator.frequency.exponentialRampToValueAtTime(82, now + 0.42);
 
   gain.gain.setValueAtTime(0.0001, now);
   gain.gain.exponentialRampToValueAtTime(0.16, now + 0.03);
@@ -560,6 +564,7 @@ function countSuccessfulDodges(timestamp) {
     if (dodges % dodgesPerLevel === 0) {
       level++;
       speedLevel = level;
+      pilotSpinUntil = timestamp + 1100;
       statusEl.textContent = `Level ${level}: the sins move faster.`;
 
       if ((level - 1) % 3 === 0) {
@@ -709,8 +714,10 @@ function draw() {
   }
 
   const pulse = Math.sin(frame * 0.12) * 18;
-  const fateMode = performance.now() < fateModeUntil;
-  const levelSurge = performance.now() < levelSurgeUntil;
+  const now = performance.now();
+  const fateMode = now < fateModeUntil;
+  const levelSurge = now < levelSurgeUntil;
+  const pilotSpin = now < pilotSpinUntil;
   ctx.fillStyle = '#030006';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -751,7 +758,7 @@ function draw() {
   ctx.font = '34px serif';
   ctx.save();
   ctx.translate(pilot.x + pilot.w / 2, pilot.y + pilot.h / 2);
-  ctx.rotate(-Math.PI / 4);
+  ctx.rotate(-Math.PI / 4 + (pilotSpin ? frame * 0.45 : 0));
   ctx.filter = 'invert(1) hue-rotate(180deg)';
   glowText(pilot.emoji, -pilot.w / 2, pilot.h / 2, '#ff1744', 24, 6, '#ffffff');
   ctx.restore();
