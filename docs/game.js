@@ -14,6 +14,7 @@ let relic = null;
 let eyePowerup = null;
 let pentagramPowerup = null;
 let score = 0;
+let dodges = 0;
 let level = 1;
 let running = false;
 let lastSpawn = 0;
@@ -39,6 +40,7 @@ function reset() {
   eyePowerup = null;
   pentagramPowerup = null;
   score = 0;
+  dodges = 0;
   level = 1;
   frame = 0;
   running = false;
@@ -169,6 +171,7 @@ function resetCanvasRotation() {
 
 function resetGameSpeed() {
   level = 1;
+  dodges = 0;
   resetCanvasRotation();
 
   for (const meteor of meteors) {
@@ -211,8 +214,9 @@ function countSuccessfulDodges(timestamp) {
 
     playBottomExplosion();
     score++;
+    dodges++;
 
-    if (score % dodgesPerLevel === 0) {
+    if (dodges % dodgesPerLevel === 0) {
       level++;
       statusEl.textContent = `Level ${level}: the sins move faster.`;
 
