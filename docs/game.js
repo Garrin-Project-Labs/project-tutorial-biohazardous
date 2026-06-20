@@ -11,11 +11,13 @@ const keys = { ArrowLeft: false, ArrowRight: false, a: false, d: false };
 let meteors = [];
 let popups = [];
 let relic = null;
+let eyePowerup = null;
 let score = 0;
 let level = 1;
 let running = false;
 let lastSpawn = 0;
 let lastRelicSpawn = 0;
+let lastEyeSpawn = 0;
 let fateModeUntil = 0;
 let levelSurgeUntil = 0;
 let screenRotation = 0;
@@ -32,11 +34,13 @@ function reset() {
   meteors = [];
   popups = [];
   relic = null;
+  eyePowerup = null;
   score = 0;
   level = 1;
   frame = 0;
   running = false;
   lastRelicSpawn = 0;
+  lastEyeSpawn = 0;
   fateModeUntil = 0;
   levelSurgeUntil = 0;
   screenRotation = 0;
@@ -59,6 +63,11 @@ function spawnMeteor() {
 function spawnRelic() {
   const size = 32;
   relic = { x: Math.random() * (canvas.width - size), y: -size, size, speed: 2.8 };
+}
+
+function spawnEyePowerup() {
+  const size = 34;
+  eyePowerup = { x: Math.random() * (canvas.width - size), y: -size, size, speed: 2.4 };
 }
 
 function whisperScream() {
@@ -142,6 +151,18 @@ function playBottomExplosion() {
 
 function addNearMissPopup(timestamp) {
   popups.push({ text: '+1', x: pilot.x + pilot.w / 2, y: pilot.y - 8, born: timestamp });
+}
+
+function resetGameSpeed() {
+  level = 1;
+  levelSurgeUntil = 0;
+  screenRotation = 0;
+
+  for (const meteor of meteors) {
+    meteor.speed = Math.min(meteor.speed, 5.4);
+  }
+
+  updateHud();
 }
 
 function awardNearMisses(timestamp) {
@@ -239,6 +260,11 @@ function step(timestamp) {
     lastRelicSpawn = timestamp;
   }
 
+  if (!eyePowerup && timestamp - lastEyeSpawn > 12000) {
+    spawnEyePowerup();
+    lastEyeSpawn = timestamp;
+  }
+
   for (const meteor of meteors) meteor.y += meteor.speed;
   popups = popups.filter(popup => timestamp - popup.born < 900);
   awardNearMisses(timestamp);
@@ -255,6 +281,19 @@ function step(timestamp) {
       updateHud();
     } else if (relic.y > canvas.height + relic.size) {
       relic = null;
+    }
+  }
+
+  if (eyePowerup) {
+    eyePowerup.y += eyePowerup.speed;
+
+    if (hit(pilot, eyePowerup)) {
+      eyePowerup = null;
+      resetGameSpeed();
+      popups.push({ text: 'speed reset', x: pilot.x + pilot.w / 2 - 52, y: pilot.y - 12, born: timestamp });
+      statusEl.textContent = 'Floating eye collected: speed reset to level 1.';
+    } else if (eyePowerup.y > canvas.height + eyePowerup.size) {
+      eyePowerup = null;
     }
   }
 
@@ -358,13 +397,18 @@ function draw() {
     glowText('🟢', relic.x, relic.y + relic.size, '#9dff6e', 26);
   }
 
+  if (eyePowerup) {
+    ctx.font = `${eyePowerup.size}px serif`;
+    glowText('👁️', eyePowerup.x, eyePowerup.y + eyePowerup.size, '#b388ff', 30, 7);
+  }
+
   for (const popup of popups) {
     const age = performance.now() - popup.born;
     const rise = age / 14;
     ctx.globalAlpha = Math.max(0, 1 - age / 900);
-    ctx.fillStyle = '#ff1744';
-    ctx.font = 'bold 24px sans-serif';
-    glowText(popup.text, popup.x - 12, popup.y - rise, '#ff1744', 18, 6);
+    ctx.fillStyle = popup.text === '+1' ? '#ff1744' : '#b388ff';
+    ctx.font = popup.text === '+1' ? 'bold 24px sans-serif' : 'bold 18px sans-serif';
+    glowText(popup.text, popup.x - 12, popup.y - rise, ctx.fillStyle, 18, 6);
     ctx.globalAlpha = 1;
   }
 
@@ -375,6 +419,7 @@ function draw() {
     ctx.fillText('Every 13 dodges wakes a faster level.', 24, 88);
     ctx.fillText('Every 3 level-ups rotates the screen 90 degrees.', 24, 114);
     ctx.fillText('Green relics add 13 score and reveal fate text.', 24, 140);
+    ctx.fillText('Floating eyes reset the speed back to level 1.', 24, 166);
   }
 
   ctx.restore();
