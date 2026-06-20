@@ -384,23 +384,6 @@ function draw() {
     glowRect(x, y, 3, 10, i % 2 ? '#9dff6e' : '#00f5ff', 10);
   }
 
-  ctx.fillStyle = `rgba(176, 0, 42, ${0.18 + Math.abs(Math.sin(frame * 0.05)) * 0.12})`;
-  for (let i = 0; i < 10; i++) {
-    const x = (i * 79 + frame * 0.7) % canvas.width;
-    const y = (i * 43 + frame * 1.1) % canvas.height;
-    const radius = 10 + (i % 4) * 4;
-    ctx.beginPath();
-    ctx.arc(x, y, radius, 0, Math.PI * 2);
-    ctx.save();
-    ctx.strokeStyle = '#050006';
-    ctx.lineWidth = 7;
-    ctx.stroke();
-    ctx.shadowColor = '#ff1744';
-    ctx.shadowBlur = 16;
-    ctx.fill();
-    ctx.restore();
-  }
-
   ctx.fillStyle = 'rgba(157, 255, 110, .85)';
   ctx.font = 'bold 18px sans-serif';
   ctx.fillText('THE VOID WATCHES', 24, 62);
@@ -417,9 +400,9 @@ function draw() {
   }
 
   if (levelSurge) {
-    ctx.fillStyle = 'rgba(0, 0, 0, .76)';
+    ctx.fillStyle = '#050006';
     ctx.font = 'bold 30px sans-serif';
-    ctx.fillText('FATE SURGE', 24, canvas.height - 34);
+    glowText('FATE SURGE', 24, canvas.height - 34, '#9dff6e', 10, 2);
   }
 
   ctx.font = '34px serif';

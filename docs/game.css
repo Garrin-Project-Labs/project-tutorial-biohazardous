@@ -3,8 +3,8 @@
   --bg: #030006;
   --panel: #16020a;
   --accent: #9dff6e;
-  --accent-2: #b0002a;
-  --accent-3: #ff1744;
+  --accent-2: #2b0038;
+  --accent-3: #7b2cff;
   --text: #fff1f4;
   --muted: #ff9aae;
 }
@@ -76,13 +76,15 @@ h1 {
 }
 #tagline { color: var(--muted); font-size: 1.1rem; font-weight: 700; }
 .game-card, .quests, .instructions {
-  background: color-mix(in srgb, var(--panel) 88%, black);
-  border: 1px solid rgba(157, 255, 110, .34);
-  border-radius: 24px;
+  background:
+    linear-gradient(135deg, rgba(0, 0, 0, .88), rgba(15, 0, 24, .92)),
+    repeating-linear-gradient(45deg, rgba(157, 255, 110, .08) 0 2px, transparent 2px 12px);
+  border: 1px solid rgba(157, 255, 110, .48);
+  border-radius: 3px;
   box-shadow:
-    0 24px 80px rgba(0, 0, 0, .44),
-    0 0 34px rgba(176, 0, 42, .34),
-    inset 0 0 22px rgba(157, 255, 110, .08);
+    0 24px 80px rgba(0, 0, 0, .62),
+    0 0 26px rgba(157, 255, 110, .22),
+    inset 0 0 22px rgba(0, 0, 0, .55);
   padding: 18px;
   margin: 18px 0;
 }
@@ -97,19 +99,19 @@ h1 {
   width: 100%;
   border: 0;
   box-shadow:
-    0 24px 80px rgba(0, 0, 0, .44),
-    0 0 34px rgba(176, 0, 42, .34);
+    0 24px 80px rgba(0, 0, 0, .55);
 }
 .instructions {
-  border: 1px solid rgba(157, 255, 110, .34);
-  border-radius: 24px;
+  border: 1px solid rgba(157, 255, 110, .48);
+  border-radius: 3px;
   box-shadow:
-    0 24px 80px rgba(0, 0, 0, .44),
-    0 0 34px rgba(176, 0, 42, .34),
-    inset 0 0 22px rgba(157, 255, 110, .08);
+    0 24px 80px rgba(0, 0, 0, .62),
+    0 0 26px rgba(157, 255, 110, .22),
+    inset 0 0 30px rgba(0, 0, 0, .72);
   padding: 18px;
-  color: var(--muted);
+  color: #c9ffb8;
   font-size: .92rem;
+  clip-path: polygon(0 10px, 10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px));
 }
 .instructions h2 {
   margin: 0 0 10px;
@@ -144,11 +146,15 @@ canvas {
   margin-top: 14px;
 }
 .hud span, .powerup-preview span {
-  background: rgba(255,255,255,.08);
+  background:
+    linear-gradient(135deg, rgba(0, 0, 0, .88), rgba(12, 24, 0, .72));
   padding: 8px 12px;
-  border-radius: 4px;
-  border: 1px solid rgba(255,255,255,.14);
-  box-shadow: 0 0 12px rgba(176, 0, 42, .26);
+  border-radius: 2px;
+  border: 1px solid rgba(157, 255, 110, .42);
+  box-shadow:
+    0 0 12px rgba(157, 255, 110, .18),
+    inset 0 0 12px rgba(0, 0, 0, .8);
+  clip-path: polygon(0 6px, 6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px));
 }
 .powerup-preview {
   display: flex;
@@ -173,7 +179,7 @@ button {
   color: #080004;
   background: linear-gradient(135deg, var(--accent), var(--accent-3));
   cursor: pointer;
-  box-shadow: 0 0 18px rgba(176, 0, 42, .42);
+  box-shadow: 0 0 18px rgba(157, 255, 110, .24);
 }
 button + button { background: linear-gradient(135deg, var(--accent-2), var(--accent-3)); }
 .hint { text-align: center; color: var(--muted); }
