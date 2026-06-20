@@ -72,8 +72,14 @@ function reset() {
 
 function summonVoidWhisper() {
   const whisper = document.createElement('div');
-  whisper.className = 'void-whisper';
-  whisper.textContent = 'The Void Watches';
+  const isEye = Math.random() < 0.45;
+
+  whisper.className = isEye ? 'void-whisper void-eye' : 'void-whisper';
+  whisper.textContent = isEye ? `  .-"""-.
+ /  ◉ ◉  \
+|    ─    |
+ \  ___  /
+  \`-...-\`` : 'The Void Watches';
   whisper.style.left = `${Math.random() * 82 + 6}vw`;
   whisper.style.top = `${Math.random() * 78 + 8}vh`;
   whisper.style.color = voidColors[Math.floor(Math.random() * voidColors.length)];
@@ -197,21 +203,22 @@ function startBassMusic() {
   const echo = audio.createDelay(0.28);
   const echoGain = audio.createGain();
 
-  output.gain.value = 0.062;
+  output.gain.value = 0.068;
   masterFilter.type = 'lowpass';
-  masterFilter.frequency.value = 5200;
-  echo.delayTime.value = 0.18;
-  echoGain.gain.value = 0.16;
+  masterFilter.frequency.value = 3600;
+  echo.delayTime.value = 0.24;
+  echoGain.gain.value = 0.22;
   output.connect(masterFilter);
   masterFilter.connect(audio.destination);
   output.connect(echo);
   echo.connect(echoGain);
   echoGain.connect(masterFilter);
 
-  const bassNotes = [41.2, 49, 55, 65.4, 36.7, 43.7, 55, 73.4, 41.2, 55, 65.4, 82.4, 36.7, 49, 61.7, 73.4];
-  const chordRoots = [82.4, 98, 73.4, 110, 65.4, 98, 82.4, 123.5];
-  const leadNotes = [329.6, 392, 440, 392, 293.7, 349.2, 392, 493.9, 329.6, 440, 523.3, 493.9, 293.7, 392, 440, 587.3];
-  const kickPattern = [1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 1, 0];
+  const bassNotes = [36.7, 36.7, 49, 38.9, 36.7, 55, 41.2, 32.7, 36.7, 49, 58.3, 41.2, 34.6, 36.7, 49, 30.9];
+  const chordRoots = [73.4, 82.4, 69.3, 98, 61.7, 73.4, 58.3, 87.3];
+  const leadNotes = [293.7, 311.1, 392, 349.2, 277.2, 293.7, 415.3, 369.9, 246.9, 311.1, 466.2, 392, 233.1, 277.2, 349.2, 311.1];
+  const droneNotes = [36.7, 55, 34.6, 49];
+  const kickPattern = [1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0];
   const snarePattern = [0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1];
   const hatPattern = [1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1];
   let stepIndex = 0;
@@ -270,10 +277,10 @@ function startBassMusic() {
 
     if (stepIndex % 4 === 0) {
       const root = chordRoots[(stepIndex / 4) % chordRoots.length];
-      playSynthVoice(root, 0.7, 0.07, 'triangle', 2400, -6);
-      playSynthVoice(root * 1.25, 0.7, 0.048, 'sawtooth', 2200, 4);
-      playSynthVoice(root * 1.5, 0.7, 0.04, 'triangle', 2800, 9);
-      playSynthVoice(root * 2, 0.46, 0.026, 'sine', 3600, -12);
+      playSynthVoice(root, 0.9, 0.055, 'triangle', 1400, -9);
+      playSynthVoice(root * 1.06, 0.9, 0.04, 'sawtooth', 1300, 7);
+      playSynthVoice(root * 1.5, 0.85, 0.036, 'triangle', 1800, 12);
+      playSynthVoice(root * 2.01, 0.55, 0.02, 'sine', 2600, -14);
     }
 
     if (stepIndex % 2 === 1) {
@@ -281,8 +288,13 @@ function startBassMusic() {
       playSynthVoice(leadNotes[stepIndex % leadNotes.length] * 1.5, 0.12, 0.018, 'triangle', 4200, stepIndex % 4 === 1 ? 9 : -9);
     }
 
+    if (stepIndex % 8 === 0) {
+      playSynthVoice(droneNotes[(stepIndex / 8) % droneNotes.length], 1.7, 0.045, 'sawtooth', 900, -3);
+      playSynthVoice(droneNotes[(stepIndex / 8) % droneNotes.length] * 1.01, 1.7, 0.032, 'triangle', 850, 3);
+    }
+
     if (stepIndex % 8 === 6) {
-      playSynthVoice(leadNotes[(stepIndex + 3) % leadNotes.length] * 2, 0.28, 0.026, 'sawtooth', 4600, 0);
+      playSynthVoice(leadNotes[(stepIndex + 3) % leadNotes.length] * 2, 0.32, 0.02, 'sawtooth', 3000, 0);
     }
 
     if (kickPattern[stepIndex % kickPattern.length]) {
@@ -312,7 +324,7 @@ function startBassMusic() {
     stepIndex++;
   }
 
-  bassMusic = { output: masterFilter, interval: setInterval(playBassStep, 155) };
+  bassMusic = { output: masterFilter, interval: setInterval(playBassStep, 165) };
   playBassStep();
 }
 

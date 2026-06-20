@@ -269,3 +269,12 @@ button:hover {
   82% { opacity: .9; }
   100% { opacity: 0; filter: blur(8px); }
 }
+
+.void-eye {
+  white-space: pre;
+  font-family: "Courier New", monospace;
+  line-height: .88;
+  text-align: center;
+  letter-spacing: .02em;
+  text-transform: none;
+}
