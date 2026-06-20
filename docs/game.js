@@ -31,12 +31,15 @@ let lastEyeSpawn = 0;
 let lastPentagramSpawn = 0;
 let fateModeUntil = 0;
 let levelSurgeUntil = 0;
+let bePreparedUntil = 0;
+let spawnPauseUntil = 0;
 let pilotSpinUntil = 0;
 let screenRotation = 0;
 let frame = 0;
 let audioContext = null;
 let bassMusic = null;
 let nextVoidWhisperAt = 0;
+let nextComboBellAt = 5;
 let lastEchoedTitle = heroTitleEl?.textContent || '';
 
 function resetPowerupTimers(timestamp = performance.now()) {
@@ -69,9 +72,12 @@ function reset() {
   resetPowerupTimers();
   fateModeUntil = 0;
   levelSurgeUntil = 0;
+  bePreparedUntil = 0;
+  spawnPauseUntil = 0;
   pilotSpinUntil = 0;
   screenRotation = 0;
   nextVoidWhisperAt = 0;
+  nextComboBellAt = 5;
   statusEl.textContent = 'Ready';
   updateHud();
   draw();
@@ -161,8 +167,42 @@ function comboColor() {
   return combo >= 69 ? '#ff6a00' : `rgb(255, ${cool}, ${cool})`;
 }
 
+function playComboBell(milestone) {
+  const audio = getAudioContext();
+  if (!audio) return;
+
+  const now = audio.currentTime;
+  const bell = audio.createOscillator();
+  const chime = audio.createOscillator();
+  const gain = audio.createGain();
+  const frequency = Math.max(170, 920 - milestone * 9);
+
+  bell.type = 'sine';
+  chime.type = 'triangle';
+  bell.frequency.setValueAtTime(frequency, now);
+  chime.frequency.setValueAtTime(frequency * 1.5, now);
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.exponentialRampToValueAtTime(0.09, now + 0.02);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.9);
+
+  bell.connect(gain);
+  chime.connect(gain);
+  gain.connect(audio.destination);
+  bell.start(now);
+  chime.start(now);
+  bell.stop(now + 0.95);
+  chime.stop(now + 0.75);
+}
+
 function awardPoints(basePoints) {
+  const previousCombo = combo;
   combo = Math.min(69, combo + 0.25);
+
+  while (nextComboBellAt <= combo && nextComboBellAt > previousCombo) {
+    playComboBell(nextComboBellAt);
+    nextComboBellAt += 5;
+  }
+
   score += Math.max(1, Math.round(basePoints * (1 + combo)));
 }
 
@@ -444,6 +484,27 @@ function playLevelLaser() {
   laser.stop(now + 0.4);
 }
 
+function playThunderCrash() {
+  const audio = getAudioContext();
+  if (!audio) return;
+
+  const now = audio.currentTime;
+  const rumble = audio.createOscillator();
+  const rumbleGain = audio.createGain();
+
+  rumble.type = 'sawtooth';
+  rumble.frequency.setValueAtTime(58, now);
+  rumble.frequency.exponentialRampToValueAtTime(24, now + 1.1);
+  rumbleGain.gain.setValueAtTime(0.0001, now);
+  rumbleGain.gain.exponentialRampToValueAtTime(0.2, now + 0.04);
+  rumbleGain.gain.exponentialRampToValueAtTime(0.0001, now + 1.35);
+
+  rumble.connect(rumbleGain);
+  rumbleGain.connect(audio.destination);
+  rumble.start(now);
+  rumble.stop(now + 1.4);
+  playNoiseBurst(0.72, 0.16, 1800, 70);
+}
 
 function playRelicPunch() {
   const audio = getAudioContext();
@@ -615,6 +676,7 @@ function awardNearMisses(timestamp) {
 
 function countSuccessfulDodges(timestamp) {
   const stillFalling = [];
+  let clearMeteorsForRotation = false;
 
   for (const meteor of meteors) {
     if (meteor.y < canvas.height + meteor.size) {
@@ -635,13 +697,19 @@ function countSuccessfulDodges(timestamp) {
 
       if ((level - 1) % 3 === 0) {
         levelSurgeUntil = timestamp + 3600;
+        bePreparedUntil = timestamp + 3000;
+        spawnPauseUntil = timestamp + 5000;
         screenRotation = (screenRotation + 90) % 360;
+        clearMeteorsForRotation = true;
+        lastSpawn = timestamp + 5000;
+        resetPowerupTimers(timestamp + 5000);
+        playThunderCrash();
         statusEl.textContent = `Level ${level}: fate surge awakened.`;
       }
     }
   }
 
-  meteors = stillFalling;
+  meteors = clearMeteorsForRotation ? [] : stillFalling;
   updateHud();
 }
 
@@ -686,22 +754,22 @@ function step(timestamp) {
   if (keys.ArrowRight || keys.d) pilot.x += pilotSpeed;
   pilot.x = Math.max(0, Math.min(canvas.width - pilot.w, pilot.x));
 
-  if (timestamp - lastSpawn > 520) {
+  if (timestamp >= spawnPauseUntil && timestamp - lastSpawn > 520) {
     spawnMeteor();
     lastSpawn = timestamp;
   }
 
-  if (!relic && timestamp - lastRelicSpawn > 7000) {
+  if (timestamp >= spawnPauseUntil && !relic && timestamp - lastRelicSpawn > 7000) {
     spawnRelic();
     lastRelicSpawn = timestamp;
   }
 
-  if (!eyePowerup && timestamp - lastEyeSpawn > 12000) {
+  if (timestamp >= spawnPauseUntil && !eyePowerup && timestamp - lastEyeSpawn > 12000) {
     spawnEyePowerup();
     lastEyeSpawn = timestamp;
   }
 
-  if (screenRotation && !pentagramPowerup && timestamp - lastPentagramSpawn > 3200) {
+  if (timestamp >= spawnPauseUntil && screenRotation && !pentagramPowerup && timestamp - lastPentagramSpawn > 3200) {
     spawnPentagramPowerup();
     lastPentagramSpawn = timestamp;
   }
@@ -763,6 +831,7 @@ function step(timestamp) {
     if (hit(pilot, meteor)) {
       running = false;
       combo = 0;
+      nextComboBellAt = 5;
       stopBassMusic();
       playQuietScream();
       statusEl.textContent = `Bonked! ${whisperScream()} Try again.`;
@@ -802,6 +871,14 @@ function draw() {
   if (levelSurge) {
     ctx.fillStyle = `rgba(255, 255, 255, ${0.10 + Math.abs(Math.sin(frame * 0.18)) * 0.08})`;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
+
+  if (now < bePreparedUntil && Math.floor(frame / 8) % 2 === 0) {
+    ctx.fillStyle = '#ffea00';
+    ctx.font = 'bold 48px Georgia, serif';
+    ctx.textAlign = 'center';
+    glowText('Be Prepared...', canvas.width / 2, canvas.height / 2, '#ffea00', 24, 4, '#050006');
+    ctx.textAlign = 'start';
   }
 
   ctx.fillStyle = 'rgba(157, 255, 110, .5)';
