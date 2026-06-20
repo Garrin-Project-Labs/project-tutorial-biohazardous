@@ -76,6 +76,7 @@ const quietScreams = ['aah.', 'eep.', 'oh no.', 'tiny scream.', '...'];
 const voidColors = ['#9dff6e', '#ff1744', '#00f5ff', '#b388ff', '#ffffff', '#ffea00'];
 const meteorSymbols = ['☄', 'ᚱ', 'ᛉ', 'ᛟ', 'ᚦ', '✦', '✧', '✶', '✹', '✷', '☽', '☾', '✺'];
 const titleSymbols = ['☄', 'ᚱ', 'ᛉ', 'ᛟ', 'ᚦ', '✦', '✧', '✶', '✹', '✷', '☽', '☾', '✺', '⛧', '🜏', '☠'];
+const deathSymbols = ['⛧', '🜏', '☠', 'ᛉ', 'ᛟ', 'ᚦ', 'ᚱ', '☽', '☾', '✹', '✺', '✶', '✷'];
 const backgroundThemes = [
   { base: '#030006', mist: 'rgba(157, 255, 110, .5)', alt: '#00f5ff' },
   { base: '#02000c', mist: 'rgba(179, 136, 255, .5)', alt: '#ff1744' },
@@ -172,6 +173,10 @@ function randomTitleSymbols() {
   return Array.from({ length: 13 }, () => titleSymbols[Math.floor(Math.random() * titleSymbols.length)]).join(' ');
 }
 
+function randomDeathSymbols() {
+  return Array.from({ length: 13 }, () => deathSymbols[Math.floor(Math.random() * deathSymbols.length)]).join(' ');
+}
+
 function updateTentacleClass() {
   if (!gameCardEl) return;
 
@@ -189,7 +194,7 @@ function shakePageText() {
 function spawnWelcomeHome() {
   const message = document.createElement('div');
   message.className = 'welcome-home active';
-  message.textContent = 'Welcome Home';
+  message.textContent = randomDeathSymbols();
   document.body.append(message);
   welcomeHomeEls.push(message);
 
@@ -1183,7 +1188,8 @@ function draw() {
     ctx.font = `${eyePowerup.size}px serif`;
     ctx.translate(eyePowerup.x + eyePowerup.size / 2, eyePowerup.y + eyePowerup.size / 2);
     ctx.rotate(eyePowerup.spin);
-    glowText('👁️', -eyePowerup.size / 2, eyePowerup.size / 2, '#b388ff', 30 + blink * 8, 7);
+    ctx.filter = 'invert(1) hue-rotate(180deg)';
+    glowText('👁️', -eyePowerup.size / 2, eyePowerup.size / 2, '#4c7700', 30 + blink * 8, 7);
     ctx.restore();
   }
 

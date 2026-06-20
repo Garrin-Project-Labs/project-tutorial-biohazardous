@@ -401,7 +401,7 @@ body.text-shake main {
   pointer-events: none;
   display: none;
   font-size: clamp(1.8rem, 5vw, 5rem);
-  filter: drop-shadow(0 0 12px #b388ff) drop-shadow(0 0 22px #ff1744);
+  filter: invert(1) hue-rotate(180deg) drop-shadow(0 0 12px #4c7700) drop-shadow(0 0 22px #00e8b7);
 }
 .death-eye.active {
   display: block;
