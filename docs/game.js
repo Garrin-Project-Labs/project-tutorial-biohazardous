@@ -245,7 +245,7 @@ function spawnEyePowerup() {
 
 function spawnPentagramPowerup() {
   const size = 36;
-  pentagramPowerup = { x: Math.random() * (canvas.width - size), y: -size, size, speed: 2.6, spin: 0, spinSpeed: 0.06, flashOffset: Math.random() * Math.PI * 2 };
+  pentagramPowerup = { x: Math.random() * (canvas.width - size), y: -size, size, speed: 1.6, spin: 0, spinSpeed: 0.06, flashOffset: Math.random() * Math.PI * 2 };
 }
 
 function whisperScream() {
