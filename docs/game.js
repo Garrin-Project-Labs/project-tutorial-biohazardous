@@ -7,6 +7,7 @@ const heroEl = document.querySelector('.hero');
 const heroTitleEl = document.querySelector('.hero h1');
 const taglineEl = document.querySelector('#tagline');
 const titleEchoesEl = document.querySelector('#title-echoes');
+const gameCardEl = document.querySelector('.game-card');
 const statusEl = document.querySelector('#status') || { textContent: '' };
 const startBtn = document.querySelector('#start');
 const resetBtn = document.querySelector('#reset');
@@ -129,6 +130,7 @@ function updateHud() {
   scoreEl.textContent = Math.floor(score);
   levelEl.textContent = level;
   if (highScoreEl) highScoreEl.textContent = highScore;
+  updateTentacleClass();
   updateHeroText();
 }
 
@@ -144,6 +146,20 @@ function addTitleEcho(title) {
 
 function randomTitleSymbols() {
   return Array.from({ length: 13 }, () => titleSymbols[Math.floor(Math.random() * titleSymbols.length)]).join(' ');
+}
+
+function updateTentacleClass() {
+  if (!gameCardEl) return;
+
+  gameCardEl.classList.remove('tentacle-style-1', 'tentacle-style-2', 'tentacle-style-3');
+  gameCardEl.classList.add(`tentacle-style-${((level - 1) % 3) + 1}`);
+}
+
+function shakePageText() {
+  document.body.classList.remove('text-shake');
+  void document.body.offsetWidth;
+  document.body.classList.add('text-shake');
+  setTimeout(() => document.body.classList.remove('text-shake'), 110);
 }
 
 function updateHeroText() {
@@ -254,17 +270,17 @@ function spawnMeteor() {
 
 function spawnRelic() {
   const size = 32;
-  relic = { x: Math.random() * (canvas.width - size), y: -size, size, speed: 2.8, spin: 0, spinSpeed: 0.025, flashOffset: Math.random() * Math.PI * 2 };
+  relic = { x: Math.random() * (canvas.width - size), y: -size, size, speed: 2.8, spin: 0, spinSpeed: 0, flashOffset: Math.random() * Math.PI * 2 };
 }
 
 function spawnEyePowerup() {
   const size = 34;
-  eyePowerup = { x: Math.random() * (canvas.width - size), y: -size, size, speed: 2.4, spin: 0, spinSpeed: -0.022, flashOffset: Math.random() * Math.PI * 2 };
+  eyePowerup = { x: Math.random() * (canvas.width - size), y: -size, size, speed: 2.4, spin: 0, spinSpeed: 0, flashOffset: Math.random() * Math.PI * 2 };
 }
 
 function spawnPentagramPowerup() {
   const size = 36;
-  pentagramPowerup = { x: Math.random() * (canvas.width - size), y: -size, size, speed: 1.6, spin: 0, spinSpeed: 0.03, flashOffset: Math.random() * Math.PI * 2 };
+  pentagramPowerup = { x: Math.random() * (canvas.width - size), y: -size, size, speed: 1.6, spin: 0, spinSpeed: 0, flashOffset: Math.random() * Math.PI * 2 };
 }
 
 function whisperScream() {
@@ -745,6 +761,7 @@ function countSuccessfulDodges(timestamp) {
 
     if (dodges % dodgesPerLevel === 0) {
       level++;
+      shakePageText();
       playLevelLaser();
       speedLevel = level;
       pilotSpinUntil = timestamp + 1100;
@@ -1044,8 +1061,6 @@ function draw() {
     const y = (i * 53 + frame * 3.2) % canvas.height;
     glowRect(x, y, 3, 10, i % 2 ? '#9dff6e' : bg.alt, 10);
   }
-
-  drawTentacleBorder();
 
   ctx.fillStyle = comboColor();
   ctx.font = 'bold 13px Papyrus, \"Cinzel Decorative\", Georgia, serif';

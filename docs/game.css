@@ -115,8 +115,42 @@ h1 {
   background: transparent;
   border: 0;
   box-shadow: none;
-  padding: 0;
+  padding: 14px;
+  position: relative;
 }
+.game-card::before, .game-card::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  inset: 0;
+  border-radius: 22px;
+}
+.game-card::before {
+  inset: -8px;
+  border: 3px solid var(--tentacle-glow, #9dff6e);
+  box-shadow:
+    0 0 14px var(--tentacle-glow, #9dff6e),
+    inset 0 0 10px var(--tentacle-glow, #9dff6e);
+  filter: url(#none);
+}
+.game-card::after {
+  inset: -14px;
+  background:
+    radial-gradient(circle at 10% 0%, var(--tentacle-glow, #9dff6e) 0 4px, transparent 5px),
+    radial-gradient(circle at 90% 100%, var(--tentacle-glow, #9dff6e) 0 4px, transparent 5px),
+    repeating-conic-gradient(from 0deg, transparent 0deg 12deg, color-mix(in srgb, var(--tentacle-glow, #9dff6e) 70%, transparent) 13deg 16deg, transparent 17deg 28deg);
+  opacity: .45;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  padding: 10px;
+  mask-composite: exclude;
+  -webkit-mask-composite: xor;
+  animation: tentacleTwist 5s linear infinite;
+}
+.tentacle-style-1 { --tentacle-glow: #9dff6e; }
+.tentacle-style-2 { --tentacle-glow: #ff2a00; }
+.tentacle-style-3 { --tentacle-glow: #b388ff; }
+
 .title-echoes {
   grid-column: 1;
   grid-row: 1;
@@ -173,8 +207,8 @@ h1 {
 }
 canvas {
   display: block;
-  width: min(100%, calc(100vh - 300px));
-  max-width: 820px;
+  width: min(100%, calc((100vh - 160px) * 2));
+  max-width: 1640px;
   aspect-ratio: 1 / 1;
   margin: 0 auto;
   border-radius: 18px;
@@ -323,4 +357,25 @@ button:hover {
   .game-layout { grid-template-columns: 1fr; }
   .title-echoes, .game-card, .game-side-panel, .instructions { grid-column: 1; grid-row: auto; }
   .title-echoes { order: 2; }
+}
+
+@keyframes tentacleTwist {
+  from { transform: rotate(0deg) scale(1); }
+  50% { transform: rotate(1deg) scale(1.01); }
+  to { transform: rotate(0deg) scale(1); }
+}
+
+body.text-shake .hero,
+body.text-shake .title-echoes,
+body.text-shake .game-side-panel,
+body.text-shake .instructions {
+  animation: textShake .1s linear 1;
+}
+
+@keyframes textShake {
+  0% { transform: translate(0, 0); }
+  25% { transform: translate(3px, -2px); }
+  50% { transform: translate(-3px, 2px); }
+  75% { transform: translate(2px, 2px); }
+  100% { transform: translate(0, 0); }
 }
