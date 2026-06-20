@@ -17,6 +17,7 @@ let lastSpawn = 0;
 let lastRelicSpawn = 0;
 let fateModeUntil = 0;
 let levelSurgeUntil = 0;
+let screenRotation = 0;
 let frame = 0;
 const pilotSpeed = 7;
 const dodgesPerLevel = 13;
@@ -34,6 +35,7 @@ function reset() {
   lastRelicSpawn = 0;
   fateModeUntil = 0;
   levelSurgeUntil = 0;
+  screenRotation = 0;
   statusEl.textContent = 'Ready';
   updateHud();
   draw();
@@ -72,6 +74,7 @@ function countSuccessfulDodges(timestamp) {
 
       if ((level - 1) % 3 === 0) {
         levelSurgeUntil = timestamp + 3600;
+        screenRotation = (screenRotation + 90) % 360;
         statusEl.textContent = `Level ${level}: fate surge awakened.`;
       }
     }
@@ -135,6 +138,14 @@ function step(timestamp) {
 
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.save();
+
+  if (screenRotation) {
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.rotate(screenRotation * Math.PI / 180);
+    ctx.translate(-canvas.width / 2, -canvas.height / 2);
+  }
+
   const pulse = Math.sin(frame * 0.12) * 18;
   const fateMode = performance.now() < fateModeUntil;
   const levelSurge = performance.now() < levelSurgeUntil;
@@ -212,9 +223,11 @@ function draw() {
     ctx.font = '18px sans-serif';
     ctx.fillText('Press Start, then use ←/→ or A/D to dodge.', 24, 36);
     ctx.fillText('Every 13 dodges wakes a faster level.', 24, 88);
-    ctx.fillText('Every 3 level-ups triggers a safer fate surge.', 24, 114);
+    ctx.fillText('Every 3 level-ups rotates the screen 90 degrees.', 24, 114);
     ctx.fillText('Green relics reveal fate text for a few seconds.', 24, 140);
   }
+
+  ctx.restore();
 }
 
 function controlKey(event) {
