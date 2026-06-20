@@ -629,7 +629,7 @@ function step(timestamp) {
     if (hit(pilot, relic)) {
       relic = null;
       playRelicPunch();
-      fateModeUntil = timestamp + 4200;
+      fateModeUntil = timestamp + 2200;
       score += relicBonus;
       statusEl.textContent = 'Relic taken: fate sees you.';
       updateHud();
@@ -659,7 +659,6 @@ function step(timestamp) {
       pentagramPowerup = null;
       playPentagramPortal();
       resetCanvasRotation();
-      popups.push({ text: 'unrotated', x: pilot.x + pilot.w / 2 - 44, y: pilot.y - 12, born: timestamp });
       statusEl.textContent = 'Pentagram collected: canvas reset.';
     } else if (pentagramPowerup.y > canvas.height + pentagramPowerup.size) {
       pentagramPowerup = null;
@@ -767,7 +766,6 @@ function draw() {
     const rise = age / 14;
     ctx.globalAlpha = Math.max(0, 1 - age / 900);
     ctx.fillStyle = popup.text === '+1' ? '#ff1744' : '#b388ff';
-    if (popup.text === 'unrotated') ctx.fillStyle = '#ff1744';
     ctx.font = popup.text === '+1' ? 'bold 24px sans-serif' : 'bold 18px sans-serif';
     glowText(popup.text, popup.x - 12, popup.y - rise, ctx.fillStyle, 18, 6);
     ctx.globalAlpha = 1;
