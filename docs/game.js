@@ -50,6 +50,7 @@ const speedBoostPerLevel = 1.0;
 const relicBonus = 13;
 const quietScreams = ['aah.', 'eep.', 'oh no.', 'tiny scream.', '...'];
 const voidColors = ['#9dff6e', '#ff1744', '#00f5ff', '#b388ff', '#ffffff', '#ffea00'];
+const meteorSymbols = ['☄', 'ᚱ', 'ᛉ', 'ᛟ', 'ᚦ', '✦', '✧', '✶', '✹', '✷', '☽', '☾', '✺'];
 
 function reset() {
   pilot.x = canvas.width / 2 - pilot.w / 2;
@@ -127,13 +128,15 @@ function updateHeroText() {
   if (!heroEl || !heroTitleEl || !taglineEl) return;
 
   const fade = Math.max(0, 1 - Math.min(score, 13) / 13);
-  const nextTitle = score >= 333
-    ? 'Good Job...'
-    : score >= 131
-      ? 'Just Breathe...'
-      : score >= 13
-        ? "You Can't Run..."
-        : 'You can not run from your sins. They watch.';
+  const nextTitle = combo >= 69
+    ? 'x69. Nice...'
+    : score >= 333
+      ? 'Good Job...'
+      : score >= 131
+        ? 'Just Breathe...'
+        : score >= 13
+          ? "You Can't Run..."
+          : 'You can not run from your sins. They watch.';
 
   heroEl.classList.toggle('doom-message', score >= 13);
   heroTitleEl.textContent = nextTitle;
@@ -159,7 +162,7 @@ function comboColor() {
 }
 
 function awardPoints(basePoints) {
-  combo = Math.min(69, combo + 0.05);
+  combo = Math.min(69, combo + 0.25);
   score += Math.max(1, Math.round(basePoints * (1 + combo)));
 }
 
@@ -176,23 +179,24 @@ function spawnMeteor() {
     nearMissed: false,
     spin: Math.random() * Math.PI * 2,
     spinSpeed: (Math.random() < 0.5 ? -1 : 1) * (0.035 + Math.random() * 0.035),
-    flashOffset: Math.random() * Math.PI * 2
+    flashOffset: Math.random() * Math.PI * 2,
+    symbol: meteorSymbols[Math.floor(Math.random() * meteorSymbols.length)]
   });
 }
 
 function spawnRelic() {
   const size = 32;
-  relic = { x: Math.random() * (canvas.width - size), y: -size, size, speed: 2.8 };
+  relic = { x: Math.random() * (canvas.width - size), y: -size, size, speed: 2.8, spin: 0, spinSpeed: 0.045, flashOffset: Math.random() * Math.PI * 2 };
 }
 
 function spawnEyePowerup() {
   const size = 34;
-  eyePowerup = { x: Math.random() * (canvas.width - size), y: -size, size, speed: 2.4 };
+  eyePowerup = { x: Math.random() * (canvas.width - size), y: -size, size, speed: 2.4, spin: 0, spinSpeed: -0.04, flashOffset: Math.random() * Math.PI * 2 };
 }
 
 function spawnPentagramPowerup() {
   const size = 36;
-  pentagramPowerup = { x: Math.random() * (canvas.width - size), y: -size, size, speed: 2.6 };
+  pentagramPowerup = { x: Math.random() * (canvas.width - size), y: -size, size, speed: 2.6, spin: 0, spinSpeed: 0.06, flashOffset: Math.random() * Math.PI * 2 };
 }
 
 function whisperScream() {
@@ -712,6 +716,7 @@ function step(timestamp) {
 
   if (relic) {
     relic.y += relic.speed;
+    relic.spin += relic.spinSpeed;
 
     if (hit(pilot, relic)) {
       relic = null;
@@ -727,6 +732,7 @@ function step(timestamp) {
 
   if (eyePowerup) {
     eyePowerup.y += eyePowerup.speed;
+    eyePowerup.spin += eyePowerup.spinSpeed;
 
     if (hit(pilot, eyePowerup)) {
       eyePowerup = null;
@@ -741,6 +747,7 @@ function step(timestamp) {
 
   if (pentagramPowerup) {
     pentagramPowerup.y += pentagramPowerup.speed;
+    pentagramPowerup.spin += pentagramPowerup.spinSpeed;
 
     if (hit(pilot, pentagramPowerup)) {
       pentagramPowerup = null;
@@ -851,24 +858,42 @@ function draw() {
     ctx.font = `bold ${meteor.size}px serif`;
     ctx.translate(meteor.x + meteor.size / 2, meteor.y + meteor.size / 2);
     ctx.rotate(meteor.spin);
-    glowText('☄', -meteor.size / 2, meteor.size / 2, '#050006', 18 + flash * 10, 7, '#050006');
+    glowText(meteor.symbol, -meteor.size / 2, meteor.size / 2, '#050006', 18 + flash * 10, 7, '#050006');
     ctx.restore();
   }
 
   if (relic) {
+    const blink = 0.45 + Math.abs(Math.sin(frame * 0.18 + relic.flashOffset)) * 0.55;
+    ctx.save();
+    ctx.globalAlpha = blink;
     ctx.font = `${relic.size}px serif`;
-    glowText('🧿', relic.x, relic.y + relic.size, '#9dff6e', 30, 7);
+    ctx.translate(relic.x + relic.size / 2, relic.y + relic.size / 2);
+    ctx.rotate(relic.spin);
+    glowText('🧿', -relic.size / 2, relic.size / 2, '#9dff6e', 30 + blink * 8, 7);
+    ctx.restore();
   }
 
   if (eyePowerup) {
+    const blink = 0.45 + Math.abs(Math.sin(frame * 0.2 + eyePowerup.flashOffset)) * 0.55;
+    ctx.save();
+    ctx.globalAlpha = blink;
     ctx.font = `${eyePowerup.size}px serif`;
-    glowText('👁️', eyePowerup.x, eyePowerup.y + eyePowerup.size, '#b388ff', 30, 7);
+    ctx.translate(eyePowerup.x + eyePowerup.size / 2, eyePowerup.y + eyePowerup.size / 2);
+    ctx.rotate(eyePowerup.spin);
+    glowText('👁️', -eyePowerup.size / 2, eyePowerup.size / 2, '#b388ff', 30 + blink * 8, 7);
+    ctx.restore();
   }
 
   if (pentagramPowerup) {
+    const blink = 0.45 + Math.abs(Math.sin(frame * 0.22 + pentagramPowerup.flashOffset)) * 0.55;
+    ctx.save();
+    ctx.globalAlpha = blink;
     ctx.fillStyle = '#050006';
     ctx.font = `bold ${pentagramPowerup.size}px serif`;
-    glowText('⛧', pentagramPowerup.x, pentagramPowerup.y + pentagramPowerup.size, '#ff1744', 34, 9, '#ff1744');
+    ctx.translate(pentagramPowerup.x + pentagramPowerup.size / 2, pentagramPowerup.y + pentagramPowerup.size / 2);
+    ctx.rotate(pentagramPowerup.spin);
+    glowText('⛧', -pentagramPowerup.size / 2, pentagramPowerup.size / 2, '#ff1744', 34 + blink * 10, 9, '#ff1744');
+    ctx.restore();
   }
 
   for (const popup of popups) {
