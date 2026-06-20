@@ -26,7 +26,7 @@
         <button id="start">Start rocket run</button>
         <button id="reset">Reset</button>
       </div>
-      <p class="hint">Cosmic horror mode: every 13 dodges levels you up, and every 3 level-ups briefly rotates the game screen.</p>
+      <p class="hint">Cosmic horror mode: green relics add 13 score, every 13 dodges levels you up, and every 3 level-ups rotates the game screen.</p>
     </section>
 
     <section class="quests">

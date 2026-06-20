@@ -22,7 +22,7 @@ let frame = 0;
 const pilotSpeed = 7;
 const dodgesPerLevel = 13;
 const speedBoostPerLevel = 1.5;
-const relicBonus = 5;
+const relicBonus = 13;
 
 function reset() {
   pilot.x = canvas.width / 2 - pilot.w / 2;
@@ -224,7 +224,7 @@ function draw() {
     ctx.fillText('Press Start, then use ←/→ or A/D to dodge.', 24, 36);
     ctx.fillText('Every 13 dodges wakes a faster level.', 24, 88);
     ctx.fillText('Every 3 level-ups rotates the screen 90 degrees.', 24, 114);
-    ctx.fillText('Green relics reveal fate text for a few seconds.', 24, 140);
+    ctx.fillText('Green relics add 13 score and reveal fate text.', 24, 140);
   }
 
   ctx.restore();
