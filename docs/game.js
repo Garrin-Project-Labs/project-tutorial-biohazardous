@@ -263,11 +263,11 @@ function hit(a, b) {
     a.y + a.h - insetY > b.y;
 }
 
-function glowText(text, x, y, color, blur = 18, outline = 5) {
+function glowText(text, x, y, color, blur = 18, outline = 5, outlineColor = '#050006') {
   ctx.save();
   ctx.lineJoin = 'round';
   ctx.miterLimit = 2;
-  ctx.strokeStyle = '#050006';
+  ctx.strokeStyle = outlineColor;
   ctx.lineWidth = outline;
   ctx.strokeText(text, x, y);
   ctx.shadowColor = color;
@@ -433,13 +433,14 @@ function draw() {
   ctx.restore();
 
   for (const meteor of meteors) {
-    ctx.font = `${meteor.size}px serif`;
-    glowText('🩸', meteor.x, meteor.y + meteor.size, '#ff1744', 22);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = `bold ${meteor.size}px serif`;
+    glowText('☄', meteor.x, meteor.y + meteor.size, '#050006', 18, 7, '#050006');
   }
 
   if (relic) {
     ctx.font = `${relic.size}px serif`;
-    glowText('🟢', relic.x, relic.y + relic.size, '#9dff6e', 26);
+    glowText('🧿', relic.x, relic.y + relic.size, '#9dff6e', 30, 7);
   }
 
   if (eyePowerup) {
@@ -448,8 +449,9 @@ function draw() {
   }
 
   if (pentagramPowerup) {
-    ctx.font = `${pentagramPowerup.size}px serif`;
-    glowText('⛧', pentagramPowerup.x, pentagramPowerup.y + pentagramPowerup.size, '#ff1744', 32, 7);
+    ctx.fillStyle = '#050006';
+    ctx.font = `bold ${pentagramPowerup.size}px serif`;
+    glowText('⛧', pentagramPowerup.x, pentagramPowerup.y + pentagramPowerup.size, '#ff1744', 34, 9, '#ff1744');
   }
 
   for (const popup of popups) {
