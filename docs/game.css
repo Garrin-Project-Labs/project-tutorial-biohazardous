@@ -1,12 +1,12 @@
 :root {
   color-scheme: dark;
-  --bg: #050014;
-  --panel: #17002f;
-  --accent: #00f5ff;
-  --accent-2: #ff2bd6;
-  --accent-3: #faff00;
-  --text: #eef6ff;
-  --muted: #d8b4fe;
+  --bg: #030006;
+  --panel: #16020a;
+  --accent: #9dff6e;
+  --accent-2: #b0002a;
+  --accent-3: #ff1744;
+  --text: #fff1f4;
+  --muted: #ff9aae;
 }
 
 * { box-sizing: border-box; }
@@ -16,9 +16,9 @@ body {
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   color: var(--text);
   background:
-    radial-gradient(circle at 20% 10%, rgba(255, 43, 214, .36), transparent 24rem),
-    radial-gradient(circle at 80% 0%, rgba(0, 245, 255, .32), transparent 26rem),
-    linear-gradient(135deg, #050014 0%, #120039 52%, #240018 100%);
+    radial-gradient(circle at 20% 10%, rgba(176, 0, 42, .42), transparent 24rem),
+    radial-gradient(circle at 80% 0%, rgba(157, 255, 110, .16), transparent 26rem),
+    linear-gradient(135deg, #030006 0%, #120008 52%, #25000a 100%);
 }
 .shell {
   width: min(960px, calc(100% - 32px));
@@ -32,7 +32,7 @@ body {
   letter-spacing: .16em;
   font-size: .78rem;
   font-weight: 800;
-  text-shadow: 0 0 18px rgba(0, 245, 255, .9);
+  text-shadow: 0 0 18px rgba(157, 255, 110, .75);
 }
 h1 {
   margin: 8px 0;
@@ -40,19 +40,19 @@ h1 {
   line-height: .95;
   color: #fff;
   text-shadow:
-    0 0 10px rgba(0, 245, 255, .95),
-    0 0 26px rgba(255, 43, 214, .75),
-    5px 5px 0 rgba(250, 255, 0, .35);
+    0 0 10px rgba(157, 255, 110, .7),
+    0 0 26px rgba(176, 0, 42, .9),
+    5px 5px 0 rgba(255, 23, 68, .42);
 }
 #tagline { color: var(--muted); font-size: 1.1rem; font-weight: 700; }
 .game-card, .quests {
   background: color-mix(in srgb, var(--panel) 88%, black);
-  border: 1px solid rgba(0, 245, 255, .42);
+  border: 1px solid rgba(157, 255, 110, .34);
   border-radius: 24px;
   box-shadow:
     0 24px 80px rgba(0, 0, 0, .44),
-    0 0 34px rgba(255, 43, 214, .22),
-    inset 0 0 22px rgba(0, 245, 255, .08);
+    0 0 34px rgba(176, 0, 42, .34),
+    inset 0 0 22px rgba(157, 255, 110, .08);
   padding: 18px;
   margin: 18px 0;
 }
@@ -63,9 +63,9 @@ canvas {
   aspect-ratio: 12 / 7;
   margin: 0 auto;
   border-radius: 18px;
-  background: linear-gradient(#1b0352, #070014);
-  border: 2px solid rgba(250, 255, 0, .5);
-  box-shadow: 0 0 26px rgba(0, 245, 255, .26);
+  background: linear-gradient(#16000b, #030006);
+  border: 2px solid rgba(157, 255, 110, .42);
+  box-shadow: 0 0 26px rgba(176, 0, 42, .42);
 }
 .hud, .controls {
   display: flex;
@@ -79,17 +79,17 @@ canvas {
   padding: 8px 12px;
   border-radius: 999px;
   border: 1px solid rgba(255,255,255,.14);
-  box-shadow: 0 0 12px rgba(0, 245, 255, .16);
+  box-shadow: 0 0 12px rgba(176, 0, 42, .26);
 }
 button {
   border: 0;
   border-radius: 999px;
   padding: 10px 16px;
   font-weight: 800;
-  color: #090018;
+  color: #080004;
   background: linear-gradient(135deg, var(--accent), var(--accent-3));
   cursor: pointer;
-  box-shadow: 0 0 18px rgba(0, 245, 255, .35);
+  box-shadow: 0 0 18px rgba(176, 0, 42, .42);
 }
 button + button { background: linear-gradient(135deg, var(--accent-2), var(--accent-3)); }
 .hint { text-align: center; color: var(--muted); }

@@ -74,26 +74,35 @@ function step(timestamp) {
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   const pulse = Math.sin(frame * 0.12) * 18;
-  ctx.fillStyle = '#070014';
+  ctx.fillStyle = '#030006';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  ctx.fillStyle = `rgba(255, 43, 214, ${0.16 + Math.abs(Math.sin(frame * 0.08)) * 0.12})`;
+  ctx.fillStyle = `rgba(120, 0, 24, ${0.18 + Math.abs(Math.sin(frame * 0.08)) * 0.14})`;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  ctx.fillStyle = 'rgba(0, 245, 255, .6)';
+  ctx.fillStyle = 'rgba(157, 255, 110, .5)';
   for (let i = 0; i < 70; i++) {
     const x = (i * 97 + frame * 1.9) % canvas.width;
     const y = (i * 53 + frame * 3.2) % canvas.height;
     ctx.fillRect(x, y, 3, 10);
   }
 
-  ctx.strokeStyle = `rgba(250, 255, 0, ${0.18 + Math.abs(Math.sin(frame * 0.15)) * 0.18})`;
+  ctx.fillStyle = `rgba(176, 0, 42, ${0.18 + Math.abs(Math.sin(frame * 0.05)) * 0.12})`;
+  for (let i = 0; i < 10; i++) {
+    const x = (i * 79 + frame * 0.7) % canvas.width;
+    const y = (i * 43 + frame * 1.1) % canvas.height;
+    ctx.beginPath();
+    ctx.arc(x, y, 10 + (i % 4) * 4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  ctx.strokeStyle = `rgba(157, 255, 110, ${0.18 + Math.abs(Math.sin(frame * 0.15)) * 0.18})`;
   ctx.lineWidth = 3;
   ctx.strokeRect(16 + pulse * 0.05, 16 + pulse * 0.05, canvas.width - 32 - pulse * 0.1, canvas.height - 32 - pulse * 0.1);
 
-  ctx.fillStyle = 'rgba(250, 255, 0, .85)';
+  ctx.fillStyle = 'rgba(157, 255, 110, .85)';
   ctx.font = 'bold 18px sans-serif';
-  ctx.fillText('NEON ARCADE MODE', 24, 62);
+  ctx.fillText('THE VOID WATCHES', 24, 62);
 
   ctx.font = '34px serif';
   ctx.fillText(pilot.emoji, pilot.x, pilot.y + pilot.h);
@@ -104,7 +113,7 @@ function draw() {
 
   for (const meteor of meteors) {
     ctx.font = `${meteor.size}px serif`;
-    ctx.fillText('☄️', meteor.x, meteor.y + meteor.size);
+    ctx.fillText('🩸', meteor.x, meteor.y + meteor.size);
   }
 
   if (!running) {
