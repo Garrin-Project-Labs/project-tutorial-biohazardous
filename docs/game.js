@@ -35,6 +35,7 @@ let bePreparedUntil = 0;
 let spawnPauseUntil = 0;
 let pilotSpinUntil = 0;
 let screenRotation = 0;
+let backgroundTheme = 0;
 let frame = 0;
 let audioContext = null;
 let bassMusic = null;
@@ -54,6 +55,13 @@ const relicBonus = 13;
 const quietScreams = ['aah.', 'eep.', 'oh no.', 'tiny scream.', '...'];
 const voidColors = ['#9dff6e', '#ff1744', '#00f5ff', '#b388ff', '#ffffff', '#ffea00'];
 const meteorSymbols = ['☄', 'ᚱ', 'ᛉ', 'ᛟ', 'ᚦ', '✦', '✧', '✶', '✹', '✷', '☽', '☾', '✺'];
+const backgroundThemes = [
+  { base: '#030006', mist: 'rgba(157, 255, 110, .5)', alt: '#00f5ff' },
+  { base: '#02000c', mist: 'rgba(179, 136, 255, .5)', alt: '#ff1744' },
+  { base: '#090000', mist: 'rgba(255, 23, 68, .42)', alt: '#ffea00' },
+  { base: '#00090a', mist: 'rgba(0, 245, 255, .42)', alt: '#9dff6e' },
+  { base: '#080808', mist: 'rgba(255, 255, 255, .34)', alt: '#b388ff' }
+];
 
 function reset() {
   pilot.x = canvas.width / 2 - pilot.w / 2;
@@ -76,6 +84,7 @@ function reset() {
   spawnPauseUntil = 0;
   pilotSpinUntil = 0;
   screenRotation = 0;
+  backgroundTheme = 0;
   nextVoidWhisperAt = 0;
   nextComboBellAt = 5;
   statusEl.textContent = 'Ready';
@@ -175,7 +184,7 @@ function playComboBell(milestone) {
   const bell = audio.createOscillator();
   const chime = audio.createOscillator();
   const gain = audio.createGain();
-  const frequency = Math.max(170, 920 - milestone * 9);
+  const frequency = Math.max(55, 280 - milestone * 3.2);
 
   bell.type = 'sine';
   chime.type = 'triangle';
@@ -700,6 +709,7 @@ function countSuccessfulDodges(timestamp) {
         bePreparedUntil = timestamp + 3000;
         spawnPauseUntil = timestamp + 5000;
         screenRotation = (screenRotation + 90) % 360;
+        backgroundTheme = 1 + Math.floor(Math.random() * (backgroundThemes.length - 1));
         clearMeteorsForRotation = true;
         lastSpawn = timestamp + 5000;
         resetPowerupTimers(timestamp + 5000);
@@ -789,7 +799,7 @@ function step(timestamp) {
     if (hit(pilot, relic)) {
       relic = null;
       playRelicPunch();
-      fateModeUntil = timestamp + 2200;
+      fateModeUntil = timestamp + 1200;
       awardPoints(relicBonus);
       statusEl.textContent = 'Relic taken: fate sees you.';
       updateHud();
@@ -860,7 +870,8 @@ function draw() {
   const fateMode = now < fateModeUntil;
   const levelSurge = now < levelSurgeUntil;
   const pilotSpin = now < pilotSpinUntil;
-  ctx.fillStyle = '#030006';
+  const bg = backgroundThemes[backgroundTheme] || backgroundThemes[0];
+  ctx.fillStyle = bg.base;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   if (fateMode) {
@@ -881,11 +892,11 @@ function draw() {
     ctx.textAlign = 'start';
   }
 
-  ctx.fillStyle = 'rgba(157, 255, 110, .5)';
+  ctx.fillStyle = bg.mist;
   for (let i = 0; i < 70; i++) {
     const x = (i * 97 + frame * 1.9) % canvas.width;
     const y = (i * 53 + frame * 3.2) % canvas.height;
-    glowRect(x, y, 3, 10, i % 2 ? '#9dff6e' : '#00f5ff', 10);
+    glowRect(x, y, 3, 10, i % 2 ? '#9dff6e' : bg.alt, 10);
   }
 
 
