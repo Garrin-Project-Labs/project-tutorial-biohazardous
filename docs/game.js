@@ -903,10 +903,17 @@ function draw() {
   ctx.fillStyle = comboColor();
   ctx.font = 'bold 13px Papyrus, \"Cinzel Decorative\", Georgia, serif';
   if (combo >= 69) {
+    const flicker = Math.sin(frame * 0.55) * 2;
+    const comboText = `COMBO ${combo.toFixed(2)}`;
+
     ctx.save();
-    ctx.shadowColor = '#ff2a00';
-    ctx.shadowBlur = 18 + Math.sin(frame * 0.4) * 6;
-    glowText(`COMBO ${combo.toFixed(2)}`, 22, 28, '#ff6a00', 20, 3, '#5a0000');
+    ctx.font = 'bold 14px Papyrus, \"Cinzel Decorative\", Georgia, serif';
+    ctx.globalAlpha = 0.65;
+    glowText(comboText, 21, 30 + flicker, '#ff2a00', 24, 4, '#2a0000');
+    ctx.globalAlpha = 0.55;
+    glowText(comboText, 23, 26 - flicker, '#ffea00', 20, 3, '#7a1200');
+    ctx.globalAlpha = 1;
+    glowText(comboText, 22, 28, '#fff1b8', 18, 2.5, '#5a0000');
     ctx.restore();
   } else {
     glowText(`COMBO ${combo.toFixed(2)}`, 22, 28, comboColor(), 8, 1.5, '#050006');
