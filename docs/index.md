@@ -3,14 +3,14 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Bio's Big Bouncing Rocket</title>
+  <title>You can not run from your sins. They watch.</title>
   <link rel="stylesheet" href="game.css" />
 </head>
 <body>
   <main class="shell">
     <section class="hero">
       <p class="eyebrow">Biohazardous's cosmic horror rocket trial</p>
-      <h1>Bio's Big Bouncing Rocket</h1>
+      <h1>You can not run from your sins. They watch.</h1>
       <p id="tagline">As you walk through the shadow of the valley of death</p>
     </section>
 
