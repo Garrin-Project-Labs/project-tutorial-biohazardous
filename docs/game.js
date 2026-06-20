@@ -30,7 +30,7 @@ let audioContext = null;
 let nextVoidWhisperAt = 0;
 const pilotSpeed = 7;
 const dodgesPerLevel = 13;
-const speedBoostPerLevel = 1.5;
+const speedBoostPerLevel = 1.1;
 const relicBonus = 13;
 const quietScreams = ['aah.', 'eep.', 'oh no.', 'tiny scream.', '...'];
 const voidColors = ['#9dff6e', '#ff1744', '#00f5ff', '#b388ff', '#ffffff', '#ffea00'];
@@ -86,7 +86,7 @@ function updateHud() {
 
 function spawnMeteor() {
   const size = 26 + Math.random() * 22;
-  const baseSpeed = 4.2 + Math.random() * 2.4;
+  const baseSpeed = 3.2 + Math.random() * 1.8;
   const levelSpeedBoost = (speedLevel - 1) * speedBoostPerLevel;
   meteors.push({ x: Math.random() * (canvas.width - size), y: -size, size, baseSpeed, speed: baseSpeed + levelSpeedBoost, nearMissed: false });
 }
