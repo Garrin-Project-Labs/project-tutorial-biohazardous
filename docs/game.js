@@ -170,16 +170,10 @@ function resetCanvasRotation() {
   levelSurgeUntil = 0;
 }
 
-function resetGameSpeed() {
-  level = 1;
-  dodges = 0;
-  levelSurgeUntil = 0;
-
+function resetMeteorSpeed() {
   for (const meteor of meteors) {
     meteor.speed = meteor.baseSpeed || Math.min(meteor.speed, 5.4);
   }
-
-  updateHud();
 }
 
 function awardNearMisses(timestamp) {
@@ -317,9 +311,9 @@ function step(timestamp) {
 
     if (hit(pilot, eyePowerup)) {
       eyePowerup = null;
-      resetGameSpeed();
+      resetMeteorSpeed();
       popups.push({ text: 'speed reset', x: pilot.x + pilot.w / 2 - 52, y: pilot.y - 12, born: timestamp });
-      statusEl.textContent = 'Floating eye collected: speed reset to level 1.';
+      statusEl.textContent = 'Floating eye collected: meteor speed reset.';
     } else if (eyePowerup.y > canvas.height + eyePowerup.size) {
       eyePowerup = null;
     }
