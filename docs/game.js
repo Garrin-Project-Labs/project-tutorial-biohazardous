@@ -260,7 +260,7 @@ function step(timestamp) {
     lastRelicSpawn = timestamp;
   }
 
-  if (!eyePowerup && timestamp - lastEyeSpawn > 12000) {
+  if (screenRotation && !eyePowerup && timestamp - lastEyeSpawn > 12000) {
     spawnEyePowerup();
     lastEyeSpawn = timestamp;
   }
