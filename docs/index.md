@@ -15,7 +15,18 @@
     </section>
 
     <section class="game-card" aria-label="Cosmic horror Dodge the Meteors game">
-      <canvas id="game" width="720" height="420"></canvas>
+      <div class="play-area">
+        <aside class="instructions" aria-label="Game instructions">
+          <h2>How to survive</h2>
+          <p>Press Prepare To Die, then use ←/→ or A/D to dodge.</p>
+          <p>Every 13 dodges wakes a faster level.</p>
+          <p>Every 3 level-ups rotates the game screen.</p>
+          <p>Green relics add 13 score and reveal fate text.</p>
+          <p>Floating eyes reset the speed back to level 1.</p>
+          <p>Pentagrams appear after rotation and reset the canvas.</p>
+        </aside>
+        <canvas id="game" width="720" height="420"></canvas>
+      </div>
       <div class="hud">
         <span>Score: <strong id="score">0</strong></span>
         <span>Level: <strong id="level">1</strong></span>

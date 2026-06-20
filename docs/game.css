@@ -56,6 +56,32 @@ h1 {
   padding: 18px;
   margin: 18px 0;
 }
+.play-area {
+  display: grid;
+  grid-template-columns: minmax(180px, 240px) minmax(0, 720px);
+  gap: 18px;
+  align-items: start;
+  justify-content: center;
+}
+.instructions {
+  border: 1px solid rgba(157, 255, 110, .34);
+  border-radius: 6px;
+  background: rgba(0, 0, 0, .28);
+  box-shadow: inset 0 0 18px rgba(176, 0, 42, .18);
+  padding: 14px;
+  color: var(--muted);
+  font-size: .92rem;
+}
+.instructions h2 {
+  margin: 0 0 10px;
+  color: var(--accent);
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+.instructions p {
+  margin: 10px 0;
+}
 canvas {
   display: block;
   width: 100%;
@@ -93,6 +119,10 @@ button {
 }
 button + button { background: linear-gradient(135deg, var(--accent-2), var(--accent-3)); }
 .hint { text-align: center; color: var(--muted); }
+@media (max-width: 860px) {
+  .play-area { grid-template-columns: 1fr; }
+  .instructions { order: 2; }
+}
 .quests code {
   color: var(--accent-2);
   background: rgba(255,255,255,.08);

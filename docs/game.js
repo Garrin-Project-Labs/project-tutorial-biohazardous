@@ -462,16 +462,6 @@ function draw() {
     ctx.globalAlpha = 1;
   }
 
-  if (!running) {
-    ctx.fillStyle = 'rgba(255,255,255,.84)';
-    ctx.font = '18px sans-serif';
-    ctx.fillText('Press Start, then use ←/→ or A/D to dodge.', 24, 36);
-    ctx.fillText('Every 13 dodges wakes a faster level.', 24, 88);
-    ctx.fillText('Every 3 level-ups rotates the screen 90 degrees.', 24, 114);
-    ctx.fillText('Green relics add 13 score and reveal fate text.', 24, 140);
-    ctx.fillText('Floating eyes reset the speed back to level 1.', 24, 166);
-    ctx.fillText('Pentagrams appear after rotation and reset the canvas.', 24, 192);
-  }
 
   ctx.restore();
 }
