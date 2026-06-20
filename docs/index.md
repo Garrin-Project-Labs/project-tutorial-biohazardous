@@ -23,7 +23,7 @@
         <span>Status: <strong id="status">Unfinished</strong></span>
       </div>
       <div class="controls">
-        <button id="start">Start rocket run</button>
+        <button id="start">Prepare To Die</button>
         <button id="reset">Reset</button>
       </div>
       <p class="hint">Cosmic horror mode: green relics add 13 score, every 13 dodges levels you up, and every 3 level-ups rotates the game screen.</p>
