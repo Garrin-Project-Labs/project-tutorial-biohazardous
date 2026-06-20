@@ -1,0 +1,61 @@
+project:
+  id: "tutorial-biohazardous"
+  name: "Biohazardous Dodge the Meteors"
+  repo: "Garrin-Project-Labs/project-tutorial-biohazardous"
+  sourceOfTruth: discord
+
+owner:
+  discordUserId: "96407099092779008"
+  label: "Biohazardous"
+
+discord:
+  guildId: "1515020347425030245"
+  channelId: "1517726794147692596"
+  visibility: "public"
+  projectsCategoryId: "1516195966330343444"
+  projectCreationChannelId: "1516196374620799127"
+  roles:
+    viewer:
+      roleId: "1517726785310036140"
+      name: "tutorial-biohazardous-viewer"
+    contributor:
+      roleId: "1517726788111831063"
+      name: "tutorial-biohazardous-contributor"
+    maintainer:
+      roleId: "1517726790557110493"
+      name: "tutorial-biohazardous-maintainer"
+
+authorization:
+  allowViewerQuestions: true
+  allowContributorsToClaimTasks: true
+  requireMaintainerForPlanApproval: true
+  requireMaintainerForDocsAndMemory: true
+  requireOwnerForInvites: false
+  requireOwnerForRepoCreation: true
+  requireOwnerForArchiveDelete: true
+  requireGlobalOwnerForGatewayConfig: true
+
+publishing:
+  githubPages: true
+  githubPagesStatus: "pending"
+  githubPagesUrl: "https://garrin-project-labs.github.io/project-tutorial-biohazardous/"
+  githubPagesSource: "main:/docs"
+  publicDemos: true
+
+workflow:
+  taskThreads: automatic
+  taskCommandStyle: natural_language
+  friendlyTaskName: quest
+  requireMention: true
+  jamMode: temporary_ambient
+  branchNaming: "task/<id>-<slug>"
+  requirePlanApproval: true
+  requireMaintainerForDocsAndMemory: true
+  allowBotMergeWithMaintainerApproval: true
+  githubIssues: false
+
+audit:
+  level: medium
+  path: ".project/audit/events.jsonl"
+  includePrLinks: true
+  includeDiscordThreadLinks: true

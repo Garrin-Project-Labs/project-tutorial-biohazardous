@@ -1,0 +1,128 @@
+{
+  "kind": "dodge-meteors",
+  "status": "active",
+  "projectId": "tutorial-biohazardous",
+  "displayName": "Biohazardous Dodge the Meteors",
+  "learner": {
+    "discordUserId": "96407099092779008",
+    "label": "Biohazardous"
+  },
+  "pagesUrl": "https://garrin-project-labs.github.io/project-tutorial-biohazardous/",
+  "currentQuest": 1,
+  "promptStyle": {
+    "goal": "Give beginners copy-pasteable prompts and ask for one small choice at a time.",
+    "approvalPrompt": "@G-Claw-Bot looks good lets start",
+    "nextQuestPrompt": "@G-Claw-Bot lets start the next quest",
+    "fallbackPrompt": "@G-Claw-Bot surprise me",
+    "surpriseRule": "When the learner says surprise me, choose a small option that is not already listed in the suggested prompts and not already built into the game."
+  },
+  "quests": [
+    {
+      "id": 1,
+      "title": "Make it yours",
+      "learnerGoal": "Replace the starter placeholders with a real title, pilot name, and welcome text so the unfinished game starts to feel like it belongs to the learner.",
+      "agentPlan": [
+        "Show the learner that the starter page intentionally begins as 'Untitled Meteor Game' with a generic pilot.",
+        "Ask what title or hero/pilot name they want.",
+        "Recommend a playful default if they are unsure.",
+        "After approval, update the visible placeholders and publish the page."
+      ],
+      "customizationQuestion": "What should we call the game or the hero?",
+      "recommendation": "Use a short fun title like 'Biohazardous Meteor Dash' and keep the hero name simple for the first version.",
+      "suggestedPrompts": [
+        "@G-Claw-Bot call the game Biohazardous Meteor Dash",
+        "@G-Claw-Bot name the hero Biohazardous Star Runner",
+        "@G-Claw-Bot make it feel silly and arcade-like",
+        "@G-Claw-Bot surprise me"
+      ],
+      "approvalPrompt": "@G-Claw-Bot looks good lets start",
+      "completionSignal": "The starter placeholders for title, hero/pilot name, or welcome text visibly changed on GitHub Pages."
+    },
+    {
+      "id": 2,
+      "title": "Choose controls",
+      "learnerGoal": "Choose and build the first movement controls because the starter game intentionally begins with a pilot who cannot move yet.",
+      "agentPlan": [
+        "Explain that the starter game has falling meteors but no working movement controls yet.",
+        "Offer arrow keys, WASD, or both.",
+        "Recommend arrow keys for beginners because they are easiest to explain and remember.",
+        "After approval, add the chosen controls, update the page hint, and publish the page."
+      ],
+      "customizationQuestion": "For movement, do you want arrow keys, WASD, or both?",
+      "recommendation": "Use arrow keys for the first version.",
+      "suggestedPrompts": [
+        "@G-Claw-Bot use arrow keys",
+        "@G-Claw-Bot use WASD",
+        "@G-Claw-Bot support both arrow keys and WASD",
+        "@G-Claw-Bot surprise me"
+      ],
+      "approvalPrompt": "@G-Claw-Bot looks good lets start",
+      "completionSignal": "The previously-unmoving pilot now supports the chosen movement input and the page tells the learner how to move."
+    },
+    {
+      "id": 3,
+      "title": "Pick the vibe",
+      "learnerGoal": "Choose a visual mood so the game looks intentionally customized.",
+      "agentPlan": [
+        "Offer a few simple visual directions such as cute, neon arcade, spooky space, or cozy stars.",
+        "Ask which vibe sounds fun.",
+        "Recommend neon arcade if they want a strong first visual change.",
+        "After approval, update colors, emoji, and/or background and publish the page."
+      ],
+      "customizationQuestion": "What vibe should the game have: cute, neon arcade, spooky space, cozy stars, or something else?",
+      "recommendation": "Use a neon arcade vibe for a clear, exciting first visual change.",
+      "suggestedPrompts": [
+        "@G-Claw-Bot make it neon arcade",
+        "@G-Claw-Bot make it cute and colorful",
+        "@G-Claw-Bot make it spooky space",
+        "@G-Claw-Bot surprise me"
+      ],
+      "approvalPrompt": "@G-Claw-Bot looks good lets start",
+      "completionSignal": "The game has a visibly customized look on GitHub Pages."
+    },
+    {
+      "id": 4,
+      "title": "Add a twist",
+      "learnerGoal": "Add one tiny mechanic so the learner sees the game change beyond text and colors.",
+      "agentPlan": [
+        "Offer one small gameplay twist that is not already in the starter game, not a big redesign.",
+        "Ask which twist sounds fun.",
+        "Recommend a bonus star because it is easy to understand and satisfying to collect.",
+        "After approval, add the twist, explain how to try it, and publish the page."
+      ],
+      "customizationQuestion": "Which twist sounds fun: bonus star, shield, faster second level, or score target?",
+      "recommendation": "Add a bonus star that gives extra points.",
+      "suggestedPrompts": [
+        "@G-Claw-Bot add a bonus star",
+        "@G-Claw-Bot add a shield",
+        "@G-Claw-Bot add a faster second level",
+        "@G-Claw-Bot surprise me"
+      ],
+      "approvalPrompt": "@G-Claw-Bot looks good lets start",
+      "completionSignal": "The learner can play the customized game with one extra mechanic."
+    },
+    {
+      "id": 5,
+      "title": "Make your own quest",
+      "learnerGoal": "Help the learner notice something they want to change and turn that into their first self-directed quest.",
+      "agentPlan": [
+        "Celebrate that the learner has changed text, controls, visuals, and gameplay.",
+        "Ask them to look at the game and name one thing they dislike, wish was different, or want to try.",
+        "Turn their answer into a tiny scoped quest with a plan and approval prompt.",
+        "If they choose a suggested prompt or ask to be surprised, propose one small improvement and ask for approval before editing."
+      ],
+      "customizationQuestion": "Look at the game now: what is one thing you do not like yet, wish was different, or want to try?",
+      "recommendation": "Pick one small improvement from the learner's reaction; if they are unsure, suggest making the game feel clearer or more exciting.",
+      "suggestedPrompts": [
+        "@G-Claw-Bot I don't like how hard it is",
+        "@G-Claw-Bot I want it to look more like space",
+        "@G-Claw-Bot I wish there were powerups",
+        "@G-Claw-Bot I want to make it funnier",
+        "@G-Claw-Bot surprise me with one more improvement"
+      ],
+      "approvalPrompt": "@G-Claw-Bot looks good lets start",
+      "completionSignal": "The learner has suggested their own change and the agent has either implemented it or turned it into a clear next quest."
+    }
+  ],
+  "completionMessage": "Tutorial complete \ud83c\udf89 You have made a guided game change and created your own quest. You can keep improving this project by telling me what you want to change next, go back to the project-creation channel to start something new, or create a conversation channel from general to explore another idea."
+}
