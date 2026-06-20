@@ -15,6 +15,8 @@ let running = false;
 let lastSpawn = 0;
 let frame = 0;
 const pilotSpeed = 7;
+const dodgesPerLevel = 13;
+const speedBoostPerLevel = 1.5;
 
 function reset() {
   pilot.x = canvas.width / 2 - pilot.w / 2;
@@ -35,7 +37,29 @@ function updateHud() {
 
 function spawnMeteor() {
   const size = 26 + Math.random() * 22;
-  meteors.push({ x: Math.random() * (canvas.width - size), y: -size, size, speed: 4.2 + Math.random() * 2.4 });
+  const levelSpeedBoost = (level - 1) * speedBoostPerLevel;
+  meteors.push({ x: Math.random() * (canvas.width - size), y: -size, size, speed: 4.2 + Math.random() * 2.4 + levelSpeedBoost });
+}
+
+function countSuccessfulDodges() {
+  const stillFalling = [];
+
+  for (const meteor of meteors) {
+    if (meteor.y < canvas.height + meteor.size) {
+      stillFalling.push(meteor);
+      continue;
+    }
+
+    score++;
+
+    if (score % dodgesPerLevel === 0) {
+      level++;
+      statusEl.textContent = `Level ${level}: the sins move faster.`;
+    }
+  }
+
+  meteors = stillFalling;
+  updateHud();
 }
 
 function hit(a, b) {
@@ -56,7 +80,7 @@ function step(timestamp) {
   }
 
   for (const meteor of meteors) meteor.y += meteor.speed;
-  meteors = meteors.filter(m => m.y < canvas.height + m.size);
+  countSuccessfulDodges();
 
   for (const meteor of meteors) {
     if (hit(pilot, meteor)) {
@@ -120,6 +144,7 @@ function draw() {
     ctx.fillStyle = 'rgba(255,255,255,.84)';
     ctx.font = '18px sans-serif';
     ctx.fillText('Press Start, then use ←/→ or A/D to dodge.', 24, 36);
+    ctx.fillText('Every 13 dodges wakes a faster level.', 24, 88);
   }
 }
 

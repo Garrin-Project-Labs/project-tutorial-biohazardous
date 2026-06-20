@@ -8,7 +8,7 @@
     "label": "Biohazardous"
   },
   "pagesUrl": "https://garrin-project-labs.github.io/project-tutorial-biohazardous/",
-  "currentQuest": 4,
+  "currentQuest": 5,
   "promptStyle": {
     "goal": "Give beginners copy-pasteable prompts and ask for one small choice at a time.",
     "approvalPrompt": "@G-Claw-Bot looks good lets start",
