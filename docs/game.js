@@ -159,38 +159,65 @@ function startBassMusic() {
   if (!audio || bassMusic) return;
 
   const output = audio.createGain();
-  output.gain.value = 0.055;
+  output.gain.value = 0.07;
   output.connect(audio.destination);
 
-  const notes = [41.2, 41.2, 49, 36.7, 55, 49, 41.2, 32.7];
+  const bassNotes = [41.2, 41.2, 55, 49, 36.7, 41.2, 61.7, 55, 41.2, 32.7, 41.2, 49, 55, 61.7, 49, 36.7];
+  const kickPattern = [1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 1, 0];
+  const snarePattern = [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0];
+  const hatPattern = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
   let stepIndex = 0;
 
   function playBassStep() {
     if (!bassMusic) return;
 
     const now = audio.currentTime;
-    const osc = audio.createOscillator();
-    const gain = audio.createGain();
-    const filter = audio.createBiquadFilter();
+    const bass = audio.createOscillator();
+    const bassGain = audio.createGain();
+    const bassFilter = audio.createBiquadFilter();
 
-    osc.type = 'square';
-    osc.frequency.setValueAtTime(notes[stepIndex % notes.length], now);
-    filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(260, now);
-    gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.exponentialRampToValueAtTime(0.85, now + 0.02);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.32);
+    bass.type = 'square';
+    bass.frequency.setValueAtTime(bassNotes[stepIndex % bassNotes.length], now);
+    bassFilter.type = 'lowpass';
+    bassFilter.frequency.setValueAtTime(520, now);
+    bassGain.gain.setValueAtTime(0.0001, now);
+    bassGain.gain.exponentialRampToValueAtTime(0.72, now + 0.012);
+    bassGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
 
-    osc.connect(filter);
-    filter.connect(gain);
-    gain.connect(output);
-    osc.start(now);
-    osc.stop(now + 0.35);
+    bass.connect(bassFilter);
+    bassFilter.connect(bassGain);
+    bassGain.connect(output);
+    bass.start(now);
+    bass.stop(now + 0.24);
+
+    if (kickPattern[stepIndex % kickPattern.length]) {
+      const kick = audio.createOscillator();
+      const kickGain = audio.createGain();
+
+      kick.type = 'square';
+      kick.frequency.setValueAtTime(92, now);
+      kick.frequency.exponentialRampToValueAtTime(34, now + 0.11);
+      kickGain.gain.setValueAtTime(0.0001, now);
+      kickGain.gain.exponentialRampToValueAtTime(1.1, now + 0.006);
+      kickGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.16);
+      kick.connect(kickGain);
+      kickGain.connect(output);
+      kick.start(now);
+      kick.stop(now + 0.18);
+    }
+
+    if (snarePattern[stepIndex % snarePattern.length]) {
+      playNoiseBurst(0.08, 0.08, 2200, 520);
+    }
+
+    if (hatPattern[stepIndex % hatPattern.length]) {
+      playNoiseBurst(0.035, 0.028, 5200, 2600);
+    }
 
     stepIndex++;
   }
 
-  bassMusic = { output, interval: setInterval(playBassStep, 420) };
+  bassMusic = { output, interval: setInterval(playBassStep, 170) };
   playBassStep();
 }
 
