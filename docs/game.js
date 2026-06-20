@@ -400,10 +400,6 @@ function draw() {
     ctx.restore();
   }
 
-  ctx.strokeStyle = `rgba(157, 255, 110, ${0.18 + Math.abs(Math.sin(frame * 0.15)) * 0.18})`;
-  ctx.lineWidth = 3;
-  ctx.strokeRect(16 + pulse * 0.05, 16 + pulse * 0.05, canvas.width - 32 - pulse * 0.1, canvas.height - 32 - pulse * 0.1);
-
   ctx.fillStyle = 'rgba(157, 255, 110, .85)';
   ctx.font = 'bold 18px sans-serif';
   ctx.fillText('THE VOID WATCHES', 24, 62);
