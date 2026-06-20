@@ -7,7 +7,7 @@ const startBtn = document.querySelector('#start');
 const resetBtn = document.querySelector('#reset');
 
 const pilot = { x: 340, y: 360, w: 44, h: 36, emoji: '🚀', name: 'Pilot' };
-const keys = { ArrowLeft: false, ArrowRight: false };
+const keys = { ArrowLeft: false, ArrowRight: false, a: false, d: false };
 let meteors = [];
 let score = 0;
 let level = 1;
@@ -46,8 +46,8 @@ function step(timestamp) {
   if (!running) return;
   frame++;
 
-  if (keys.ArrowLeft) pilot.x -= pilotSpeed;
-  if (keys.ArrowRight) pilot.x += pilotSpeed;
+  if (keys.ArrowLeft || keys.a) pilot.x -= pilotSpeed;
+  if (keys.ArrowRight || keys.d) pilot.x += pilotSpeed;
   pilot.x = Math.max(0, Math.min(canvas.width - pilot.w, pilot.x));
 
   if (timestamp - lastSpawn > 520) {
@@ -106,20 +106,29 @@ function draw() {
   if (!running) {
     ctx.fillStyle = 'rgba(255,255,255,.84)';
     ctx.font = '18px sans-serif';
-    ctx.fillText('Press Start, then use ← and → to dodge.', 24, 36);
+    ctx.fillText('Press Start, then use ←/→ or A/D to dodge.', 24, 36);
   }
 }
 
+function controlKey(event) {
+  if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') return event.key;
+  const key = event.key.toLowerCase();
+  if (key === 'a' || key === 'd') return key;
+  return null;
+}
+
 window.addEventListener('keydown', event => {
-  if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
-    keys[event.key] = true;
+  const key = controlKey(event);
+  if (key) {
+    keys[key] = true;
     event.preventDefault();
   }
 });
 
 window.addEventListener('keyup', event => {
-  if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
-    keys[event.key] = false;
+  const key = controlKey(event);
+  if (key) {
+    keys[key] = false;
     event.preventDefault();
   }
 });

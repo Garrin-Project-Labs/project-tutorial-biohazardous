@@ -25,7 +25,7 @@
         <button id="start">Start rocket run</button>
         <button id="reset">Reset</button>
       </div>
-      <p class="hint">Use the arrow keys to steer the rocket away from meteors.</p>
+      <p class="hint">Use arrow keys or WASD to steer the rocket away from meteors.</p>
     </section>
 
     <section class="quests">
