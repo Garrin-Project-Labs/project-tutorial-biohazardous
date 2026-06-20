@@ -93,6 +93,22 @@ function hit(a, b) {
   return a.x < b.x + b.size && a.x + a.w > b.x && a.y < b.y + b.size && a.y + a.h > b.y;
 }
 
+function glowText(text, x, y, color, blur = 18) {
+  ctx.save();
+  ctx.shadowColor = color;
+  ctx.shadowBlur = blur;
+  ctx.fillText(text, x, y);
+  ctx.restore();
+}
+
+function glowRect(x, y, w, h, color, blur = 12) {
+  ctx.save();
+  ctx.shadowColor = color;
+  ctx.shadowBlur = blur;
+  ctx.fillRect(x, y, w, h);
+  ctx.restore();
+}
+
 function step(timestamp) {
   if (!running) return;
   frame++;
@@ -169,7 +185,7 @@ function draw() {
   for (let i = 0; i < 70; i++) {
     const x = (i * 97 + frame * 1.9) % canvas.width;
     const y = (i * 53 + frame * 3.2) % canvas.height;
-    ctx.fillRect(x, y, 3, 10);
+    glowRect(x, y, 3, 10, i % 2 ? '#9dff6e' : '#00f5ff', 10);
   }
 
   ctx.fillStyle = `rgba(176, 0, 42, ${0.18 + Math.abs(Math.sin(frame * 0.05)) * 0.12})`;
@@ -207,20 +223,20 @@ function draw() {
   }
 
   ctx.font = '34px serif';
-  ctx.fillText(pilot.emoji, pilot.x, pilot.y + pilot.h);
+  glowText(pilot.emoji, pilot.x, pilot.y + pilot.h, '#00f5ff', 24);
 
   ctx.fillStyle = '#eef6ff';
   ctx.font = '14px sans-serif';
-  ctx.fillText(pilot.name, pilot.x - 2, pilot.y - 8);
+  glowText(pilot.name, pilot.x - 2, pilot.y - 8, '#9dff6e', 10);
 
   for (const meteor of meteors) {
     ctx.font = `${meteor.size}px serif`;
-    ctx.fillText('🩸', meteor.x, meteor.y + meteor.size);
+    glowText('🩸', meteor.x, meteor.y + meteor.size, '#ff1744', 22);
   }
 
   if (relic) {
     ctx.font = `${relic.size}px serif`;
-    ctx.fillText('🟢', relic.x, relic.y + relic.size);
+    glowText('🟢', relic.x, relic.y + relic.size, '#9dff6e', 26);
   }
 
   if (!running) {
