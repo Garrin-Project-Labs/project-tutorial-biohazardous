@@ -395,6 +395,26 @@ body.text-shake main {
   animation: welcomeBounce 4.2s linear infinite, welcomeRainbow .45s linear infinite;
 }
 
+.death-eye {
+  position: fixed;
+  z-index: 19;
+  pointer-events: none;
+  display: none;
+  font-size: clamp(1.8rem, 5vw, 5rem);
+  filter: drop-shadow(0 0 12px #b388ff) drop-shadow(0 0 22px #ff1744);
+}
+.death-eye.active {
+  display: block;
+  animation: deathEyePulse .9s steps(2, end) infinite;
+}
+
+@keyframes deathEyePulse {
+  0% { transform: rotate(var(--eye-tilt, 0deg)) scale(.8); opacity: .2; }
+  35% { transform: rotate(var(--eye-tilt, 0deg)) scale(1.2); opacity: 1; }
+  70% { transform: rotate(var(--eye-tilt, 0deg)) scale(.95); opacity: .55; }
+  100% { transform: rotate(var(--eye-tilt, 0deg)) scale(1.05); opacity: .9; }
+}
+
 @keyframes welcomeRainbow {
   from { background-position: 0% 50%; filter: hue-rotate(0deg); }
   to { background-position: 300% 50%; filter: hue-rotate(360deg); }

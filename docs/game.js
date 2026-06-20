@@ -12,7 +12,10 @@ const statusEl = document.querySelector('#status') || { textContent: '' };
 const startBtn = document.querySelector('#start');
 const resetBtn = document.querySelector('#reset');
 let welcomeHomeInterval = null;
+let deathEyeInterval = null;
 const welcomeHomeEls = [];
+const deathEyeEls = [];
+const maxDeathMessages = 13;
 const tentacleBorderSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
 tentacleBorderSvg.classList.add('tentacle-border');
 tentacleBorderSvg.setAttribute('viewBox', '0 0 100 100');
@@ -189,12 +192,33 @@ function spawnWelcomeHome() {
   message.textContent = 'Welcome Home';
   document.body.append(message);
   welcomeHomeEls.push(message);
+
+  while (welcomeHomeEls.length > maxDeathMessages) {
+    welcomeHomeEls.shift().remove();
+  }
+}
+
+function spawnDeathEye() {
+  const eye = document.createElement('div');
+  eye.className = 'death-eye active';
+  eye.textContent = '👁️';
+  eye.style.left = `${Math.random() * 92}vw`;
+  eye.style.top = `${Math.random() * 88}vh`;
+  eye.style.setProperty('--eye-tilt', `${Math.random() * 60 - 30}deg`);
+  document.body.append(eye);
+  deathEyeEls.push(eye);
+
+  while (deathEyeEls.length > maxDeathMessages) {
+    deathEyeEls.shift().remove();
+  }
 }
 
 function showWelcomeHome() {
   hideWelcomeHome();
   spawnWelcomeHome();
-  welcomeHomeInterval = setInterval(spawnWelcomeHome, 5000);
+  spawnDeathEye();
+  welcomeHomeInterval = setInterval(spawnWelcomeHome, 1000);
+  deathEyeInterval = setInterval(spawnDeathEye, 500);
 }
 
 function hideWelcomeHome() {
@@ -202,9 +226,16 @@ function hideWelcomeHome() {
     clearInterval(welcomeHomeInterval);
     welcomeHomeInterval = null;
   }
+  if (deathEyeInterval) {
+    clearInterval(deathEyeInterval);
+    deathEyeInterval = null;
+  }
 
   while (welcomeHomeEls.length) {
     welcomeHomeEls.pop().remove();
+  }
+  while (deathEyeEls.length) {
+    deathEyeEls.pop().remove();
   }
 }
 
