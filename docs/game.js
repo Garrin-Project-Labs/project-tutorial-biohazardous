@@ -27,11 +27,13 @@ let levelSurgeUntil = 0;
 let screenRotation = 0;
 let frame = 0;
 let audioContext = null;
+let nextVoidWhisperAt = 0;
 const pilotSpeed = 7;
 const dodgesPerLevel = 13;
 const speedBoostPerLevel = 1.5;
 const relicBonus = 13;
 const quietScreams = ['aah.', 'eep.', 'oh no.', 'tiny scream.', '...'];
+const voidColors = ['#9dff6e', '#ff1744', '#00f5ff', '#b388ff', '#ffffff', '#ffea00'];
 
 function reset() {
   pilot.x = canvas.width / 2 - pilot.w / 2;
@@ -52,9 +54,29 @@ function reset() {
   fateModeUntil = 0;
   levelSurgeUntil = 0;
   screenRotation = 0;
+  nextVoidWhisperAt = 0;
   statusEl.textContent = 'Ready';
   updateHud();
   draw();
+}
+
+function summonVoidWhisper() {
+  const whisper = document.createElement('div');
+  whisper.className = 'void-whisper';
+  whisper.textContent = 'The Void Watches';
+  whisper.style.left = `${Math.random() * 82 + 6}vw`;
+  whisper.style.top = `${Math.random() * 78 + 8}vh`;
+  whisper.style.color = voidColors[Math.floor(Math.random() * voidColors.length)];
+  whisper.style.transform = `rotate(${Math.random() * 18 - 9}deg)`;
+  document.body.appendChild(whisper);
+  setTimeout(() => whisper.remove(), 1500);
+}
+
+function maybeSummonVoidWhisper(timestamp) {
+  if (!running || timestamp < nextVoidWhisperAt) return;
+
+  summonVoidWhisper();
+  nextVoidWhisperAt = timestamp + 1800 + Math.random() * 2600;
 }
 
 function updateHud() {
@@ -267,6 +289,7 @@ function glowRect(x, y, w, h, color, blur = 12) {
 function step(timestamp) {
   if (!running) return;
   frame++;
+  maybeSummonVoidWhisper(timestamp);
 
   if (keys.ArrowLeft || keys.a) pilot.x -= pilotSpeed;
   if (keys.ArrowRight || keys.d) pilot.x += pilotSpeed;
@@ -384,10 +407,6 @@ function draw() {
     const y = (i * 53 + frame * 3.2) % canvas.height;
     glowRect(x, y, 3, 10, i % 2 ? '#9dff6e' : '#00f5ff', 10);
   }
-
-  ctx.fillStyle = 'rgba(157, 255, 110, .85)';
-  ctx.font = 'bold 18px sans-serif';
-  ctx.fillText('THE VOID WATCHES', 24, 62);
 
   if (fateMode) {
     ctx.fillStyle = 'rgba(255, 255, 255, .9)';

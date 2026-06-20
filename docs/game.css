@@ -190,3 +190,28 @@ button + button { background: linear-gradient(135deg, var(--accent-2), var(--acc
   border-radius: 6px;
   padding: 2px 6px;
 }
+
+.void-whisper {
+  position: fixed;
+  z-index: 20;
+  pointer-events: none;
+  font-weight: 900;
+  font-size: clamp(1.2rem, 3vw, 3.8rem);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  text-shadow:
+    0 0 10px currentColor,
+    3px 3px 0 #050006,
+    -3px -3px 0 #050006;
+  animation: voidBlinkOut 1.5s steps(2, end) forwards;
+}
+
+@keyframes voidBlinkOut {
+  0% { opacity: 0; filter: blur(2px); }
+  12% { opacity: 1; filter: blur(0); }
+  32% { opacity: .18; }
+  48% { opacity: 1; }
+  68% { opacity: .08; }
+  82% { opacity: .9; }
+  100% { opacity: 0; filter: blur(8px); }
+}
