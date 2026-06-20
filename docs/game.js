@@ -42,7 +42,7 @@ function resetPowerupTimers(timestamp = performance.now()) {
 }
 const pilotSpeed = 7;
 const dodgesPerLevel = 13;
-const speedBoostPerLevel = 1.1;
+const speedBoostPerLevel = 1.0;
 const relicBonus = 13;
 const quietScreams = ['aah.', 'eep.', 'oh no.', 'tiny scream.', '...'];
 const voidColors = ['#9dff6e', '#ff1744', '#00f5ff', '#b388ff', '#ffffff', '#ffea00'];
@@ -131,7 +131,7 @@ function updateHeroText() {
 
 function spawnMeteor() {
   const size = 26 + Math.random() * 22;
-  const baseSpeed = 3.2 + Math.random() * 1.8;
+  const baseSpeed = 3.0 + Math.random() * 1.6;
   const levelSpeedBoost = (speedLevel - 1) * speedBoostPerLevel;
   meteors.push({ x: Math.random() * (canvas.width - size), y: -size, size, baseSpeed, speed: baseSpeed + levelSpeedBoost, nearMissed: false });
 }
@@ -537,7 +537,7 @@ function countSuccessfulDodges(timestamp) {
     }
 
     playBottomExplosion();
-    score++;
+    score += level;
     dodges++;
 
     if (dodges % dodgesPerLevel === 0) {
