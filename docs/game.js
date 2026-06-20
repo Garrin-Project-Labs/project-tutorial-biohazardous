@@ -11,6 +11,10 @@ const gameCardEl = document.querySelector('.game-card');
 const statusEl = document.querySelector('#status') || { textContent: '' };
 const startBtn = document.querySelector('#start');
 const resetBtn = document.querySelector('#reset');
+const welcomeHomeEl = document.createElement('div');
+welcomeHomeEl.className = 'welcome-home';
+welcomeHomeEl.textContent = 'Welcome Home';
+document.body.append(welcomeHomeEl);
 
 const pilot = { x: 340, y: 360, w: 34, h: 30, emoji: '🚀', name: 'Pilot' };
 const keys = { ArrowLeft: false, ArrowRight: false, ArrowUp: false, ArrowDown: false, a: false, d: false, w: false, s: false };
@@ -26,6 +30,8 @@ let dodges = 0;
 let level = 1;
 let speedLevel = 1;
 let running = false;
+let animationFrameId = null;
+let runToken = 0;
 let lastSpawn = 0;
 let lastRelicSpawn = 0;
 let lastEyeSpawn = 0;
@@ -67,6 +73,13 @@ const backgroundThemes = [
 ];
 
 function reset() {
+  running = false;
+  runToken++;
+  if (animationFrameId) {
+    cancelAnimationFrame(animationFrameId);
+    animationFrameId = null;
+  }
+  hideWelcomeHome();
   pilot.x = canvas.width / 2 - pilot.w / 2;
   meteors = [];
   popups = [];
@@ -79,7 +92,6 @@ function reset() {
   level = 1;
   speedLevel = 1;
   frame = 0;
-  running = false;
   resetPowerupTimers();
   fateModeUntil = 0;
   levelSurgeUntil = 0;
@@ -160,6 +172,16 @@ function shakePageText() {
   void document.body.offsetWidth;
   document.body.classList.add('text-shake');
   setTimeout(() => document.body.classList.remove('text-shake'), 110);
+}
+
+function showWelcomeHome() {
+  welcomeHomeEl.classList.remove('active');
+  void welcomeHomeEl.offsetWidth;
+  welcomeHomeEl.classList.add('active');
+}
+
+function hideWelcomeHome() {
+  welcomeHomeEl.classList.remove('active');
 }
 
 function updateHeroText() {
@@ -818,8 +840,8 @@ function glowRect(x, y, w, h, color, blur = 12) {
   ctx.restore();
 }
 
-function step(timestamp) {
-  if (!running) return;
+function step(timestamp, token = runToken) {
+  if (!running || token !== runToken) return;
   frame++;
   maybeSummonVoidWhisper(timestamp);
 
@@ -936,13 +958,15 @@ function step(timestamp) {
       playQuietScream();
       playEvilLaugh();
       statusEl.textContent = `Bonked! ${whisperScream()} Try again.`;
+      animationFrameId = null;
+      showWelcomeHome();
       draw();
       return;
     }
   }
 
   draw();
-  requestAnimationFrame(step);
+  animationFrameId = requestAnimationFrame(nextTimestamp => step(nextTimestamp, token));
 }
 
 function drawTentacleBorder() {
@@ -1062,6 +1086,8 @@ function draw() {
     glowRect(x, y, 3, 10, i % 2 ? '#9dff6e' : bg.alt, 10);
   }
 
+  drawTentacleBorder();
+
   ctx.fillStyle = comboColor();
   ctx.font = 'bold 13px Papyrus, \"Cinzel Decorative\", Georgia, serif';
   if (combo >= 69) {
@@ -1177,11 +1203,14 @@ function controlKey(event) {
 function startGame() {
   getAudioContext();
   if (running) return;
+  hideWelcomeHome();
   resetPowerupTimers();
   running = true;
+  runToken++;
+  const token = runToken;
   startBassMusic();
   statusEl.textContent = 'Dodging!';
-  requestAnimationFrame(step);
+  animationFrameId = requestAnimationFrame(timestamp => step(timestamp, token));
 }
 
 function resetAndStartGame() {

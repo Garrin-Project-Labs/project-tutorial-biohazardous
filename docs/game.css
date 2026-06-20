@@ -115,7 +115,7 @@ h1 {
   background: transparent;
   border: 0;
   box-shadow: none;
-  padding: 14px;
+  padding: 8px;
   position: relative;
 }
 .game-card::before, .game-card::after {
@@ -126,23 +126,22 @@ h1 {
   border-radius: 22px;
 }
 .game-card::before {
-  inset: -8px;
-  border: 3px solid var(--tentacle-glow, #9dff6e);
+  inset: 0;
+  border: 2px solid var(--tentacle-glow, #9dff6e);
   box-shadow:
-    0 0 14px var(--tentacle-glow, #9dff6e),
-    inset 0 0 10px var(--tentacle-glow, #9dff6e);
-  filter: url(#none);
+    0 0 10px var(--tentacle-glow, #9dff6e),
+    inset 0 0 8px var(--tentacle-glow, #9dff6e);
 }
 .game-card::after {
-  inset: -14px;
+  inset: -2px;
   background:
     radial-gradient(circle at 10% 0%, var(--tentacle-glow, #9dff6e) 0 4px, transparent 5px),
     radial-gradient(circle at 90% 100%, var(--tentacle-glow, #9dff6e) 0 4px, transparent 5px),
     repeating-conic-gradient(from 0deg, transparent 0deg 12deg, color-mix(in srgb, var(--tentacle-glow, #9dff6e) 70%, transparent) 13deg 16deg, transparent 17deg 28deg);
-  opacity: .45;
+  opacity: .38;
   mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  padding: 10px;
+  padding: 7px;
   mask-composite: exclude;
   -webkit-mask-composite: xor;
   animation: tentacleTwist 5s linear infinite;
@@ -207,8 +206,8 @@ h1 {
 }
 canvas {
   display: block;
-  width: min(100%, calc(100vh - 160px));
-  max-width: 820px;
+  width: min(100%, calc(100vh - 178px));
+  max-width: 790px;
   aspect-ratio: 1 / 1;
   margin: 0 auto;
   border-radius: 18px;
@@ -378,4 +377,44 @@ body.text-shake .instructions {
   50% { transform: translate(-3px, 2px); }
   75% { transform: translate(2px, 2px); }
   100% { transform: translate(0, 0); }
+}
+
+.welcome-home {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 20;
+  pointer-events: none;
+  display: none;
+  font-family: "Old English Text MT", "UnifrakturMaguntia", "Blackletter", "Cinzel Decorative", Georgia, serif;
+  font-size: clamp(2rem, 7vw, 6rem);
+  font-weight: 900;
+  line-height: 1;
+  white-space: nowrap;
+  background: linear-gradient(90deg, #ff1744, #ffea00, #9dff6e, #00f5ff, #b388ff, #ff1744);
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 18px rgba(255,255,255,.62);
+}
+.welcome-home.active {
+  display: block;
+  animation: welcomeBounce 4.2s linear infinite, welcomeRainbow .45s linear infinite;
+}
+
+@keyframes welcomeRainbow {
+  from { background-position: 0% 50%; filter: hue-rotate(0deg); }
+  to { background-position: 300% 50%; filter: hue-rotate(360deg); }
+}
+
+@keyframes welcomeBounce {
+  0% { transform: translate(4vw, 8vh); }
+  14% { transform: translate(62vw, 20vh); }
+  28% { transform: translate(28vw, 74vh); }
+  42% { transform: translate(70vw, 58vh); }
+  56% { transform: translate(8vw, 42vh); }
+  70% { transform: translate(48vw, 10vh); }
+  84% { transform: translate(72vw, 76vh); }
+  100% { transform: translate(4vw, 8vh); }
 }
