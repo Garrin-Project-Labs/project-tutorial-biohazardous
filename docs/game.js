@@ -860,6 +860,7 @@ function draw() {
 
   if (screenRotation) {
     ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.scale(canvas.height / canvas.width, canvas.height / canvas.width);
     ctx.rotate(screenRotation * Math.PI / 180);
     ctx.translate(-canvas.width / 2, -canvas.height / 2);
   }
