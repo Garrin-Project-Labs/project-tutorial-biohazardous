@@ -109,12 +109,27 @@ canvas {
   flex-wrap: wrap;
   margin-top: 14px;
 }
-.hud span {
+.hud span, .powerup-preview span {
   background: rgba(255,255,255,.08);
   padding: 8px 12px;
   border-radius: 4px;
   border: 1px solid rgba(255,255,255,.14);
   box-shadow: 0 0 12px rgba(176, 0, 42, .26);
+}
+.powerup-preview {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+  color: var(--muted);
+  font-weight: 700;
+}
+.powerup-preview strong {
+  color: #fff;
+  font-size: 1.35rem;
+  margin-right: 6px;
+  text-shadow: 0 0 14px rgba(255, 23, 68, .7);
 }
 button {
   border: 0;
