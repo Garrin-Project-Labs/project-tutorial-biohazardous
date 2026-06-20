@@ -1086,8 +1086,6 @@ function draw() {
     glowRect(x, y, 3, 10, i % 2 ? '#9dff6e' : bg.alt, 10);
   }
 
-  drawTentacleBorder();
-
   ctx.fillStyle = comboColor();
   ctx.font = 'bold 13px Papyrus, \"Cinzel Decorative\", Georgia, serif';
   if (combo >= 69) {
