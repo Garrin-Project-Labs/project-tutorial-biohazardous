@@ -173,27 +173,34 @@ canvas {
   text-shadow: 0 0 14px rgba(255, 23, 68, .7);
 }
 button {
-  border: 2px solid #fff;
-  border-radius: 2px;
-  padding: 10px 20px;
+  border: 2px solid #ff2a00;
+  border-radius: 0;
+  padding: 12px 24px;
   font-family: Papyrus, "Cinzel Decorative", "Copperplate", fantasy;
   font-weight: 900;
-  letter-spacing: .14em;
+  letter-spacing: .16em;
   text-transform: uppercase;
-  color: #fff;
-  background: #050505;
+  color: #ffefe6;
+  background:
+    linear-gradient(180deg, rgba(255, 58, 0, .34), rgba(0, 0, 0, .92) 48%, rgba(80, 0, 0, .88)),
+    repeating-linear-gradient(45deg, rgba(255, 42, 0, .18) 0 3px, transparent 3px 9px);
   cursor: pointer;
+  clip-path: polygon(0 10px, 10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px));
+  text-shadow:
+    0 0 8px #ff2a00,
+    2px 2px 0 #050006;
   box-shadow:
-    0 0 18px rgba(255, 255, 255, .28),
-    inset 0 0 18px rgba(255, 255, 255, .08);
+    0 0 22px rgba(255, 42, 0, .62),
+    inset 0 0 18px rgba(255, 0, 0, .28),
+    inset 0 -10px 20px rgba(0, 0, 0, .62);
 }
-button + button {
-  color: #050505;
-  background: #fff;
-  border-color: #050505;
+button:hover {
+  color: #fff;
+  border-color: #ff7a00;
   box-shadow:
-    0 0 18px rgba(255, 255, 255, .24),
-    inset 0 0 18px rgba(0, 0, 0, .12);
+    0 0 30px rgba(255, 42, 0, .82),
+    inset 0 0 22px rgba(255, 122, 0, .34),
+    inset 0 -10px 20px rgba(0, 0, 0, .62);
 }
 .hint { text-align: center; color: var(--muted); }
 .quests code {
