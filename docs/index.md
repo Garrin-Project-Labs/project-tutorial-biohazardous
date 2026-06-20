@@ -1,4 +1,3 @@
-<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -9,7 +8,6 @@
 <body>
   <main class="shell">
     <section class="hero">
-      <p class="eyebrow">Biohazardous's cosmic horror rocket trial</p>
       <h1>You can not run from your sins. They watch.</h1>
       <p id="tagline">As you walk through the shadow of the valley of death</p>
     </section>
