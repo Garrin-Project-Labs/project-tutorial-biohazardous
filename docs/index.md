@@ -11,7 +11,7 @@
     <section class="hero">
       <p class="eyebrow">Biohazardous's first OpenClaw project</p>
       <h1>Bio's Big Bouncing Rocket</h1>
-      <p id="tagline">This tiny starter game is missing the fun parts. Your quests will make it yours.</p>
+      <p id="tagline">I hope you're ready for bouncing rocket chaos 🙂</p>
     </section>
 
     <section class="game-card" aria-label="Unfinished Dodge the Meteors starter game">
