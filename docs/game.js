@@ -27,6 +27,7 @@ let levelSurgeUntil = 0;
 let screenRotation = 0;
 let frame = 0;
 let audioContext = null;
+let bassMusic = null;
 let nextVoidWhisperAt = 0;
 
 function resetPowerupTimers(timestamp = performance.now()) {
@@ -123,6 +124,84 @@ function getAudioContext() {
   return audioContext;
 }
 
+function playNoiseBurst(duration, gainPeak, filterStart, filterEnd) {
+  const audio = getAudioContext();
+  if (!audio) return;
+
+  const now = audio.currentTime;
+  const noise = audio.createBufferSource();
+  const noiseGain = audio.createGain();
+  const filter = audio.createBiquadFilter();
+  const buffer = audio.createBuffer(1, Math.floor(audio.sampleRate * duration), audio.sampleRate);
+  const samples = buffer.getChannelData(0);
+
+  for (let i = 0; i < samples.length; i++) {
+    samples[i] = (Math.random() * 2 - 1) * (1 - i / samples.length);
+  }
+
+  noise.buffer = buffer;
+  filter.type = 'lowpass';
+  filter.frequency.setValueAtTime(filterStart, now);
+  filter.frequency.exponentialRampToValueAtTime(filterEnd, now + duration);
+  noiseGain.gain.setValueAtTime(0.0001, now);
+  noiseGain.gain.exponentialRampToValueAtTime(gainPeak, now + 0.015);
+  noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+  noise.connect(filter);
+  filter.connect(noiseGain);
+  noiseGain.connect(audio.destination);
+  noise.start(now);
+  noise.stop(now + duration);
+}
+
+function startBassMusic() {
+  const audio = getAudioContext();
+  if (!audio || bassMusic) return;
+
+  const output = audio.createGain();
+  output.gain.value = 0.055;
+  output.connect(audio.destination);
+
+  const notes = [41.2, 41.2, 49, 36.7, 55, 49, 41.2, 32.7];
+  let stepIndex = 0;
+
+  function playBassStep() {
+    if (!bassMusic) return;
+
+    const now = audio.currentTime;
+    const osc = audio.createOscillator();
+    const gain = audio.createGain();
+    const filter = audio.createBiquadFilter();
+
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(notes[stepIndex % notes.length], now);
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(260, now);
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.85, now + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.32);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(output);
+    osc.start(now);
+    osc.stop(now + 0.35);
+
+    stepIndex++;
+  }
+
+  bassMusic = { output, interval: setInterval(playBassStep, 420) };
+  playBassStep();
+}
+
+function stopBassMusic() {
+  if (!bassMusic) return;
+
+  clearInterval(bassMusic.interval);
+  bassMusic.output.disconnect();
+  bassMusic = null;
+}
+
 function playQuietScream() {
   const audio = getAudioContext();
   if (!audio) return;
@@ -132,18 +211,90 @@ function playQuietScream() {
   const gain = audio.createGain();
 
   oscillator.type = 'sawtooth';
-  oscillator.frequency.setValueAtTime(760, now);
-  oscillator.frequency.exponentialRampToValueAtTime(1120, now + 0.08);
-  oscillator.frequency.exponentialRampToValueAtTime(430, now + 0.34);
+  oscillator.frequency.setValueAtTime(230, now);
+  oscillator.frequency.exponentialRampToValueAtTime(340, now + 0.09);
+  oscillator.frequency.exponentialRampToValueAtTime(115, now + 0.42);
 
   gain.gain.setValueAtTime(0.0001, now);
   gain.gain.exponentialRampToValueAtTime(0.16, now + 0.03);
-  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.38);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.46);
 
   oscillator.connect(gain);
   gain.connect(audio.destination);
   oscillator.start(now);
-  oscillator.stop(now + 0.4);
+  oscillator.stop(now + 0.48);
+}
+
+function playRelicPunch() {
+  const audio = getAudioContext();
+  if (!audio) return;
+
+  const now = audio.currentTime;
+  const thump = audio.createOscillator();
+  const gain = audio.createGain();
+
+  thump.type = 'triangle';
+  thump.frequency.setValueAtTime(95, now);
+  thump.frequency.exponentialRampToValueAtTime(38, now + 0.16);
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.exponentialRampToValueAtTime(0.18, now + 0.012);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.2);
+
+  thump.connect(gain);
+  gain.connect(audio.destination);
+  thump.start(now);
+  thump.stop(now + 0.22);
+  playNoiseBurst(0.12, 0.09, 520, 90);
+}
+
+function playEyeSquish() {
+  const audio = getAudioContext();
+  if (!audio) return;
+
+  const now = audio.currentTime;
+  const squelch = audio.createOscillator();
+  const gain = audio.createGain();
+
+  squelch.type = 'sawtooth';
+  squelch.frequency.setValueAtTime(180, now);
+  squelch.frequency.exponentialRampToValueAtTime(70, now + 0.18);
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.exponentialRampToValueAtTime(0.08, now + 0.02);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.24);
+
+  squelch.connect(gain);
+  gain.connect(audio.destination);
+  squelch.start(now);
+  squelch.stop(now + 0.25);
+  playNoiseBurst(0.18, 0.045, 380, 120);
+}
+
+function playPentagramPortal() {
+  const audio = getAudioContext();
+  if (!audio) return;
+
+  const now = audio.currentTime;
+  const portal = audio.createOscillator();
+  const shimmer = audio.createOscillator();
+  const gain = audio.createGain();
+
+  portal.type = 'sine';
+  shimmer.type = 'square';
+  portal.frequency.setValueAtTime(90, now);
+  portal.frequency.exponentialRampToValueAtTime(560, now + 0.62);
+  shimmer.frequency.setValueAtTime(740, now);
+  shimmer.frequency.exponentialRampToValueAtTime(185, now + 0.62);
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.exponentialRampToValueAtTime(0.09, now + 0.06);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.68);
+
+  portal.connect(gain);
+  shimmer.connect(gain);
+  gain.connect(audio.destination);
+  portal.start(now);
+  shimmer.start(now);
+  portal.stop(now + 0.7);
+  shimmer.stop(now + 0.7);
 }
 
 function playBottomExplosion() {
@@ -329,6 +480,7 @@ function step(timestamp) {
 
     if (hit(pilot, relic)) {
       relic = null;
+      playRelicPunch();
       fateModeUntil = timestamp + 4200;
       score += relicBonus;
       statusEl.textContent = 'Relic taken: fate sees you.';
@@ -343,6 +495,7 @@ function step(timestamp) {
 
     if (hit(pilot, eyePowerup)) {
       eyePowerup = null;
+      playEyeSquish();
       resetMeteorSpeed();
       popups.push({ text: 'speed reset', x: pilot.x + pilot.w / 2 - 52, y: pilot.y - 12, born: timestamp });
       statusEl.textContent = 'Floating eye collected: game speed reset until the next level.';
@@ -356,6 +509,7 @@ function step(timestamp) {
 
     if (hit(pilot, pentagramPowerup)) {
       pentagramPowerup = null;
+      playPentagramPortal();
       resetCanvasRotation();
       popups.push({ text: 'unrotated', x: pilot.x + pilot.w / 2 - 44, y: pilot.y - 12, born: timestamp });
       statusEl.textContent = 'Pentagram collected: canvas reset.';
@@ -367,6 +521,7 @@ function step(timestamp) {
   for (const meteor of meteors) {
     if (hit(pilot, meteor)) {
       running = false;
+      stopBassMusic();
       playQuietScream();
       statusEl.textContent = `Bonked! ${whisperScream()} Try again.`;
       draw();
@@ -486,6 +641,7 @@ function startGame() {
   if (running) return;
   resetPowerupTimers();
   running = true;
+  startBassMusic();
   statusEl.textContent = 'Dodging!';
   requestAnimationFrame(step);
 }
@@ -518,5 +674,8 @@ window.addEventListener('keyup', event => {
 });
 
 startBtn.addEventListener('click', startGame);
-resetBtn.addEventListener('click', reset);
+resetBtn.addEventListener('click', () => {
+  stopBassMusic();
+  reset();
+});
 reset();
