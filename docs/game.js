@@ -91,6 +91,10 @@ function draw() {
   ctx.lineWidth = 3;
   ctx.strokeRect(16 + pulse * 0.05, 16 + pulse * 0.05, canvas.width - 32 - pulse * 0.1, canvas.height - 32 - pulse * 0.1);
 
+  ctx.fillStyle = 'rgba(250, 255, 0, .85)';
+  ctx.font = 'bold 18px sans-serif';
+  ctx.fillText('NEON ARCADE MODE', 24, 62);
+
   ctx.font = '34px serif';
   ctx.fillText(pilot.emoji, pilot.x, pilot.y + pilot.h);
 

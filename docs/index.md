@@ -14,18 +14,19 @@
       <p id="tagline">I hope you're ready for bouncing rocket chaos 🙂</p>
     </section>
 
-    <section class="game-card" aria-label="Unfinished Dodge the Meteors starter game">
+    <section class="game-card" aria-label="Neon arcade Dodge the Meteors game">
       <canvas id="game" width="720" height="420"></canvas>
       <div class="hud">
         <span>Score: <strong id="score">0</strong></span>
         <span>Level: <strong id="level">1</strong></span>
+        <span>Vibe: <strong>Neon Arcade</strong></span>
         <span>Status: <strong id="status">Unfinished</strong></span>
       </div>
       <div class="controls">
         <button id="start">Start rocket run</button>
         <button id="reset">Reset</button>
       </div>
-      <p class="hint">Use arrow keys or WASD to steer the rocket away from meteors.</p>
+      <p class="hint">Neon arcade mode: use arrow keys or WASD to steer the rocket away from meteors.</p>
     </section>
 
     <section class="quests">
