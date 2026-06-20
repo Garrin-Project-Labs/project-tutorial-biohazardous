@@ -369,8 +369,10 @@ function draw() {
   ctx.fillStyle = '#030006';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  ctx.fillStyle = fateMode ? `rgba(255, 255, 255, ${0.06 + Math.abs(Math.sin(frame * 0.08)) * 0.05})` : `rgba(120, 0, 24, ${0.18 + Math.abs(Math.sin(frame * 0.08)) * 0.14})`;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  if (fateMode) {
+    ctx.fillStyle = `rgba(255, 255, 255, ${0.06 + Math.abs(Math.sin(frame * 0.08)) * 0.05})`;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
 
   if (levelSurge) {
     ctx.fillStyle = `rgba(255, 255, 255, ${0.10 + Math.abs(Math.sin(frame * 0.18)) * 0.08})`;
