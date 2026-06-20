@@ -12,12 +12,14 @@ let meteors = [];
 let popups = [];
 let relic = null;
 let eyePowerup = null;
+let pentagramPowerup = null;
 let score = 0;
 let level = 1;
 let running = false;
 let lastSpawn = 0;
 let lastRelicSpawn = 0;
 let lastEyeSpawn = 0;
+let lastPentagramSpawn = 0;
 let fateModeUntil = 0;
 let levelSurgeUntil = 0;
 let screenRotation = 0;
@@ -35,12 +37,14 @@ function reset() {
   popups = [];
   relic = null;
   eyePowerup = null;
+  pentagramPowerup = null;
   score = 0;
   level = 1;
   frame = 0;
   running = false;
   lastRelicSpawn = 0;
   lastEyeSpawn = 0;
+  lastPentagramSpawn = 0;
   fateModeUntil = 0;
   levelSurgeUntil = 0;
   screenRotation = 0;
@@ -68,6 +72,11 @@ function spawnRelic() {
 function spawnEyePowerup() {
   const size = 34;
   eyePowerup = { x: Math.random() * (canvas.width - size), y: -size, size, speed: 2.4 };
+}
+
+function spawnPentagramPowerup() {
+  const size = 36;
+  pentagramPowerup = { x: Math.random() * (canvas.width - size), y: -size, size, speed: 2.6 };
 }
 
 function whisperScream() {
@@ -153,10 +162,14 @@ function addNearMissPopup(timestamp) {
   popups.push({ text: '+1', x: pilot.x + pilot.w / 2, y: pilot.y - 8, born: timestamp });
 }
 
+function resetCanvasRotation() {
+  screenRotation = 0;
+  levelSurgeUntil = 0;
+}
+
 function resetGameSpeed() {
   level = 1;
-  levelSurgeUntil = 0;
-  screenRotation = 0;
+  resetCanvasRotation();
 
   for (const meteor of meteors) {
     meteor.speed = Math.min(meteor.speed, 5.4);
@@ -265,6 +278,11 @@ function step(timestamp) {
     lastEyeSpawn = timestamp;
   }
 
+  if (screenRotation && !pentagramPowerup && timestamp - lastPentagramSpawn > 9000) {
+    spawnPentagramPowerup();
+    lastPentagramSpawn = timestamp;
+  }
+
   for (const meteor of meteors) meteor.y += meteor.speed;
   popups = popups.filter(popup => timestamp - popup.born < 900);
   awardNearMisses(timestamp);
@@ -294,6 +312,19 @@ function step(timestamp) {
       statusEl.textContent = 'Floating eye collected: speed reset to level 1.';
     } else if (eyePowerup.y > canvas.height + eyePowerup.size) {
       eyePowerup = null;
+    }
+  }
+
+  if (pentagramPowerup) {
+    pentagramPowerup.y += pentagramPowerup.speed;
+
+    if (hit(pilot, pentagramPowerup)) {
+      pentagramPowerup = null;
+      resetCanvasRotation();
+      popups.push({ text: 'unrotated', x: pilot.x + pilot.w / 2 - 44, y: pilot.y - 12, born: timestamp });
+      statusEl.textContent = 'Pentagram collected: canvas reset.';
+    } else if (pentagramPowerup.y > canvas.height + pentagramPowerup.size) {
+      pentagramPowerup = null;
     }
   }
 
@@ -402,11 +433,17 @@ function draw() {
     glowText('👁️', eyePowerup.x, eyePowerup.y + eyePowerup.size, '#b388ff', 30, 7);
   }
 
+  if (pentagramPowerup) {
+    ctx.font = `${pentagramPowerup.size}px serif`;
+    glowText('⛧', pentagramPowerup.x, pentagramPowerup.y + pentagramPowerup.size, '#ff1744', 32, 7);
+  }
+
   for (const popup of popups) {
     const age = performance.now() - popup.born;
     const rise = age / 14;
     ctx.globalAlpha = Math.max(0, 1 - age / 900);
     ctx.fillStyle = popup.text === '+1' ? '#ff1744' : '#b388ff';
+    if (popup.text === 'unrotated') ctx.fillStyle = '#ff1744';
     ctx.font = popup.text === '+1' ? 'bold 24px sans-serif' : 'bold 18px sans-serif';
     glowText(popup.text, popup.x - 12, popup.y - rise, ctx.fillStyle, 18, 6);
     ctx.globalAlpha = 1;
@@ -420,6 +457,7 @@ function draw() {
     ctx.fillText('Every 3 level-ups rotates the screen 90 degrees.', 24, 114);
     ctx.fillText('Green relics add 13 score and reveal fate text.', 24, 140);
     ctx.fillText('Floating eyes reset the speed back to level 1.', 24, 166);
+    ctx.fillText('Pentagrams appear after rotation and reset the canvas.', 24, 192);
   }
 
   ctx.restore();
