@@ -225,10 +225,6 @@ function draw() {
   ctx.font = '34px serif';
   glowText(pilot.emoji, pilot.x, pilot.y + pilot.h, '#00f5ff', 24);
 
-  ctx.fillStyle = '#eef6ff';
-  ctx.font = '14px sans-serif';
-  glowText(pilot.name, pilot.x - 2, pilot.y - 8, '#9dff6e', 10);
-
   for (const meteor of meteors) {
     ctx.font = `${meteor.size}px serif`;
     glowText('🩸', meteor.x, meteor.y + meteor.size, '#ff1744', 22);
