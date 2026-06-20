@@ -21,7 +21,7 @@ body {
     linear-gradient(135deg, #030006 0%, #120008 52%, #25000a 100%);
 }
 .shell {
-  width: min(1220px, calc(100% - 32px));
+  width: min(2680px, calc(100% - 32px));
   margin: 0 auto;
   padding: 32px 0 48px;
 }
@@ -58,7 +58,7 @@ h1 {
 }
 .game-layout {
   display: grid;
-  grid-template-columns: minmax(180px, 240px) minmax(0, 760px) minmax(180px, 240px);
+  grid-template-columns: minmax(180px, 240px) minmax(0, 2200px) minmax(180px, 240px);
   gap: 18px;
   align-items: start;
   margin: 18px 0;
@@ -90,7 +90,7 @@ h1 {
 canvas {
   display: block;
   width: 100%;
-  max-width: 720px;
+  max-width: 2160px;
   aspect-ratio: 12 / 7;
   margin: 0 auto;
   border-radius: 18px;
