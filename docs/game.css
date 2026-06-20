@@ -97,9 +97,10 @@ h1 {
 }
 .game-card {
   width: 100%;
+  background: transparent;
   border: 0;
-  box-shadow:
-    0 24px 80px rgba(0, 0, 0, .55);
+  box-shadow: none;
+  padding: 0;
 }
 .instructions {
   border: 1px solid rgba(157, 255, 110, .48);
