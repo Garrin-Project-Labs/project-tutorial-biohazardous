@@ -42,6 +42,7 @@ let bassMusic = null;
 let nextVoidWhisperAt = 0;
 let nextComboBellAt = 5;
 let lastEchoedTitle = heroTitleEl?.textContent || '';
+let random777Title = '';
 
 function resetPowerupTimers(timestamp = performance.now()) {
   lastRelicSpawn = timestamp;
@@ -55,6 +56,7 @@ const relicBonus = 13;
 const quietScreams = ['aah.', 'eep.', 'oh no.', 'tiny scream.', '...'];
 const voidColors = ['#9dff6e', '#ff1744', '#00f5ff', '#b388ff', '#ffffff', '#ffea00'];
 const meteorSymbols = ['☄', 'ᚱ', 'ᛉ', 'ᛟ', 'ᚦ', '✦', '✧', '✶', '✹', '✷', '☽', '☾', '✺'];
+const titleSymbols = ['☄', 'ᚱ', 'ᛉ', 'ᛟ', 'ᚦ', '✦', '✧', '✶', '✹', '✷', '☽', '☾', '✺', '⛧', '🜏', '☠'];
 const backgroundThemes = [
   { base: '#030006', mist: 'rgba(157, 255, 110, .5)', alt: '#00f5ff' },
   { base: '#02000c', mist: 'rgba(179, 136, 255, .5)', alt: '#ff1744' },
@@ -87,6 +89,7 @@ function reset() {
   backgroundTheme = 0;
   nextVoidWhisperAt = 0;
   nextComboBellAt = 5;
+  random777Title = '';
   statusEl.textContent = 'Ready';
   updateHud();
   draw();
@@ -139,21 +142,36 @@ function addTitleEcho(title) {
   lastEchoedTitle = title;
 }
 
+function randomTitleSymbols() {
+  return Array.from({ length: 13 }, () => titleSymbols[Math.floor(Math.random() * titleSymbols.length)]).join(' ');
+}
+
 function updateHeroText() {
   if (!heroEl || !heroTitleEl || !taglineEl) return;
 
-  const fade = Math.max(0, 1 - Math.min(score, 13) / 13);
-  const nextTitle = combo >= 69
-    ? 'x69. Nice...'
-    : score >= 333
-      ? 'Good Job...'
-      : score >= 131
-        ? 'Just Breathe...'
-        : score >= 13
-          ? "You Can't Run..."
-          : 'You can not run from your sins. They watch.';
+  if (score >= 777 && !random777Title) random777Title = randomTitleSymbols();
 
-  heroEl.classList.toggle('doom-message', score >= 13);
+  const fade = Math.max(0, 1 - Math.min(score, 13) / 13);
+  const nextTitle = score >= 999
+    ? 'NINE NETHERES NEVER NEAR...'
+    : score >= 888
+      ? '13 13 13 13 13 13 13 13 13 13 13 13 13...'
+      : score >= 777
+        ? random777Title
+        : score >= 666
+          ? 'Demonic...'
+          : combo >= 69
+            ? 'x69. Nice...'
+            : score >= 333
+              ? 'Good Job...'
+              : score >= 131
+                ? 'Just Breathe...'
+                : score >= 13
+                  ? "You Can't Run..."
+                  : 'You can not run from your sins. They watch.';
+
+  heroEl.classList.toggle('doom-message', score >= 13 && score < 999);
+  heroEl.classList.toggle('rainbow-message', score >= 999);
   heroTitleEl.textContent = nextTitle;
   addTitleEcho(nextTitle);
 
