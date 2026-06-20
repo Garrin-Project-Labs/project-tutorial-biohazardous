@@ -176,19 +176,19 @@ button {
   border: 2px solid #ff2a00;
   border-radius: 0;
   padding: 12px 24px;
-  font-family: Papyrus, "Cinzel Decorative", "Copperplate", fantasy;
+  font-family: Georgia, "Times New Roman", serif;
   font-weight: 900;
-  letter-spacing: .16em;
+  letter-spacing: .08em;
   text-transform: uppercase;
-  color: #ffefe6;
+  color: #fff6ee;
   background:
     linear-gradient(180deg, rgba(255, 58, 0, .34), rgba(0, 0, 0, .92) 48%, rgba(80, 0, 0, .88)),
     repeating-linear-gradient(45deg, rgba(255, 42, 0, .18) 0 3px, transparent 3px 9px);
   cursor: pointer;
   clip-path: polygon(0 10px, 10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px));
   text-shadow:
-    0 0 8px #ff2a00,
-    2px 2px 0 #050006;
+    0 0 5px #ff2a00,
+    1px 1px 0 #050006;
   box-shadow:
     0 0 22px rgba(255, 42, 0, .62),
     inset 0 0 18px rgba(255, 0, 0, .28),

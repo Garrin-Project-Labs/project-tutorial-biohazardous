@@ -433,7 +433,8 @@ function draw() {
   ctx.save();
   ctx.translate(pilot.x + pilot.w / 2, pilot.y + pilot.h / 2);
   ctx.rotate(-Math.PI / 4);
-  glowText(pilot.emoji, -pilot.w / 2, pilot.h / 2, '#00f5ff', 24);
+  ctx.filter = 'invert(1) hue-rotate(180deg)';
+  glowText(pilot.emoji, -pilot.w / 2, pilot.h / 2, '#ff1744', 24, 6, '#ffffff');
   ctx.restore();
 
   for (const meteor of meteors) {
