@@ -159,24 +159,39 @@ function startBassMusic() {
   if (!audio || bassMusic) return;
 
   const output = audio.createGain();
-  output.gain.value = 0.075;
-  output.connect(audio.destination);
+  const masterFilter = audio.createBiquadFilter();
+  const echo = audio.createDelay(0.28);
+  const echoGain = audio.createGain();
 
-  const bassNotes = [41.2, 49, 55, 49, 36.7, 43.7, 55, 61.7, 41.2, 55, 65.4, 61.7, 36.7, 49, 55, 73.4];
-  const chordRoots = [82.4, 73.4, 98, 65.4];
-  const kickPattern = [1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1];
-  const snarePattern = [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0];
-  const hatPattern = [1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1];
+  output.gain.value = 0.062;
+  masterFilter.type = 'lowpass';
+  masterFilter.frequency.value = 5200;
+  echo.delayTime.value = 0.18;
+  echoGain.gain.value = 0.16;
+  output.connect(masterFilter);
+  masterFilter.connect(audio.destination);
+  output.connect(echo);
+  echo.connect(echoGain);
+  echoGain.connect(masterFilter);
+
+  const bassNotes = [41.2, 49, 55, 65.4, 36.7, 43.7, 55, 73.4, 41.2, 55, 65.4, 82.4, 36.7, 49, 61.7, 73.4];
+  const chordRoots = [82.4, 98, 73.4, 110, 65.4, 98, 82.4, 123.5];
+  const leadNotes = [329.6, 392, 440, 392, 293.7, 349.2, 392, 493.9, 329.6, 440, 523.3, 493.9, 293.7, 392, 440, 587.3];
+  const kickPattern = [1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 1, 0];
+  const snarePattern = [0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1];
+  const hatPattern = [1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1];
   let stepIndex = 0;
 
-  function playSynthVoice(frequency, duration, gainPeak, type = 'sawtooth', filterFrequency = 1400) {
+  function playSynthVoice(frequency, duration, gainPeak, type = 'sawtooth', filterFrequency = 2400, detune = 0) {
     const now = audio.currentTime;
     const osc = audio.createOscillator();
     const gain = audio.createGain();
     const filter = audio.createBiquadFilter();
+    const pan = audio.createStereoPanner ? audio.createStereoPanner() : null;
 
     osc.type = type;
     osc.frequency.setValueAtTime(frequency, now);
+    osc.detune.value = detune;
     filter.type = 'lowpass';
     filter.frequency.setValueAtTime(filterFrequency, now);
     gain.gain.setValueAtTime(0.0001, now);
@@ -185,7 +200,13 @@ function startBassMusic() {
 
     osc.connect(filter);
     filter.connect(gain);
-    gain.connect(output);
+    if (pan) {
+      pan.pan.value = Math.max(-0.7, Math.min(0.7, detune / 18));
+      gain.connect(pan);
+      pan.connect(output);
+    } else {
+      gain.connect(output);
+    }
     osc.start(now);
     osc.stop(now + duration + 0.02);
   }
@@ -200,27 +221,34 @@ function startBassMusic() {
 
     bass.type = 'sawtooth';
     bass.frequency.setValueAtTime(bassNotes[stepIndex % bassNotes.length], now);
+    bass.detune.value = stepIndex % 2 ? -4 : 4;
     bassFilter.type = 'lowpass';
-    bassFilter.frequency.setValueAtTime(720, now);
+    bassFilter.frequency.setValueAtTime(980, now);
     bassGain.gain.setValueAtTime(0.0001, now);
-    bassGain.gain.exponentialRampToValueAtTime(0.58, now + 0.012);
-    bassGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.24);
+    bassGain.gain.exponentialRampToValueAtTime(0.5, now + 0.01);
+    bassGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.23);
 
     bass.connect(bassFilter);
     bassFilter.connect(bassGain);
     bassGain.connect(output);
     bass.start(now);
-    bass.stop(now + 0.26);
+    bass.stop(now + 0.25);
 
     if (stepIndex % 4 === 0) {
       const root = chordRoots[(stepIndex / 4) % chordRoots.length];
-      playSynthVoice(root, 0.62, 0.09, 'triangle', 1800);
-      playSynthVoice(root * 1.2, 0.62, 0.055, 'sawtooth', 1600);
-      playSynthVoice(root * 1.5, 0.62, 0.045, 'triangle', 2200);
+      playSynthVoice(root, 0.7, 0.07, 'triangle', 2400, -6);
+      playSynthVoice(root * 1.25, 0.7, 0.048, 'sawtooth', 2200, 4);
+      playSynthVoice(root * 1.5, 0.7, 0.04, 'triangle', 2800, 9);
+      playSynthVoice(root * 2, 0.46, 0.026, 'sine', 3600, -12);
     }
 
     if (stepIndex % 2 === 1) {
-      playSynthVoice(bassNotes[stepIndex % bassNotes.length] * 4, 0.12, 0.035, 'square', 2600);
+      playSynthVoice(leadNotes[stepIndex % leadNotes.length], 0.16, 0.032, 'square', 3600, stepIndex % 4 === 1 ? -7 : 7);
+      playSynthVoice(leadNotes[stepIndex % leadNotes.length] * 1.5, 0.12, 0.018, 'triangle', 4200, stepIndex % 4 === 1 ? 9 : -9);
+    }
+
+    if (stepIndex % 8 === 6) {
+      playSynthVoice(leadNotes[(stepIndex + 3) % leadNotes.length] * 2, 0.28, 0.026, 'sawtooth', 4600, 0);
     }
 
     if (kickPattern[stepIndex % kickPattern.length]) {
@@ -250,7 +278,7 @@ function startBassMusic() {
     stepIndex++;
   }
 
-  bassMusic = { output, interval: setInterval(playBassStep, 150) };
+  bassMusic = { output: masterFilter, interval: setInterval(playBassStep, 135) };
   playBassStep();
 }
 
