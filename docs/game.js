@@ -23,6 +23,7 @@ const pilotSpeed = 7;
 const dodgesPerLevel = 13;
 const speedBoostPerLevel = 1.5;
 const relicBonus = 13;
+const quietScreams = ['aah.', 'eep.', 'oh no.', 'tiny scream.', '...'];
 
 function reset() {
   pilot.x = canvas.width / 2 - pilot.w / 2;
@@ -55,6 +56,10 @@ function spawnMeteor() {
 function spawnRelic() {
   const size = 32;
   relic = { x: Math.random() * (canvas.width - size), y: -size, size, speed: 2.8 };
+}
+
+function whisperScream() {
+  return quietScreams[Math.floor(Math.random() * quietScreams.length)];
 }
 
 function countSuccessfulDodges(timestamp) {
@@ -126,7 +131,7 @@ function step(timestamp) {
   for (const meteor of meteors) {
     if (hit(pilot, meteor)) {
       running = false;
-      statusEl.textContent = 'Bonked! Try again.';
+      statusEl.textContent = `Bonked! ${whisperScream()} Try again.`;
       draw();
       return;
     }
