@@ -3,14 +3,14 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Untitled Meteor Game</title>
+  <title>Bio's Big Bouncing Rocket</title>
   <link rel="stylesheet" href="game.css" />
 </head>
 <body>
   <main class="shell">
     <section class="hero">
       <p class="eyebrow">Biohazardous's first OpenClaw project</p>
-      <h1>Untitled Meteor Game</h1>
+      <h1>Bio's Big Bouncing Rocket</h1>
       <p id="tagline">This tiny starter game is missing the fun parts. Your quests will make it yours.</p>
     </section>
 
