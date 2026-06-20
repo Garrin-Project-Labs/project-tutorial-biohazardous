@@ -50,7 +50,7 @@ function resetPowerupTimers(timestamp = performance.now()) {
 }
 const pilotSpeed = 7;
 const dodgesPerLevel = 13;
-const speedBoostPerLevel = 1.0;
+const speedBoostPerLevel = 0.9;
 const relicBonus = 13;
 const quietScreams = ['aah.', 'eep.', 'oh no.', 'tiny scream.', '...'];
 const voidColors = ['#9dff6e', '#ff1744', '#00f5ff', '#b388ff', '#ffffff', '#ffea00'];
@@ -217,7 +217,7 @@ function awardPoints(basePoints) {
 
 function spawnMeteor() {
   const size = 26 + Math.random() * 22;
-  const baseSpeed = 3.0 + Math.random() * 1.6;
+  const baseSpeed = 2.7 + Math.random() * 1.3;
   const levelSpeedBoost = (speedLevel - 1) * speedBoostPerLevel;
   meteors.push({
     x: Math.random() * (canvas.width - size),
@@ -225,9 +225,10 @@ function spawnMeteor() {
     size,
     baseSpeed,
     speed: baseSpeed + levelSpeedBoost,
+    vx: (Math.random() < 0.5 ? -1 : 1) * (0.25 + Math.random() * 0.45),
     nearMissed: false,
     spin: Math.random() * Math.PI * 2,
-    spinSpeed: (Math.random() < 0.5 ? -1 : 1) * (0.035 + Math.random() * 0.035),
+    spinSpeed: (Math.random() < 0.5 ? -1 : 1) * (0.018 + Math.random() * 0.017),
     flashOffset: Math.random() * Math.PI * 2,
     symbol: meteorSymbols[Math.floor(Math.random() * meteorSymbols.length)]
   });
@@ -235,17 +236,17 @@ function spawnMeteor() {
 
 function spawnRelic() {
   const size = 32;
-  relic = { x: Math.random() * (canvas.width - size), y: -size, size, speed: 2.8, spin: 0, spinSpeed: 0.045, flashOffset: Math.random() * Math.PI * 2 };
+  relic = { x: Math.random() * (canvas.width - size), y: -size, size, speed: 2.8, spin: 0, spinSpeed: 0.025, flashOffset: Math.random() * Math.PI * 2 };
 }
 
 function spawnEyePowerup() {
   const size = 34;
-  eyePowerup = { x: Math.random() * (canvas.width - size), y: -size, size, speed: 2.4, spin: 0, spinSpeed: -0.04, flashOffset: Math.random() * Math.PI * 2 };
+  eyePowerup = { x: Math.random() * (canvas.width - size), y: -size, size, speed: 2.4, spin: 0, spinSpeed: -0.022, flashOffset: Math.random() * Math.PI * 2 };
 }
 
 function spawnPentagramPowerup() {
   const size = 36;
-  pentagramPowerup = { x: Math.random() * (canvas.width - size), y: -size, size, speed: 1.6, spin: 0, spinSpeed: 0.06, flashOffset: Math.random() * Math.PI * 2 };
+  pentagramPowerup = { x: Math.random() * (canvas.width - size), y: -size, size, speed: 1.6, spin: 0, spinSpeed: 0.03, flashOffset: Math.random() * Math.PI * 2 };
 }
 
 function whisperScream() {
@@ -470,6 +471,33 @@ function playQuietScream() {
   sub.stop(now + 1.0);
   scrape.stop(now + 0.75);
   playNoiseBurst(0.55, 0.07, 520, 70);
+}
+
+function playEvilLaugh() {
+  const audio = getAudioContext();
+  if (!audio) return;
+
+  const now = audio.currentTime;
+  const laughGain = audio.createGain();
+  laughGain.connect(audio.destination);
+
+  [0, 0.13, 0.27].forEach((offset, index) => {
+    const voice = audio.createOscillator();
+    const gain = audio.createGain();
+    const start = now + offset;
+
+    voice.type = 'sawtooth';
+    voice.frequency.setValueAtTime(180 - index * 24, start);
+    voice.frequency.exponentialRampToValueAtTime(82 - index * 10, start + 0.16);
+    gain.gain.setValueAtTime(0.0001, start);
+    gain.gain.exponentialRampToValueAtTime(0.075, start + 0.025);
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.22);
+
+    voice.connect(gain);
+    gain.connect(laughGain);
+    voice.start(start);
+    voice.stop(start + 0.24);
+  });
 }
 
 function playLevelLaser() {
@@ -764,7 +792,7 @@ function step(timestamp) {
   if (keys.ArrowRight || keys.d) pilot.x += pilotSpeed;
   pilot.x = Math.max(0, Math.min(canvas.width - pilot.w, pilot.x));
 
-  if (timestamp >= spawnPauseUntil && timestamp - lastSpawn > 520) {
+  if (timestamp >= spawnPauseUntil && timestamp - lastSpawn > 420) {
     spawnMeteor();
     lastSpawn = timestamp;
   }
@@ -786,7 +814,30 @@ function step(timestamp) {
 
   for (const meteor of meteors) {
     meteor.y += meteor.speed;
+    meteor.x += meteor.vx;
+    if (meteor.x <= 0 || meteor.x + meteor.size >= canvas.width) {
+      meteor.vx *= -1;
+      meteor.x = Math.max(0, Math.min(canvas.width - meteor.size, meteor.x));
+    }
     meteor.spin += meteor.spinSpeed;
+  }
+
+  for (let i = 0; i < meteors.length; i++) {
+    for (let j = i + 1; j < meteors.length; j++) {
+      const a = meteors[i];
+      const b = meteors[j];
+      const ax = a.x + a.size / 2;
+      const ay = a.y + a.size / 2;
+      const bx = b.x + b.size / 2;
+      const by = b.y + b.size / 2;
+      const minDistance = (a.size + b.size) / 2;
+
+      if (Math.hypot(ax - bx, ay - by) < minDistance) {
+        [a.vx, b.vx] = [b.vx, a.vx];
+        a.spinSpeed *= -1;
+        b.spinSpeed *= -1;
+      }
+    }
   }
   popups = popups.filter(popup => timestamp - popup.born < 900);
   awardNearMisses(timestamp);
@@ -829,6 +880,7 @@ function step(timestamp) {
 
     if (hit(pilot, pentagramPowerup)) {
       pentagramPowerup = null;
+      meteors = [];
       playPentagramPortal();
       resetCanvasRotation();
       statusEl.textContent = 'Pentagram collected: canvas reset.';
@@ -844,6 +896,7 @@ function step(timestamp) {
       nextComboBellAt = 5;
       stopBassMusic();
       playQuietScream();
+      playEvilLaugh();
       statusEl.textContent = `Bonked! ${whisperScream()} Try again.`;
       draw();
       return;
@@ -939,7 +992,7 @@ function draw() {
   ctx.font = '34px serif';
   ctx.save();
   ctx.translate(pilot.x + pilot.w / 2, pilot.y + pilot.h / 2);
-  ctx.rotate(-Math.PI / 4 + (pilotSpin ? frame * 0.45 : 0));
+  ctx.rotate(-Math.PI / 4 + (pilotSpin ? frame * 0.28 : 0));
   ctx.filter = 'invert(1) hue-rotate(180deg)';
   glowText(pilot.emoji, -pilot.w / 2, pilot.h / 2, '#ff1744', 24, 6, '#ffffff');
   ctx.restore();

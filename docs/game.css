@@ -183,11 +183,14 @@ canvas {
   box-shadow: 0 0 26px rgba(190, 190, 190, .24);
 }
 .high-score {
-  color: #c9ffb8;
+  color: #ffe58a;
   font-weight: 900;
   letter-spacing: .06em;
   text-align: left;
-  text-shadow: 0 0 10px rgba(157, 255, 110, .42);
+  text-shadow:
+    0 0 8px rgba(255, 229, 138, .78),
+    0 0 20px rgba(255, 174, 0, .58),
+    2px 2px 0 rgba(0, 0, 0, .9);
 }
 .hero h1, #tagline {
   transition: opacity .6s ease, color .6s ease, text-shadow .6s ease;
