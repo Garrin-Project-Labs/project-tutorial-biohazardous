@@ -19,6 +19,7 @@ let relic = null;
 let eyePowerup = null;
 let pentagramPowerup = null;
 let score = 0;
+let combo = 0;
 let highScore = Number(localStorage.getItem('meteorHighScore') || 0);
 let dodges = 0;
 let level = 1;
@@ -58,6 +59,7 @@ function reset() {
   eyePowerup = null;
   pentagramPowerup = null;
   score = 0;
+  combo = 0;
   dodges = 0;
   level = 1;
   speedLevel = 1;
@@ -105,7 +107,7 @@ function updateHud() {
     localStorage.setItem('meteorHighScore', highScore);
   }
 
-  scoreEl.textContent = score;
+  scoreEl.textContent = Math.floor(score);
   levelEl.textContent = level;
   if (highScoreEl) highScoreEl.textContent = highScore;
   updateHeroText();
@@ -148,6 +150,17 @@ function updateHeroText() {
     taglineEl.textContent = 'As you walk through the shadow of the valley of death';
     taglineEl.style.opacity = fade;
   }
+}
+
+function comboColor() {
+  const heat = Math.min(combo / 8, 1);
+  const cool = Math.round(255 * (1 - heat));
+  return `rgb(255, ${cool}, ${cool})`;
+}
+
+function awardPoints(basePoints) {
+  combo += 0.5;
+  score += Math.max(1, Math.round(basePoints * (1 + combo)));
 }
 
 function spawnMeteor() {
@@ -372,23 +385,61 @@ function playQuietScream() {
   if (!audio) return;
 
   const now = audio.currentTime;
-  const oscillator = audio.createOscillator();
-  const gain = audio.createGain();
+  const deathGain = audio.createGain();
+  const growl = audio.createOscillator();
+  const sub = audio.createOscillator();
+  const scrape = audio.createOscillator();
 
-  oscillator.type = 'sawtooth';
-  oscillator.frequency.setValueAtTime(92, now);
-  oscillator.frequency.exponentialRampToValueAtTime(135, now + 0.11);
-  oscillator.frequency.exponentialRampToValueAtTime(38, now + 0.52);
+  deathGain.gain.setValueAtTime(0.0001, now);
+  deathGain.gain.exponentialRampToValueAtTime(0.22, now + 0.04);
+  deathGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.95);
 
-  gain.gain.setValueAtTime(0.0001, now);
-  gain.gain.exponentialRampToValueAtTime(0.16, now + 0.03);
-  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.58);
+  growl.type = 'sawtooth';
+  growl.frequency.setValueAtTime(72, now);
+  growl.frequency.exponentialRampToValueAtTime(28, now + 0.82);
 
-  oscillator.connect(gain);
-  gain.connect(audio.destination);
-  oscillator.start(now);
-  oscillator.stop(now + 0.62);
+  sub.type = 'triangle';
+  sub.frequency.setValueAtTime(38, now);
+  sub.frequency.exponentialRampToValueAtTime(18, now + 0.9);
+
+  scrape.type = 'square';
+  scrape.frequency.setValueAtTime(115, now + 0.08);
+  scrape.frequency.exponentialRampToValueAtTime(46, now + 0.65);
+
+  growl.connect(deathGain);
+  sub.connect(deathGain);
+  scrape.connect(deathGain);
+  deathGain.connect(audio.destination);
+  growl.start(now);
+  sub.start(now);
+  scrape.start(now + 0.08);
+  growl.stop(now + 1.0);
+  sub.stop(now + 1.0);
+  scrape.stop(now + 0.75);
+  playNoiseBurst(0.55, 0.07, 520, 70);
 }
+
+function playLevelLaser() {
+  const audio = getAudioContext();
+  if (!audio) return;
+
+  const now = audio.currentTime;
+  const laser = audio.createOscillator();
+  const laserGain = audio.createGain();
+
+  laser.type = 'sawtooth';
+  laser.frequency.setValueAtTime(980, now);
+  laser.frequency.exponentialRampToValueAtTime(140, now + 0.34);
+  laserGain.gain.setValueAtTime(0.0001, now);
+  laserGain.gain.exponentialRampToValueAtTime(0.12, now + 0.015);
+  laserGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.38);
+
+  laser.connect(laserGain);
+  laserGain.connect(audio.destination);
+  laser.start(now);
+  laser.stop(now + 0.4);
+}
+
 
 function playRelicPunch() {
   const audio = getAudioContext();
@@ -550,7 +601,7 @@ function awardNearMisses(timestamp) {
 
     if (closeX && crossingPlayer) {
       meteor.nearMissed = true;
-      score++;
+      awardPoints(1);
       addNearMissPopup(timestamp);
       statusEl.textContent = 'Near miss! +1';
       updateHud();
@@ -568,11 +619,12 @@ function countSuccessfulDodges(timestamp) {
     }
 
     playBottomExplosion();
-    score += level;
+    awardPoints(level);
     dodges++;
 
     if (dodges % dodgesPerLevel === 0) {
       level++;
+      playLevelLaser();
       speedLevel = level;
       pilotSpinUntil = timestamp + 1100;
       statusEl.textContent = `Level ${level}: the sins move faster.`;
@@ -665,7 +717,7 @@ function step(timestamp) {
       relic = null;
       playRelicPunch();
       fateModeUntil = timestamp + 2200;
-      score += relicBonus;
+      awardPoints(relicBonus);
       statusEl.textContent = 'Relic taken: fate sees you.';
       updateHud();
     } else if (relic.y > canvas.height + relic.size) {
@@ -703,6 +755,7 @@ function step(timestamp) {
   for (const meteor of meteors) {
     if (hit(pilot, meteor)) {
       running = false;
+      combo = 0;
       stopBassMusic();
       playQuietScream();
       statusEl.textContent = `Bonked! ${whisperScream()} Try again.`;
@@ -750,6 +803,11 @@ function draw() {
     const y = (i * 53 + frame * 3.2) % canvas.height;
     glowRect(x, y, 3, 10, i % 2 ? '#9dff6e' : '#00f5ff', 10);
   }
+
+
+  ctx.fillStyle = comboColor();
+  ctx.font = 'bold 22px Georgia, serif';
+  glowText(`COMBO ${combo.toFixed(2)}`, 22, 34, comboColor(), 10, 2, '#050006');
 
   if (fateMode) {
     ctx.fillStyle = '#050006';
