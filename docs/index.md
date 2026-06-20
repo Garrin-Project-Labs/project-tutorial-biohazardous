@@ -11,7 +11,7 @@
     <section class="hero">
       <p class="eyebrow">Biohazardous's cosmic horror rocket trial</p>
       <h1>Bio's Big Bouncing Rocket</h1>
-      <p id="tagline">The void is hungry. Keep the rocket out of the red cosmic mess.</p>
+      <p id="tagline">As you walk through the shadow of the valley of death</p>
     </section>
 
     <section class="game-card" aria-label="Cosmic horror Dodge the Meteors game">
