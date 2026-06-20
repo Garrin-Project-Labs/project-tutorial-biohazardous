@@ -120,27 +120,29 @@ h1 {
   padding: 0;
   position: relative;
 }
-.game-card::after {
-  content: "";
+.tentacle-border {
   position: absolute;
+  inset: -24px;
+  width: calc(100% + 48px);
+  height: calc(100% + 48px);
+  z-index: 1;
   pointer-events: none;
-  inset: -16px;
-  border-radius: 28px;
-  background:
-    radial-gradient(circle at 10% 0%, var(--tentacle-glow, #9dff6e) 0 4px, transparent 5px),
-    radial-gradient(circle at 90% 100%, var(--tentacle-glow, #9dff6e) 0 4px, transparent 5px),
-    repeating-conic-gradient(from 0deg, transparent 0deg 12deg, color-mix(in srgb, var(--tentacle-glow, #9dff6e) 70%, transparent) 13deg 16deg, transparent 17deg 28deg);
-  opacity: .38;
-  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  padding: 16px;
-  mask-composite: exclude;
-  -webkit-mask-composite: xor;
-  animation: tentacleTwist 5s linear infinite;
+  overflow: visible;
+  filter: drop-shadow(0 0 8px var(--tentacle-svg-glow, #9dff6e));
 }
-.tentacle-style-1 { --tentacle-glow: #9dff6e; }
-.tentacle-style-2 { --tentacle-glow: #ff2a00; }
-.tentacle-style-3 { --tentacle-glow: #b388ff; }
+.tentacle-border path {
+  stroke: var(--tentacle-svg-glow, #9dff6e);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+canvas {
+  position: relative;
+  z-index: 2;
+}
+.tentacle-style-1 { --tentacle-glow: #9dff6e; --tentacle-svg-glow: #9dff6e; }
+.tentacle-style-2 { --tentacle-glow: #ff2a00; --tentacle-svg-glow: #ff2a00; }
+.tentacle-style-3 { --tentacle-glow: #b388ff; --tentacle-svg-glow: #b388ff; }
 
 .title-echoes {
   grid-column: 1;
@@ -356,19 +358,17 @@ button:hover {
   to { transform: rotate(0deg) scale(1); }
 }
 
-body.text-shake .hero,
-body.text-shake .title-echoes,
-body.text-shake .game-side-panel,
-body.text-shake .instructions {
+body.text-shake main {
   animation: textShake .1s linear 1;
 }
 
 @keyframes textShake {
-  0% { transform: translate(0, 0); }
-  25% { transform: translate(3px, -2px); }
-  50% { transform: translate(-3px, 2px); }
-  75% { transform: translate(2px, 2px); }
-  100% { transform: translate(0, 0); }
+  0% { transform: translate(0, 0) rotate(0deg); }
+  20% { transform: translate(14px, -10px) rotate(.8deg); }
+  40% { transform: translate(-16px, 12px) rotate(-.8deg); }
+  60% { transform: translate(12px, 14px) rotate(.6deg); }
+  80% { transform: translate(-10px, -12px) rotate(-.6deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
 }
 
 .welcome-home {

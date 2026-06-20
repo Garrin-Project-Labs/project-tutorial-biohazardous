@@ -11,10 +11,19 @@ const gameCardEl = document.querySelector('.game-card');
 const statusEl = document.querySelector('#status') || { textContent: '' };
 const startBtn = document.querySelector('#start');
 const resetBtn = document.querySelector('#reset');
-const welcomeHomeEl = document.createElement('div');
-welcomeHomeEl.className = 'welcome-home';
-welcomeHomeEl.textContent = 'Welcome Home';
-document.body.append(welcomeHomeEl);
+let welcomeHomeInterval = null;
+const welcomeHomeEls = [];
+const tentacleBorderSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+tentacleBorderSvg.classList.add('tentacle-border');
+tentacleBorderSvg.setAttribute('viewBox', '0 0 100 100');
+tentacleBorderSvg.setAttribute('preserveAspectRatio', 'none');
+const tentaclePaths = Array.from({ length: 4 }, () => {
+  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  path.setAttribute('fill', 'none');
+  tentacleBorderSvg.append(path);
+  return path;
+});
+gameCardEl?.append(tentacleBorderSvg);
 
 const pilot = { x: 340, y: 360, w: 34, h: 30, emoji: '🚀', name: 'Pilot' };
 const keys = { ArrowLeft: false, ArrowRight: false, ArrowUp: false, ArrowDown: false, a: false, d: false, w: false, s: false };
@@ -174,14 +183,29 @@ function shakePageText() {
   setTimeout(() => document.body.classList.remove('text-shake'), 110);
 }
 
+function spawnWelcomeHome() {
+  const message = document.createElement('div');
+  message.className = 'welcome-home active';
+  message.textContent = 'Welcome Home';
+  document.body.append(message);
+  welcomeHomeEls.push(message);
+}
+
 function showWelcomeHome() {
-  welcomeHomeEl.classList.remove('active');
-  void welcomeHomeEl.offsetWidth;
-  welcomeHomeEl.classList.add('active');
+  hideWelcomeHome();
+  spawnWelcomeHome();
+  welcomeHomeInterval = setInterval(spawnWelcomeHome, 5000);
 }
 
 function hideWelcomeHome() {
-  welcomeHomeEl.classList.remove('active');
+  if (welcomeHomeInterval) {
+    clearInterval(welcomeHomeInterval);
+    welcomeHomeInterval = null;
+  }
+
+  while (welcomeHomeEls.length) {
+    welcomeHomeEls.pop().remove();
+  }
 }
 
 function updateHeroText() {
@@ -970,75 +994,40 @@ function step(timestamp, token = runToken) {
 }
 
 function drawTentacleBorder() {
+  if (!tentacleBorderSvg) return;
+
   const variant = (level - 1) % 3;
   const configs = [
-    { glow: '#9dff6e', dark: '#061004', width: 5, amp: 8, waves: 8 },
-    { glow: '#ff2a00', dark: '#230000', width: 9, amp: 14, waves: 10 },
-    { glow: '#b388ff', dark: '#0b0018', width: 13, amp: 20, waves: 7 }
+    { color: '#9dff6e', dark: '#061004', width: 1.25, amp: 1.2, waves: 8 },
+    { color: '#ff2a00', dark: '#230000', width: 1.6, amp: 1.8, waves: 10 },
+    { color: '#b388ff', dark: '#0b0018', width: 1.95, amp: 2.2, waves: 7 }
   ];
   const config = configs[variant];
-  const inset = 18;
-  const steps = 64;
+  const sides = [
+    { fixed: 4, from: 8, to: 92, horizontal: true },
+    { fixed: 96, from: 8, to: 92, horizontal: false },
+    { fixed: 96, from: 92, to: 8, horizontal: true },
+    { fixed: 4, from: 92, to: 8, horizontal: false }
+  ];
 
-  function borderPoint(side, t) {
-    const wobble = Math.sin(t * Math.PI * 2 * config.waves + frame * 0.035 + side) * config.amp;
+  tentacleBorderSvg.style.setProperty('--tentacle-svg-glow', config.color);
+  tentacleBorderSvg.style.setProperty('--tentacle-svg-dark', config.dark);
 
-    if (side === 0) return { x: inset + t * (canvas.width - inset * 2), y: inset + wobble };
-    if (side === 1) return { x: canvas.width - inset + wobble, y: inset + t * (canvas.height - inset * 2) };
-    if (side === 2) return { x: canvas.width - inset - t * (canvas.width - inset * 2), y: canvas.height - inset + wobble };
-    return { x: inset + wobble, y: canvas.height - inset - t * (canvas.height - inset * 2) };
-  }
-
-  ctx.save();
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
-  ctx.shadowColor = config.glow;
-  ctx.shadowBlur = 16 + variant * 5;
-
-  for (let side = 0; side < 4; side++) {
-    ctx.beginPath();
-    for (let i = 0; i <= steps; i++) {
-      const point = borderPoint(side, i / steps);
-      if (i === 0) ctx.moveTo(point.x, point.y);
-      else ctx.lineTo(point.x, point.y);
+  sides.forEach((side, sideIndex) => {
+    const points = [];
+    for (let i = 0; i <= 40; i++) {
+      const t = i / 40;
+      const travel = side.from + (side.to - side.from) * t;
+      const wobble = Math.sin(t * Math.PI * 2 * config.waves + frame * 0.05 + sideIndex) * config.amp;
+      const x = side.horizontal ? travel : side.fixed + wobble;
+      const y = side.horizontal ? side.fixed + wobble : travel;
+      points.push(`${x.toFixed(2)},${y.toFixed(2)}`);
     }
 
-    ctx.strokeStyle = config.dark;
-    ctx.lineWidth = config.width + 10;
-    ctx.stroke();
-
-    ctx.strokeStyle = config.glow;
-    ctx.lineWidth = config.width;
-    ctx.stroke();
-
-    ctx.shadowBlur = 0;
-    ctx.strokeStyle = '#050006';
-    ctx.lineWidth = Math.max(2, config.width / 3);
-    ctx.stroke();
-    ctx.shadowBlur = 16 + variant * 5;
-
-    for (let i = 6; i < steps; i += 10) {
-      const point = borderPoint(side, i / steps);
-      ctx.beginPath();
-      if (variant === 1) {
-        const thorn = 7;
-        ctx.fillStyle = '#ffe0aa';
-        ctx.moveTo(point.x, point.y - thorn * 1.6);
-        ctx.lineTo(point.x + thorn, point.y + thorn);
-        ctx.lineTo(point.x - thorn, point.y + thorn);
-        ctx.closePath();
-        ctx.fill();
-      } else {
-        ctx.strokeStyle = 'rgba(255,255,255,.7)';
-        ctx.lineWidth = 1.5;
-        const r = variant === 0 ? 3 : 5;
-        ctx.arc(point.x, point.y, r, 0, Math.PI * 2);
-        ctx.stroke();
-      }
-    }
-  }
-
-  ctx.restore();
+    const path = tentaclePaths[sideIndex];
+    path.setAttribute('d', `M ${points.join(' L ')}`);
+    path.setAttribute('stroke-width', config.width);
+  });
 }
 
 function draw() {
@@ -1085,6 +1074,8 @@ function draw() {
     const y = (i * 53 + frame * 3.2) % canvas.height;
     glowRect(x, y, 3, 10, i % 2 ? '#9dff6e' : bg.alt, 10);
   }
+
+  drawTentacleBorder();
 
   ctx.fillStyle = comboColor();
   ctx.font = 'bold 13px Papyrus, \"Cinzel Decorative\", Georgia, serif';
