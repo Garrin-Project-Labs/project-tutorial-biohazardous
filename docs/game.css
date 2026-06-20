@@ -209,6 +209,33 @@ canvas {
   border: 0;
   box-shadow: none;
 }
+.sprite-preview {
+  display: inline-block;
+  font-weight: 900;
+  text-shadow: 0 0 10px currentColor, 1px 1px 0 #050006;
+}
+.rocket-preview {
+  filter: invert(1) hue-rotate(180deg);
+  color: #ff1744;
+}
+.rune-preview {
+  color: #f8f8f8;
+  text-shadow: 0 0 10px #ffffff, 0 0 16px #050006;
+}
+.relic-preview {
+  color: #9dff6e;
+  text-shadow: 0 0 10px #9dff6e, 0 0 18px #050006;
+}
+.eye-preview {
+  filter: invert(1) hue-rotate(180deg);
+  color: #4c7700;
+  text-shadow: 0 0 10px #4c7700, 0 0 18px #00e8b7;
+}
+.pentagram-preview {
+  color: #ff1744;
+  text-shadow: 0 0 10px #ff1744, 0 0 20px #ff1744;
+}
+
 .high-score {
   color: #ffe58a;
   font-weight: 900;

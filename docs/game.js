@@ -589,6 +589,62 @@ function playQuietScream() {
   playNoiseBurst(0.55, 0.07, 520, 70);
 }
 
+function playSadGameOverJingle() {
+  const audio = getAudioContext();
+  if (!audio) return;
+
+  const now = audio.currentTime;
+  const output = audio.createGain();
+  output.gain.setValueAtTime(0.0001, now);
+  output.gain.exponentialRampToValueAtTime(0.16, now + 0.03);
+  output.gain.exponentialRampToValueAtTime(0.0001, now + 2.8);
+  output.connect(audio.destination);
+
+  const notes = [523.25, 493.88, 415.30, 392.00, 329.63, 311.13, 261.63, 246.94];
+  const bassNotes = [130.81, 123.47, 98.00, 82.41];
+
+  notes.forEach((frequency, index) => {
+    const start = now + index * 0.18;
+    const osc = audio.createOscillator();
+    const gain = audio.createGain();
+    const filter = audio.createBiquadFilter();
+
+    osc.type = index % 2 ? 'square' : 'triangle';
+    osc.frequency.setValueAtTime(frequency, start);
+    osc.detune.setValueAtTime(index % 2 ? -7 : 7, start);
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(2600 - index * 160, start);
+    gain.gain.setValueAtTime(0.0001, start);
+    gain.gain.exponentialRampToValueAtTime(0.11, start + 0.025);
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.32);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(output);
+    osc.start(start);
+    osc.stop(start + 0.36);
+  });
+
+  bassNotes.forEach((frequency, index) => {
+    const start = now + index * 0.42;
+    const osc = audio.createOscillator();
+    const gain = audio.createGain();
+
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(frequency, start);
+    gain.gain.setValueAtTime(0.0001, start);
+    gain.gain.exponentialRampToValueAtTime(0.12, start + 0.035);
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.5);
+
+    osc.connect(gain);
+    gain.connect(output);
+    osc.start(start);
+    osc.stop(start + 0.55);
+  });
+
+  playNoiseBurst(0.12, 0.035, 1800, 700);
+}
+
 function playEvilLaugh() {
   const audio = getAudioContext();
   if (!audio) return;
@@ -1016,6 +1072,7 @@ function step(timestamp, token = runToken) {
       nextComboBellAt = 5;
       stopBassMusic();
       playQuietScream();
+      playSadGameOverJingle();
       playEvilLaugh();
       statusEl.textContent = `Bonked! ${whisperScream()} Try again.`;
       animationFrameId = null;

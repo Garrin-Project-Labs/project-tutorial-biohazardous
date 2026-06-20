@@ -26,9 +26,9 @@
           <span>Level: <strong id="level">1</strong></span>
         </div>
         <div class="powerup-preview" aria-label="Powerup previews">
-          <span><strong>🧿</strong> Relic: +13 score</span>
-          <span><strong>👁️</strong> Eye: reset speed</span>
-          <span><strong>⛧</strong> Pentagram: reset rotation</span>
+          <span><strong class="sprite-preview relic-preview">🧿</strong> Relic: +13 score + fate text</span>
+          <span><strong class="sprite-preview eye-preview">👁️</strong> Inverted eye: reset speed</span>
+          <span><strong class="sprite-preview pentagram-preview">⛧</strong> Pentagram: reset rotation + clears meteors</span>
         </div>
         <div class="controls">
           <button id="start">Prepare To Die</button>
@@ -39,12 +39,13 @@
       <aside class="instructions" aria-label="Game instructions">
         <h2>How to survive</h2>
         <p>Press <strong>Prepare To Die</strong> to start, or press <strong>R</strong> to reset and instantly restart.</p>
-        <p>Use arrow keys or WASD to move and dodge the falling white meteors.</p>
+        <p><strong class="sprite-preview rocket-preview">🚀</strong> Use arrow keys or WASD to move the rocket.</p>
+        <p>Dodge the spinning runes: <strong class="sprite-preview rune-preview">☄ ᚱ ᛉ ✹ ☽</strong></p>
         <p>Near misses give +1. Meteor dodges are worth +1 more each level.</p>
-        <p>Every 3 level-ups rotates the game screen.</p>
-        <p><strong>🧿 Relic</strong>: +13 score and reveals fate text.</p>
-        <p><strong>👁️ Eye</strong>: resets game speed until the next level, without changing your level.</p>
-        <p><strong>⛧ Pentagram</strong>: appears after rotation and resets the canvas angle.</p>
+        <p>Every 3 level-ups rotates the game screen and changes the outside tentacles.</p>
+        <p><strong class="sprite-preview relic-preview">🧿</strong> Relic: +13 score and reveals fate text.</p>
+        <p><strong class="sprite-preview eye-preview">👁️</strong> Inverted eye: resets game speed until the next level, without changing your level.</p>
+        <p><strong class="sprite-preview pentagram-preview">⛧</strong> Pentagram: appears after rotation, resets the canvas angle, and clears meteors.</p>
       </aside>
 
     </div>
