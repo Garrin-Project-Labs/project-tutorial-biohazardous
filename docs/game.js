@@ -33,7 +33,7 @@ function updateHud() {
 
 function spawnMeteor() {
   const size = 26 + Math.random() * 22;
-  meteors.push({ x: Math.random() * (canvas.width - size), y: -size, size, speed: 2.2 + Math.random() });
+  meteors.push({ x: Math.random() * (canvas.width - size), y: -size, size, speed: 4.2 + Math.random() * 2.4 });
 }
 
 function hit(a, b) {
@@ -46,7 +46,7 @@ function step(timestamp) {
 
   // Quest 2 belongs here: add controls so the pilot can move left and right.
 
-  if (timestamp - lastSpawn > 900) {
+  if (timestamp - lastSpawn > 520) {
     spawnMeteor();
     lastSpawn = timestamp;
   }
@@ -69,15 +69,23 @@ function step(timestamp) {
 
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = '#070a1a';
+  const pulse = Math.sin(frame * 0.12) * 18;
+  ctx.fillStyle = '#070014';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  ctx.fillStyle = 'rgba(125, 211, 252, .35)';
-  for (let i = 0; i < 48; i++) {
-    const x = (i * 97 + frame * 0.15) % canvas.width;
-    const y = (i * 53 + frame * 0.35) % canvas.height;
-    ctx.fillRect(x, y, 2, 2);
+  ctx.fillStyle = `rgba(255, 43, 214, ${0.16 + Math.abs(Math.sin(frame * 0.08)) * 0.12})`;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = 'rgba(0, 245, 255, .6)';
+  for (let i = 0; i < 70; i++) {
+    const x = (i * 97 + frame * 1.9) % canvas.width;
+    const y = (i * 53 + frame * 3.2) % canvas.height;
+    ctx.fillRect(x, y, 3, 10);
   }
+
+  ctx.strokeStyle = `rgba(250, 255, 0, ${0.18 + Math.abs(Math.sin(frame * 0.15)) * 0.18})`;
+  ctx.lineWidth = 3;
+  ctx.strokeRect(16 + pulse * 0.05, 16 + pulse * 0.05, canvas.width - 32 - pulse * 0.1, canvas.height - 32 - pulse * 0.1);
 
   ctx.font = '34px serif';
   ctx.fillText(pilot.emoji, pilot.x, pilot.y + pilot.h);
