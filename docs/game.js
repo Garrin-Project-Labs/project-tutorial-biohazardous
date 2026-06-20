@@ -19,6 +19,7 @@ let fateModeUntil = 0;
 let levelSurgeUntil = 0;
 let screenRotation = 0;
 let frame = 0;
+let audioContext = null;
 const pilotSpeed = 7;
 const dodgesPerLevel = 13;
 const speedBoostPerLevel = 1.5;
@@ -60,6 +61,30 @@ function spawnRelic() {
 
 function whisperScream() {
   return quietScreams[Math.floor(Math.random() * quietScreams.length)];
+}
+
+function playQuietScream() {
+  const AudioContext = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContext) return;
+
+  audioContext ||= new AudioContext();
+  const now = audioContext.currentTime;
+  const oscillator = audioContext.createOscillator();
+  const gain = audioContext.createGain();
+
+  oscillator.type = 'sawtooth';
+  oscillator.frequency.setValueAtTime(760, now);
+  oscillator.frequency.exponentialRampToValueAtTime(1120, now + 0.08);
+  oscillator.frequency.exponentialRampToValueAtTime(430, now + 0.34);
+
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.exponentialRampToValueAtTime(0.16, now + 0.03);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.38);
+
+  oscillator.connect(gain);
+  gain.connect(audioContext.destination);
+  oscillator.start(now);
+  oscillator.stop(now + 0.4);
 }
 
 function countSuccessfulDodges(timestamp) {
@@ -154,6 +179,7 @@ function step(timestamp) {
   for (const meteor of meteors) {
     if (hit(pilot, meteor)) {
       running = false;
+      playQuietScream();
       statusEl.textContent = `Bonked! ${whisperScream()} Try again.`;
       draw();
       return;
