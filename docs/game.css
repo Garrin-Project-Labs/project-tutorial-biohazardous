@@ -99,7 +99,7 @@ canvas {
   margin: 0 auto;
   border-radius: 18px;
   background: linear-gradient(#16000b, #030006);
-  border: 2px solid rgba(157, 255, 110, .42);
+  border: 0;
   box-shadow: 0 0 26px rgba(176, 0, 42, .42);
 }
 .hud, .controls {

@@ -62,8 +62,9 @@ function updateHud() {
 
 function spawnMeteor() {
   const size = 26 + Math.random() * 22;
+  const baseSpeed = 4.2 + Math.random() * 2.4;
   const levelSpeedBoost = (level - 1) * speedBoostPerLevel;
-  meteors.push({ x: Math.random() * (canvas.width - size), y: -size, size, speed: 4.2 + Math.random() * 2.4 + levelSpeedBoost, nearMissed: false });
+  meteors.push({ x: Math.random() * (canvas.width - size), y: -size, size, baseSpeed, speed: baseSpeed + levelSpeedBoost, nearMissed: false });
 }
 
 function spawnRelic() {
@@ -175,7 +176,7 @@ function resetGameSpeed() {
   levelSurgeUntil = 0;
 
   for (const meteor of meteors) {
-    meteor.speed = Math.min(meteor.speed, 5.4);
+    meteor.speed = meteor.baseSpeed || Math.min(meteor.speed, 5.4);
   }
 
   updateHud();
