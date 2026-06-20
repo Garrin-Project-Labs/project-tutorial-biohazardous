@@ -6,7 +6,7 @@ const statusEl = document.querySelector('#status');
 const startBtn = document.querySelector('#start');
 const resetBtn = document.querySelector('#reset');
 
-const pilot = { x: 340, y: 360, w: 44, h: 36, emoji: '🚀', name: 'Pilot' };
+const pilot = { x: 340, y: 360, w: 34, h: 30, emoji: '🚀', name: 'Pilot' };
 const keys = { ArrowLeft: false, ArrowRight: false, a: false, d: false };
 let meteors = [];
 let popups = [];
@@ -229,7 +229,12 @@ function countSuccessfulDodges(timestamp) {
 }
 
 function hit(a, b) {
-  return a.x < b.x + b.size && a.x + a.w > b.x && a.y < b.y + b.size && a.y + a.h > b.y;
+  const insetX = a.hitInsetX || 0;
+  const insetY = a.hitInsetY || 0;
+  return a.x + insetX < b.x + b.size &&
+    a.x + a.w - insetX > b.x &&
+    a.y + insetY < b.y + b.size &&
+    a.y + a.h - insetY > b.y;
 }
 
 function glowText(text, x, y, color, blur = 18, outline = 5) {
@@ -416,7 +421,11 @@ function draw() {
   }
 
   ctx.font = '34px serif';
-  glowText(pilot.emoji, pilot.x, pilot.y + pilot.h, '#00f5ff', 24);
+  ctx.save();
+  ctx.translate(pilot.x + pilot.w / 2, pilot.y + pilot.h / 2);
+  ctx.rotate(-Math.PI / 4);
+  glowText(pilot.emoji, -pilot.w / 2, pilot.h / 2, '#00f5ff', 24);
+  ctx.restore();
 
   for (const meteor of meteors) {
     ctx.font = `${meteor.size}px serif`;
