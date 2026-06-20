@@ -12,7 +12,7 @@ const startBtn = document.querySelector('#start');
 const resetBtn = document.querySelector('#reset');
 
 const pilot = { x: 340, y: 360, w: 34, h: 30, emoji: '🚀', name: 'Pilot' };
-const keys = { ArrowLeft: false, ArrowRight: false, a: false, d: false };
+const keys = { ArrowLeft: false, ArrowRight: false, ArrowUp: false, ArrowDown: false, a: false, d: false, w: false, s: false };
 let meteors = [];
 let popups = [];
 let relic = null;
@@ -808,7 +808,10 @@ function step(timestamp) {
 
   if (keys.ArrowLeft || keys.a) pilot.x -= pilotSpeed;
   if (keys.ArrowRight || keys.d) pilot.x += pilotSpeed;
+  if (keys.ArrowUp || keys.w) pilot.y -= pilotSpeed;
+  if (keys.ArrowDown || keys.s) pilot.y += pilotSpeed;
   pilot.x = Math.max(0, Math.min(canvas.width - pilot.w, pilot.x));
+  pilot.y = Math.max(0, Math.min(canvas.height - pilot.h, pilot.y));
 
   if (timestamp >= spawnPauseUntil && timestamp - lastSpawn > 420) {
     spawnMeteor();
@@ -1077,9 +1080,9 @@ function draw() {
 }
 
 function controlKey(event) {
-  if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') return event.key;
+  if (event.key === 'ArrowLeft' || event.key === 'ArrowRight' || event.key === 'ArrowUp' || event.key === 'ArrowDown') return event.key;
   const key = event.key.toLowerCase();
-  if (key === 'a' || key === 'd') return key;
+  if (key === 'a' || key === 'd' || key === 'w' || key === 's') return key;
   return null;
 }
 
