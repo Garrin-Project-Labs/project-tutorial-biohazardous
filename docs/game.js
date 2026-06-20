@@ -712,7 +712,7 @@ function countSuccessfulDodges(timestamp) {
         backgroundTheme = 1 + Math.floor(Math.random() * (backgroundThemes.length - 1));
         clearMeteorsForRotation = true;
         lastSpawn = timestamp + 5000;
-        resetPowerupTimers(timestamp + 5000);
+        resetPowerupTimers(timestamp);
         playThunderCrash();
         statusEl.textContent = `Level ${level}: fate surge awakened.`;
       }
@@ -774,7 +774,7 @@ function step(timestamp) {
     lastRelicSpawn = timestamp;
   }
 
-  if (timestamp >= spawnPauseUntil && !eyePowerup && timestamp - lastEyeSpawn > 12000) {
+  if (timestamp >= spawnPauseUntil && !eyePowerup && timestamp - lastEyeSpawn > 6500) {
     spawnEyePowerup();
     lastEyeSpawn = timestamp;
   }
@@ -860,7 +860,6 @@ function draw() {
 
   if (screenRotation) {
     ctx.translate(canvas.width / 2, canvas.height / 2);
-    ctx.scale(canvas.height / canvas.width, canvas.height / canvas.width);
     ctx.rotate(screenRotation * Math.PI / 180);
     ctx.translate(-canvas.width / 2, -canvas.height / 2);
   }

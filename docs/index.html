@@ -17,6 +17,9 @@
 
       <section class="game-card" aria-label="Cosmic horror Dodge the Meteors game">
         <canvas id="game" width="720" height="420"></canvas>
+      </section>
+
+      <aside class="game-side-panel" aria-label="Game controls and info">
         <div class="high-score">Highest score: <strong id="high-score">0</strong></div>
         <div class="hud">
           <span>Score: <strong id="score">0</strong></span>
@@ -31,7 +34,7 @@
           <span><strong>👁️</strong> Eye: reset speed</span>
           <span><strong>⛧</strong> Pentagram: reset rotation</span>
         </div>
-      </section>
+      </aside>
 
       <aside class="instructions" aria-label="Game instructions">
         <h2>How to survive</h2>
@@ -44,7 +47,6 @@
         <p><strong>⛧ Pentagram</strong>: appears after rotation and resets the canvas angle.</p>
       </aside>
 
-      <div class="game-spacer" aria-hidden="true"></div>
     </div>
   </main>
   <script src="game.js"></script>
