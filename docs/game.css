@@ -21,7 +21,7 @@ body {
     linear-gradient(135deg, #030006 0%, #120008 52%, #25000a 100%);
 }
 .shell {
-  width: min(960px, calc(100% - 32px));
+  width: min(1220px, calc(100% - 32px));
   margin: 0 auto;
   padding: 32px 0 48px;
 }
@@ -58,10 +58,13 @@ h1 {
 }
 .game-layout {
   display: grid;
-  grid-template-columns: minmax(180px, 240px) minmax(0, 760px);
+  grid-template-columns: minmax(180px, 240px) minmax(0, 760px) minmax(180px, 240px);
   gap: 18px;
   align-items: start;
   margin: 18px 0;
+}
+.game-card {
+  grid-column: 2;
 }
 .instructions {
   border: 1px solid rgba(157, 255, 110, .34);
