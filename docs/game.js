@@ -9,6 +9,7 @@ const resetBtn = document.querySelector('#reset');
 const pilot = { x: 340, y: 360, w: 44, h: 36, emoji: '🚀', name: 'Pilot' };
 const keys = { ArrowLeft: false, ArrowRight: false, a: false, d: false };
 let meteors = [];
+let popups = [];
 let relic = null;
 let score = 0;
 let level = 1;
@@ -29,6 +30,7 @@ const quietScreams = ['aah.', 'eep.', 'oh no.', 'tiny scream.', '...'];
 function reset() {
   pilot.x = canvas.width / 2 - pilot.w / 2;
   meteors = [];
+  popups = [];
   relic = null;
   score = 0;
   level = 1;
@@ -51,7 +53,7 @@ function updateHud() {
 function spawnMeteor() {
   const size = 26 + Math.random() * 22;
   const levelSpeedBoost = (level - 1) * speedBoostPerLevel;
-  meteors.push({ x: Math.random() * (canvas.width - size), y: -size, size, speed: 4.2 + Math.random() * 2.4 + levelSpeedBoost });
+  meteors.push({ x: Math.random() * (canvas.width - size), y: -size, size, speed: 4.2 + Math.random() * 2.4 + levelSpeedBoost, nearMissed: false });
 }
 
 function spawnRelic() {
@@ -85,6 +87,32 @@ function playQuietScream() {
   gain.connect(audioContext.destination);
   oscillator.start(now);
   oscillator.stop(now + 0.4);
+}
+
+function addNearMissPopup(timestamp) {
+  popups.push({ text: '+1', x: pilot.x + pilot.w / 2, y: pilot.y - 8, born: timestamp });
+}
+
+function awardNearMisses(timestamp) {
+  const pilotCenterX = pilot.x + pilot.w / 2;
+  const pilotCenterY = pilot.y + pilot.h / 2;
+
+  for (const meteor of meteors) {
+    if (meteor.nearMissed || hit(pilot, meteor)) continue;
+
+    const meteorCenterX = meteor.x + meteor.size / 2;
+    const meteorCenterY = meteor.y + meteor.size / 2;
+    const closeX = Math.abs(meteorCenterX - pilotCenterX) < meteor.size / 2 + pilot.w / 2 + 22;
+    const crossingPlayer = Math.abs(meteorCenterY - pilotCenterY) < meteor.size / 2 + pilot.h / 2 + 10;
+
+    if (closeX && crossingPlayer) {
+      meteor.nearMissed = true;
+      score++;
+      addNearMissPopup(timestamp);
+      statusEl.textContent = 'Near miss! +1';
+      updateHud();
+    }
+  }
 }
 
 function countSuccessfulDodges(timestamp) {
@@ -160,6 +188,8 @@ function step(timestamp) {
   }
 
   for (const meteor of meteors) meteor.y += meteor.speed;
+  popups = popups.filter(popup => timestamp - popup.born < 900);
+  awardNearMisses(timestamp);
   countSuccessfulDodges(timestamp);
 
   if (relic) {
@@ -274,6 +304,16 @@ function draw() {
   if (relic) {
     ctx.font = `${relic.size}px serif`;
     glowText('🟢', relic.x, relic.y + relic.size, '#9dff6e', 26);
+  }
+
+  for (const popup of popups) {
+    const age = performance.now() - popup.born;
+    const rise = age / 14;
+    ctx.globalAlpha = Math.max(0, 1 - age / 900);
+    ctx.fillStyle = '#ff1744';
+    ctx.font = 'bold 24px sans-serif';
+    glowText(popup.text, popup.x - 12, popup.y - rise, '#ff1744', 18, 6);
+    ctx.globalAlpha = 1;
   }
 
   if (!running) {
