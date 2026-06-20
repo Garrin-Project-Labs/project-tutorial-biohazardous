@@ -7,12 +7,14 @@ const startBtn = document.querySelector('#start');
 const resetBtn = document.querySelector('#reset');
 
 const pilot = { x: 340, y: 360, w: 44, h: 36, emoji: '🚀', name: 'Pilot' };
+const keys = { ArrowLeft: false, ArrowRight: false };
 let meteors = [];
 let score = 0;
 let level = 1;
 let running = false;
 let lastSpawn = 0;
 let frame = 0;
+const pilotSpeed = 7;
 
 function reset() {
   pilot.x = canvas.width / 2 - pilot.w / 2;
@@ -21,7 +23,7 @@ function reset() {
   level = 1;
   frame = 0;
   running = false;
-  statusEl.textContent = 'Unfinished';
+  statusEl.textContent = 'Ready';
   updateHud();
   draw();
 }
@@ -44,7 +46,9 @@ function step(timestamp) {
   if (!running) return;
   frame++;
 
-  // Quest 2 belongs here: add controls so the pilot can move left and right.
+  if (keys.ArrowLeft) pilot.x -= pilotSpeed;
+  if (keys.ArrowRight) pilot.x += pilotSpeed;
+  pilot.x = Math.max(0, Math.min(canvas.width - pilot.w, pilot.x));
 
   if (timestamp - lastSpawn > 520) {
     spawnMeteor();
@@ -57,7 +61,7 @@ function step(timestamp) {
   for (const meteor of meteors) {
     if (hit(pilot, meteor)) {
       running = false;
-      statusEl.textContent = 'Bonked! Quest 2 will help.';
+      statusEl.textContent = 'Bonked! Try again.';
       draw();
       return;
     }
@@ -102,14 +106,28 @@ function draw() {
   if (!running) {
     ctx.fillStyle = 'rgba(255,255,255,.84)';
     ctx.font = '18px sans-serif';
-    ctx.fillText('Starter game: the pilot cannot move yet.', 24, 36);
+    ctx.fillText('Press Start, then use ← and → to dodge.', 24, 36);
   }
 }
+
+window.addEventListener('keydown', event => {
+  if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+    keys[event.key] = true;
+    event.preventDefault();
+  }
+});
+
+window.addEventListener('keyup', event => {
+  if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+    keys[event.key] = false;
+    event.preventDefault();
+  }
+});
 
 startBtn.addEventListener('click', () => {
   if (running) return;
   running = true;
-  statusEl.textContent = 'Dodging... sort of';
+  statusEl.textContent = 'Dodging!';
   requestAnimationFrame(step);
 });
 resetBtn.addEventListener('click', reset);

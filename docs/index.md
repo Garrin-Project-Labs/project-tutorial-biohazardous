@@ -22,10 +22,10 @@
         <span>Status: <strong id="status">Unfinished</strong></span>
       </div>
       <div class="controls">
-        <button id="start">Start unfinished game</button>
+        <button id="start">Start rocket run</button>
         <button id="reset">Reset</button>
       </div>
-      <p class="hint">Controls are not built yet. Quest 2 will teach the pilot how to move.</p>
+      <p class="hint">Use the arrow keys to steer the rocket away from meteors.</p>
     </section>
 
     <section class="quests">
