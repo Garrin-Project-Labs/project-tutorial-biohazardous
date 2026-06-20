@@ -154,7 +154,17 @@ function spawnMeteor() {
   const size = 26 + Math.random() * 22;
   const baseSpeed = 3.0 + Math.random() * 1.6;
   const levelSpeedBoost = (speedLevel - 1) * speedBoostPerLevel;
-  meteors.push({ x: Math.random() * (canvas.width - size), y: -size, size, baseSpeed, speed: baseSpeed + levelSpeedBoost, nearMissed: false });
+  meteors.push({
+    x: Math.random() * (canvas.width - size),
+    y: -size,
+    size,
+    baseSpeed,
+    speed: baseSpeed + levelSpeedBoost,
+    nearMissed: false,
+    spin: Math.random() * Math.PI * 2,
+    spinSpeed: (Math.random() < 0.5 ? -1 : 1) * (0.035 + Math.random() * 0.035),
+    flashOffset: Math.random() * Math.PI * 2
+  });
 }
 
 function spawnRelic() {
@@ -366,18 +376,18 @@ function playQuietScream() {
   const gain = audio.createGain();
 
   oscillator.type = 'sawtooth';
-  oscillator.frequency.setValueAtTime(185, now);
-  oscillator.frequency.exponentialRampToValueAtTime(270, now + 0.09);
-  oscillator.frequency.exponentialRampToValueAtTime(82, now + 0.42);
+  oscillator.frequency.setValueAtTime(92, now);
+  oscillator.frequency.exponentialRampToValueAtTime(135, now + 0.11);
+  oscillator.frequency.exponentialRampToValueAtTime(38, now + 0.52);
 
   gain.gain.setValueAtTime(0.0001, now);
   gain.gain.exponentialRampToValueAtTime(0.16, now + 0.03);
-  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.46);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.58);
 
   oscillator.connect(gain);
   gain.connect(audio.destination);
   oscillator.start(now);
-  oscillator.stop(now + 0.48);
+  oscillator.stop(now + 0.62);
 }
 
 function playRelicPunch() {
@@ -640,7 +650,10 @@ function step(timestamp) {
     lastPentagramSpawn = timestamp;
   }
 
-  for (const meteor of meteors) meteor.y += meteor.speed;
+  for (const meteor of meteors) {
+    meteor.y += meteor.speed;
+    meteor.spin += meteor.spinSpeed;
+  }
   popups = popups.filter(popup => timestamp - popup.born < 900);
   awardNearMisses(timestamp);
   countSuccessfulDodges(timestamp);
@@ -764,9 +777,16 @@ function draw() {
   ctx.restore();
 
   for (const meteor of meteors) {
+    const flash = 0.55 + Math.abs(Math.sin(frame * 0.16 + meteor.flashOffset)) * 0.45;
+
+    ctx.save();
+    ctx.globalAlpha = flash;
     ctx.fillStyle = '#ffffff';
     ctx.font = `bold ${meteor.size}px serif`;
-    glowText('☄', meteor.x, meteor.y + meteor.size, '#050006', 18, 7, '#050006');
+    ctx.translate(meteor.x + meteor.size / 2, meteor.y + meteor.size / 2);
+    ctx.rotate(meteor.spin);
+    glowText('☄', -meteor.size / 2, meteor.size / 2, '#050006', 18 + flash * 10, 7, '#050006');
+    ctx.restore();
   }
 
   if (relic) {
