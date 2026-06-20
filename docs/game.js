@@ -65,14 +65,22 @@ function whisperScream() {
   return quietScreams[Math.floor(Math.random() * quietScreams.length)];
 }
 
-function playQuietScream() {
+function getAudioContext() {
   const AudioContext = window.AudioContext || window.webkitAudioContext;
-  if (!AudioContext) return;
+  if (!AudioContext) return null;
 
   audioContext ||= new AudioContext();
-  const now = audioContext.currentTime;
-  const oscillator = audioContext.createOscillator();
-  const gain = audioContext.createGain();
+  if (audioContext.state === 'suspended') audioContext.resume();
+  return audioContext;
+}
+
+function playQuietScream() {
+  const audio = getAudioContext();
+  if (!audio) return;
+
+  const now = audio.currentTime;
+  const oscillator = audio.createOscillator();
+  const gain = audio.createGain();
 
   oscillator.type = 'sawtooth';
   oscillator.frequency.setValueAtTime(760, now);
@@ -84,9 +92,52 @@ function playQuietScream() {
   gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.38);
 
   oscillator.connect(gain);
-  gain.connect(audioContext.destination);
+  gain.connect(audio.destination);
   oscillator.start(now);
   oscillator.stop(now + 0.4);
+}
+
+function playBottomExplosion() {
+  const audio = getAudioContext();
+  if (!audio) return;
+
+  const now = audio.currentTime;
+  const boom = audio.createOscillator();
+  const boomGain = audio.createGain();
+  const noise = audio.createBufferSource();
+  const noiseGain = audio.createGain();
+  const filter = audio.createBiquadFilter();
+  const buffer = audio.createBuffer(1, audio.sampleRate * 0.18, audio.sampleRate);
+  const samples = buffer.getChannelData(0);
+
+  for (let i = 0; i < samples.length; i++) {
+    samples[i] = (Math.random() * 2 - 1) * (1 - i / samples.length);
+  }
+
+  boom.type = 'triangle';
+  boom.frequency.setValueAtTime(130, now);
+  boom.frequency.exponentialRampToValueAtTime(42, now + 0.22);
+  boomGain.gain.setValueAtTime(0.0001, now);
+  boomGain.gain.exponentialRampToValueAtTime(0.09, now + 0.02);
+  boomGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.28);
+
+  filter.type = 'lowpass';
+  filter.frequency.setValueAtTime(900, now);
+  filter.frequency.exponentialRampToValueAtTime(180, now + 0.18);
+  noise.buffer = buffer;
+  noiseGain.gain.setValueAtTime(0.0001, now);
+  noiseGain.gain.exponentialRampToValueAtTime(0.06, now + 0.01);
+  noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
+
+  boom.connect(boomGain);
+  boomGain.connect(audio.destination);
+  noise.connect(filter);
+  filter.connect(noiseGain);
+  noiseGain.connect(audio.destination);
+  boom.start(now);
+  boom.stop(now + 0.3);
+  noise.start(now);
+  noise.stop(now + 0.18);
 }
 
 function addNearMissPopup(timestamp) {
@@ -124,6 +175,7 @@ function countSuccessfulDodges(timestamp) {
       continue;
     }
 
+    playBottomExplosion();
     score++;
 
     if (score % dodgesPerLevel === 0) {
@@ -352,6 +404,7 @@ window.addEventListener('keyup', event => {
 });
 
 startBtn.addEventListener('click', () => {
+  getAudioContext();
   if (running) return;
   running = true;
   statusEl.textContent = 'Dodging!';
