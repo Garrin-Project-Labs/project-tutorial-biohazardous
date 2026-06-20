@@ -414,42 +414,32 @@ function playBottomExplosion() {
   if (!audio) return;
 
   const now = audio.currentTime;
-  const boom = audio.createOscillator();
-  const boomGain = audio.createGain();
-  const noise = audio.createBufferSource();
-  const noiseGain = audio.createGain();
+  const wind = audio.createBufferSource();
+  const windGain = audio.createGain();
   const filter = audio.createBiquadFilter();
-  const buffer = audio.createBuffer(1, audio.sampleRate * 0.18, audio.sampleRate);
+  const buffer = audio.createBuffer(1, Math.floor(audio.sampleRate * 0.34), audio.sampleRate);
   const samples = buffer.getChannelData(0);
 
   for (let i = 0; i < samples.length; i++) {
-    samples[i] = (Math.random() * 2 - 1) * (1 - i / samples.length);
+    const fadeIn = Math.min(1, i / (samples.length * 0.18));
+    const fadeOut = 1 - i / samples.length;
+    samples[i] = (Math.random() * 2 - 1) * fadeIn * fadeOut;
   }
 
-  boom.type = 'triangle';
-  boom.frequency.setValueAtTime(130, now);
-  boom.frequency.exponentialRampToValueAtTime(42, now + 0.22);
-  boomGain.gain.setValueAtTime(0.0001, now);
-  boomGain.gain.exponentialRampToValueAtTime(0.09, now + 0.02);
-  boomGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.28);
+  filter.type = 'bandpass';
+  filter.frequency.setValueAtTime(1250, now);
+  filter.frequency.exponentialRampToValueAtTime(360, now + 0.32);
+  filter.Q.value = 0.7;
+  wind.buffer = buffer;
+  windGain.gain.setValueAtTime(0.0001, now);
+  windGain.gain.exponentialRampToValueAtTime(0.035, now + 0.04);
+  windGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.34);
 
-  filter.type = 'lowpass';
-  filter.frequency.setValueAtTime(900, now);
-  filter.frequency.exponentialRampToValueAtTime(180, now + 0.18);
-  noise.buffer = buffer;
-  noiseGain.gain.setValueAtTime(0.0001, now);
-  noiseGain.gain.exponentialRampToValueAtTime(0.06, now + 0.01);
-  noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
-
-  boom.connect(boomGain);
-  boomGain.connect(audio.destination);
-  noise.connect(filter);
-  filter.connect(noiseGain);
-  noiseGain.connect(audio.destination);
-  boom.start(now);
-  boom.stop(now + 0.3);
-  noise.start(now);
-  noise.stop(now + 0.18);
+  wind.connect(filter);
+  filter.connect(windGain);
+  windGain.connect(audio.destination);
+  wind.start(now);
+  wind.stop(now + 0.35);
 }
 
 function addNearMissPopup(timestamp) {
