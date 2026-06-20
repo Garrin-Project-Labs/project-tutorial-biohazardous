@@ -143,14 +143,37 @@ h1 {
 }
 canvas {
   display: block;
-  width: min(100%, calc((100vh - 330px) * 12 / 7));
-  max-width: 1180px;
+  width: min(100%, calc((100vh - 300px) * 12 / 7));
+  max-width: 1280px;
   aspect-ratio: 12 / 7;
   margin: 0 auto;
   border-radius: 18px;
   background: linear-gradient(#16000b, #030006);
   border: 0;
   box-shadow: 0 0 26px rgba(190, 190, 190, .24);
+}
+.high-score {
+  width: min(100%, calc((100vh - 300px) * 12 / 7));
+  max-width: 1280px;
+  margin: 8px auto 0;
+  color: #c9ffb8;
+  font-weight: 900;
+  letter-spacing: .06em;
+  text-align: left;
+  text-shadow: 0 0 10px rgba(157, 255, 110, .42);
+}
+.hero h1, #tagline {
+  transition: opacity .6s ease, color .6s ease, text-shadow .6s ease;
+}
+.hero.doom-message h1 {
+  color: #ff1744;
+  text-shadow:
+    0 0 8px rgba(255, 23, 68, .78),
+    0 0 24px rgba(0, 0, 0, .95),
+    5px 5px 0 rgba(0, 0, 0, .96);
+}
+.hero.doom-message #tagline {
+  opacity: 0;
 }
 .hud, .controls {
   display: flex;

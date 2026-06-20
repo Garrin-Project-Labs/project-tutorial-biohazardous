@@ -2,6 +2,10 @@ const canvas = document.querySelector('#game');
 const ctx = canvas.getContext('2d');
 const scoreEl = document.querySelector('#score');
 const levelEl = document.querySelector('#level');
+const highScoreEl = document.querySelector('#high-score');
+const heroEl = document.querySelector('.hero');
+const heroTitleEl = document.querySelector('.hero h1');
+const taglineEl = document.querySelector('#tagline');
 const statusEl = document.querySelector('#status') || { textContent: '' };
 const startBtn = document.querySelector('#start');
 const resetBtn = document.querySelector('#reset');
@@ -14,6 +18,7 @@ let relic = null;
 let eyePowerup = null;
 let pentagramPowerup = null;
 let score = 0;
+let highScore = Number(localStorage.getItem('meteorHighScore') || 0);
 let dodges = 0;
 let level = 1;
 let speedLevel = 1;
@@ -85,8 +90,37 @@ function maybeSummonVoidWhisper(timestamp) {
 }
 
 function updateHud() {
+  if (score > highScore) {
+    highScore = score;
+    localStorage.setItem('meteorHighScore', highScore);
+  }
+
   scoreEl.textContent = score;
   levelEl.textContent = level;
+  if (highScoreEl) highScoreEl.textContent = highScore;
+  updateHeroText();
+}
+
+function updateHeroText() {
+  if (!heroEl || !heroTitleEl || !taglineEl) return;
+
+  const fade = Math.max(0, 1 - Math.min(score, 13) / 13);
+  heroEl.classList.toggle('doom-message', score >= 13);
+
+  if (score >= 333) {
+    heroTitleEl.textContent = 'Good Job...';
+    heroTitleEl.style.opacity = 1;
+    taglineEl.style.opacity = 0;
+  } else if (score >= 13) {
+    heroTitleEl.textContent = "You Can't Run...";
+    heroTitleEl.style.opacity = 1;
+    taglineEl.style.opacity = 0;
+  } else {
+    heroTitleEl.textContent = 'You can not run from your sins. They watch.';
+    heroTitleEl.style.opacity = fade;
+    taglineEl.textContent = 'As you walk through the shadow of the valley of death';
+    taglineEl.style.opacity = fade;
+  }
 }
 
 function spawnMeteor() {
@@ -278,7 +312,7 @@ function startBassMusic() {
     stepIndex++;
   }
 
-  bassMusic = { output: masterFilter, interval: setInterval(playBassStep, 135) };
+  bassMusic = { output: masterFilter, interval: setInterval(playBassStep, 155) };
   playBassStep();
 }
 
