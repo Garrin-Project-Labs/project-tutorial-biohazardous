@@ -16,6 +16,7 @@ let running = false;
 let lastSpawn = 0;
 let lastRelicSpawn = 0;
 let fateModeUntil = 0;
+let levelSurgeUntil = 0;
 let frame = 0;
 const pilotSpeed = 7;
 const dodgesPerLevel = 13;
@@ -32,6 +33,7 @@ function reset() {
   running = false;
   lastRelicSpawn = 0;
   fateModeUntil = 0;
+  levelSurgeUntil = 0;
   statusEl.textContent = 'Ready';
   updateHud();
   draw();
@@ -53,7 +55,7 @@ function spawnRelic() {
   relic = { x: Math.random() * (canvas.width - size), y: -size, size, speed: 2.8 };
 }
 
-function countSuccessfulDodges() {
+function countSuccessfulDodges(timestamp) {
   const stillFalling = [];
 
   for (const meteor of meteors) {
@@ -67,6 +69,11 @@ function countSuccessfulDodges() {
     if (score % dodgesPerLevel === 0) {
       level++;
       statusEl.textContent = `Level ${level}: the sins move faster.`;
+
+      if ((level - 1) % 3 === 0) {
+        levelSurgeUntil = timestamp + 3600;
+        statusEl.textContent = `Level ${level}: fate surge awakened.`;
+      }
     }
   }
 
@@ -97,7 +104,7 @@ function step(timestamp) {
   }
 
   for (const meteor of meteors) meteor.y += meteor.speed;
-  countSuccessfulDodges();
+  countSuccessfulDodges(timestamp);
 
   if (relic) {
     relic.y += relic.speed;
@@ -130,11 +137,17 @@ function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   const pulse = Math.sin(frame * 0.12) * 18;
   const fateMode = performance.now() < fateModeUntil;
+  const levelSurge = performance.now() < levelSurgeUntil;
   ctx.fillStyle = '#030006';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   ctx.fillStyle = fateMode ? `rgba(255, 255, 255, ${0.06 + Math.abs(Math.sin(frame * 0.08)) * 0.05})` : `rgba(120, 0, 24, ${0.18 + Math.abs(Math.sin(frame * 0.08)) * 0.14})`;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  if (levelSurge) {
+    ctx.fillStyle = `rgba(255, 255, 255, ${0.10 + Math.abs(Math.sin(frame * 0.18)) * 0.08})`;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
 
   ctx.fillStyle = 'rgba(157, 255, 110, .5)';
   for (let i = 0; i < 70; i++) {
@@ -171,6 +184,12 @@ function draw() {
     }
   }
 
+  if (levelSurge) {
+    ctx.fillStyle = 'rgba(0, 0, 0, .76)';
+    ctx.font = 'bold 30px sans-serif';
+    ctx.fillText('FATE SURGE', 24, canvas.height - 34);
+  }
+
   ctx.font = '34px serif';
   ctx.fillText(pilot.emoji, pilot.x, pilot.y + pilot.h);
 
@@ -193,7 +212,8 @@ function draw() {
     ctx.font = '18px sans-serif';
     ctx.fillText('Press Start, then use ←/→ or A/D to dodge.', 24, 36);
     ctx.fillText('Every 13 dodges wakes a faster level.', 24, 88);
-    ctx.fillText('Green relics reveal fate text for a few seconds.', 24, 114);
+    ctx.fillText('Every 3 level-ups triggers a safer fate surge.', 24, 114);
+    ctx.fillText('Green relics reveal fate text for a few seconds.', 24, 140);
   }
 }
 
