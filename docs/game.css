@@ -122,13 +122,13 @@ h1 {
 }
 .tentacle-border {
   position: absolute;
-  inset: -42px;
-  width: calc(100% + 84px);
-  height: calc(100% + 84px);
+  inset: -76px;
+  width: calc(100% + 152px);
+  height: calc(100% + 152px);
   z-index: 1;
   pointer-events: none;
   overflow: visible;
-  filter: drop-shadow(0 0 14px var(--tentacle-svg-glow, #9dff6e));
+  filter: drop-shadow(0 0 12px var(--tentacle-svg-glow, #2f7a24));
 }
 .tentacle-border path {
   stroke: var(--tentacle-svg-glow, #9dff6e);
@@ -140,9 +140,9 @@ canvas {
   position: relative;
   z-index: 2;
 }
-.tentacle-style-1 { --tentacle-glow: #9dff6e; --tentacle-svg-glow: #9dff6e; }
-.tentacle-style-2 { --tentacle-glow: #ff2a00; --tentacle-svg-glow: #ff2a00; }
-.tentacle-style-3 { --tentacle-glow: #b388ff; --tentacle-svg-glow: #b388ff; }
+.tentacle-style-1 { --tentacle-glow: #2f7a24; --tentacle-svg-glow: #2f7a24; }
+.tentacle-style-2 { --tentacle-glow: #7a1200; --tentacle-svg-glow: #7a1200; }
+.tentacle-style-3 { --tentacle-glow: #4a2575; --tentacle-svg-glow: #4a2575; }
 
 .title-echoes {
   grid-column: 1;

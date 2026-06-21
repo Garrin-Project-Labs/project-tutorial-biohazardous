@@ -869,31 +869,37 @@ function playLevelLaser() {
   const now = audio.currentTime;
   const output = audio.createGain();
   const filter = audio.createBiquadFilter();
-  const zap = audio.createOscillator();
-  const sparkle = audio.createOscillator();
+  const chime = audio.createOscillator();
+  const bell = audio.createOscillator();
+  const sub = audio.createOscillator();
 
   output.gain.setValueAtTime(0.0001, now);
-  output.gain.exponentialRampToValueAtTime(0.11, now + 0.012);
-  output.gain.exponentialRampToValueAtTime(0.0001, now + 0.52);
-  filter.type = 'bandpass';
-  filter.frequency.setValueAtTime(2600, now);
-  filter.frequency.exponentialRampToValueAtTime(520, now + 0.48);
-  filter.Q.value = 9;
-  zap.type = 'square';
-  sparkle.type = 'triangle';
-  zap.frequency.setValueAtTime(1440, now);
-  zap.frequency.exponentialRampToValueAtTime(180, now + 0.42);
-  sparkle.frequency.setValueAtTime(2160, now + 0.03);
-  sparkle.frequency.exponentialRampToValueAtTime(720, now + 0.34);
-  zap.connect(output);
-  sparkle.connect(output);
+  output.gain.exponentialRampToValueAtTime(0.095, now + 0.025);
+  output.gain.exponentialRampToValueAtTime(0.0001, now + 0.82);
+  filter.type = 'lowpass';
+  filter.frequency.setValueAtTime(3600, now);
+  filter.frequency.exponentialRampToValueAtTime(820, now + 0.72);
+  chime.type = 'triangle';
+  bell.type = 'sine';
+  sub.type = 'sine';
+  chime.frequency.setValueAtTime(660, now);
+  chime.frequency.exponentialRampToValueAtTime(990, now + 0.22);
+  bell.frequency.setValueAtTime(330, now + 0.08);
+  bell.frequency.exponentialRampToValueAtTime(247, now + 0.62);
+  sub.frequency.setValueAtTime(82, now);
+  sub.frequency.exponentialRampToValueAtTime(55, now + 0.58);
+  chime.connect(output);
+  bell.connect(output);
+  sub.connect(output);
   output.connect(filter);
   filter.connect(audio.destination);
-  zap.start(now);
-  sparkle.start(now + 0.03);
-  zap.stop(now + 0.54);
-  sparkle.stop(now + 0.39);
-  playNoiseBurst(0.12, 0.026, 6800, 1800);
+  chime.start(now);
+  bell.start(now + 0.08);
+  sub.start(now);
+  chime.stop(now + 0.75);
+  bell.stop(now + 0.85);
+  sub.stop(now + 0.66);
+  playNoiseBurst(0.08, 0.018, 4200, 900);
 }
 
 function playThunderCrash() {
@@ -1802,16 +1808,16 @@ function drawTentacleBorder() {
 
   const variant = (level - 1) % 3;
   const configs = [
-    { color: '#9dff6e', dark: '#061004', width: 1.25, amp: 1.2, waves: 8 },
-    { color: '#ff2a00', dark: '#230000', width: 1.6, amp: 1.8, waves: 10 },
-    { color: '#b388ff', dark: '#0b0018', width: 1.95, amp: 2.2, waves: 7 }
+    { color: '#2f7a24', dark: '#020901', width: 3.6, amp: 1.8, waves: 8 },
+    { color: '#7a1200', dark: '#100000', width: 4.1, amp: 2.3, waves: 10 },
+    { color: '#4a2575', dark: '#05000b', width: 4.6, amp: 2.8, waves: 7 }
   ];
   const config = configs[variant];
   const sides = [
-    { fixed: 4, from: 8, to: 92, horizontal: true },
-    { fixed: 96, from: 8, to: 92, horizontal: false },
-    { fixed: 96, from: 92, to: 8, horizontal: true },
-    { fixed: 4, from: 92, to: 8, horizontal: false }
+    { fixed: 1.5, from: 5, to: 95, horizontal: true },
+    { fixed: 98.5, from: 5, to: 95, horizontal: false },
+    { fixed: 98.5, from: 95, to: 5, horizontal: true },
+    { fixed: 1.5, from: 95, to: 5, horizontal: false }
   ];
 
   tentacleBorderSvg.style.setProperty('--tentacle-svg-glow', config.color);
