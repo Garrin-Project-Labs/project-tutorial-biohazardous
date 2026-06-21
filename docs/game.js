@@ -114,11 +114,11 @@ const meteorSymbols = ['☄', 'ᚠ', 'ᚢ', 'ᚦ', 'ᚨ', 'ᚱ', 'ᚲ', 'ᚷ', '
 const titleSymbols = ['☄', 'ᚱ', 'ᛉ', 'ᛟ', 'ᚦ', '✦', '✧', '✶', '✹', '✷', '☽', '☾', '✺', '⛧', '🜏', '☠'];
 const deathSymbols = ['⛧', '🜏', '☠', 'ᛉ', 'ᛟ', 'ᚦ', 'ᚱ', '☽', '☾', '✹', '✺', '✶', '✷'];
 const backgroundThemes = [
-  { base: '#030006', mist: 'rgba(157, 255, 110, .5)', alt: '#00f5ff' },
-  { base: '#02000c', mist: 'rgba(179, 136, 255, .5)', alt: '#ff1744' },
-  { base: '#090000', mist: 'rgba(255, 23, 68, .42)', alt: '#ffea00' },
-  { base: '#00090a', mist: 'rgba(0, 245, 255, .42)', alt: '#9dff6e' },
-  { base: '#080808', mist: 'rgba(255, 255, 255, .34)', alt: '#b388ff' }
+  { base: '#030006', mist: 'rgba(157, 255, 110, .72)', alt: '#00f5ff', nebula: '#2b0038' },
+  { base: '#030014', mist: 'rgba(179, 136, 255, .82)', alt: '#ff1744', nebula: '#40008a' },
+  { base: '#160000', mist: 'rgba(255, 23, 68, .72)', alt: '#ffea00', nebula: '#5a0000' },
+  { base: '#001114', mist: 'rgba(0, 245, 255, .75)', alt: '#9dff6e', nebula: '#003b47' },
+  { base: '#101000', mist: 'rgba(255, 234, 0, .62)', alt: '#b388ff', nebula: '#4a3900' }
 ];
 
 function reset() {
@@ -308,7 +308,7 @@ function spawnWelcomeHome() {
   document.body.append(message);
   welcomeHomeEls.push(message);
   welcomeHomeSpawnCount++;
-  if (welcomeHomeSpawnCount >= 3 && !sadViolinPlayed) {
+  if (welcomeHomeSpawnCount >= 1 && !sadViolinPlayed) {
     sadViolinPlayed = true;
     playSadViolinSong();
   }
@@ -1344,7 +1344,7 @@ function countSuccessfulDodges(timestamp) {
         spawnPauseUntil = timestamp + rotationPause;
         rotationSlowUntil = timestamp + Math.max(2400, rotationPause + 4000);
         screenRotation = rotationOptions[Math.floor(Math.random() * rotationOptions.length)];
-        backgroundTheme = (backgroundTheme + 1 + Math.floor(Math.random() * (backgroundThemes.length - 1))) % backgroundThemes.length;
+        backgroundTheme = (backgroundTheme + 1) % backgroundThemes.length;
         clearMeteorsForRotation = true;
         lastSpawn = timestamp + rotationPause;
         resetPowerupTimers(timestamp);
@@ -1441,7 +1441,7 @@ function step(timestamp, token = runToken) {
   if (timestamp >= spawnPauseUntil && level >= 6 && !thirdEyePowerup && timestamp >= thirdEyeCooldownUntil && timestamp - lastThirdEyeSpawn > 9000) {
     spawnThirdEyePowerup();
     lastThirdEyeSpawn = timestamp;
-    thirdEyeCooldownUntil = timestamp + 52000;
+    thirdEyeCooldownUntil = timestamp + 26000;
   }
 
   for (const meteor of meteors) {
@@ -1542,7 +1542,7 @@ function step(timestamp, token = runToken) {
       for (const meteor of meteors) {
         meteor.speed = (meteor.baseSpeed || meteor.speed) + Math.max(0, speedLevel - 1) * speedBoostPerLevel;
       }
-      thirdEyeCooldownUntil = timestamp + 52000;
+      thirdEyeCooldownUntil = timestamp + 26000;
       playEyeSquish();
       popups.push({ text: '-3 speed', x: pilot.x + pilot.w / 2 - 42, y: pilot.y - 30, born: timestamp });
       statusEl.textContent = 'The Third Eye opened: game speed dropped by 3 levels.';
@@ -1633,11 +1633,11 @@ function drawFlyingSpace(bg) {
     ctx.stroke();
   }
 
-  const warp = 0.045 + Math.abs(Math.sin(frame * 0.035)) * 0.035;
+  const warp = 0.075 + Math.abs(Math.sin(frame * 0.035)) * 0.055;
   const gradient = ctx.createRadialGradient(cx, cy, 20, cx, cy, canvas.width * 0.65);
   gradient.addColorStop(0, `rgba(255, 255, 255, ${warp})`);
-  gradient.addColorStop(0.22, 'rgba(0, 245, 255, .025)');
-  gradient.addColorStop(0.6, 'rgba(179, 136, 255, .018)');
+  gradient.addColorStop(0.22, 'rgba(0, 245, 255, .055)');
+  gradient.addColorStop(0.6, 'rgba(179, 136, 255, .04)');
   gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -1699,6 +1699,12 @@ function draw() {
   const pilotSpin = now < pilotSpinUntil;
   const bg = backgroundThemes[backgroundTheme] || backgroundThemes[0];
   ctx.fillStyle = bg.base;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  const nebula = ctx.createRadialGradient(canvas.width * 0.28, canvas.height * 0.18, 10, canvas.width * 0.5, canvas.height * 0.48, canvas.width * 0.88);
+  nebula.addColorStop(0, bg.mist);
+  nebula.addColorStop(0.45, bg.nebula || bg.base);
+  nebula.addColorStop(1, 'rgba(0, 0, 0, 0)');
+  ctx.fillStyle = nebula;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   drawFlyingSpace(bg);
 
