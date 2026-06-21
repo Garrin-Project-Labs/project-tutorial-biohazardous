@@ -254,10 +254,10 @@ function reset() {
 
 function summonVoidWhisper() {
   const whisper = document.createElement('div');
-  const isEye = Math.random() < 0.45;
+  const showVoidText = Math.random() < 0.15;
 
-  whisper.className = isEye ? 'void-whisper void-eye' : 'void-whisper';
-  whisper.textContent = isEye ? asciiEyeArts[Math.floor(Math.random() * asciiEyeArts.length)] : 'The Void Watches';
+  whisper.className = showVoidText ? 'void-whisper' : 'void-whisper void-eye';
+  whisper.textContent = showVoidText ? 'The Void Watches' : asciiEyeArts[Math.floor(Math.random() * asciiEyeArts.length)];
   whisper.style.left = `${Math.random() * 82 + 6}vw`;
   whisper.style.top = `${Math.random() * 78 + 8}vh`;
   whisper.style.color = voidColors[Math.floor(Math.random() * voidColors.length)];
@@ -270,7 +270,7 @@ function maybeSummonVoidWhisper(timestamp) {
   if (!running || timestamp < nextVoidWhisperAt) return;
 
   summonVoidWhisper();
-  nextVoidWhisperAt = timestamp + 1800 + Math.random() * 2600;
+  nextVoidWhisperAt = timestamp + 4200 + Math.random() * 6200;
 }
 
 function updateHud() {
@@ -430,7 +430,7 @@ function spawnWelcomeHome() {
 function spawnDeathEye() {
   const eye = document.createElement('div');
   eye.className = 'death-eye active';
-  eye.textContent = '👁️';
+  eye.textContent = asciiEyeArts[Math.floor(Math.random() * asciiEyeArts.length)];
   eye.style.left = `${Math.random() * 92}vw`;
   eye.style.top = `${Math.random() * 88}vh`;
   eye.style.setProperty('--eye-tilt', `${Math.random() * 60 - 30}deg`);
