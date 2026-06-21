@@ -86,6 +86,8 @@ let hitExplosion = null;
 let pilotVisible = true;
 let screenRotation = 0;
 let backgroundTheme = 0;
+let nextEyeBlinkAt = 0;
+let eyeBlinkUntil = 0;
 let frame = 0;
 let audioContext = null;
 let bassMusic = null;
@@ -111,6 +113,7 @@ const normalMeteorSpawnDelay = 420;
 const relicBonus = 13;
 const quietScreams = ['aah.', 'eep.', 'oh no.', 'tiny scream.', '...'];
 const voidColors = ['#9dff6e', '#ff1744', '#00f5ff', '#b388ff', '#ffffff', '#ffea00'];
+const meteorImpactColors = ['#ff1744', '#ffea00', '#9dff6e', '#00f5ff', '#b388ff', '#ffffff', '#ff6a00'];
 const meteorSymbols = ['☄', 'ᚠ', 'ᚢ', 'ᚦ', 'ᚨ', 'ᚱ', 'ᚲ', 'ᚷ', 'ᚹ', 'ᚺ', 'ᚾ', 'ᛁ', 'ᛃ', 'ᛇ', 'ᛈ', 'ᛉ', 'ᛋ', 'ᛏ', 'ᛒ', 'ᛖ', 'ᛗ', 'ᛚ', 'ᛜ', 'ᛞ', 'ᛟ', 'ᛝ', '✦', '✧', '✶', '✹', '✷', '☽', '☾', '✺'];
 const titleSymbols = ['☄', 'ᚱ', 'ᛉ', 'ᛟ', 'ᚦ', '✦', '✧', '✶', '✹', '✷', '☽', '☾', '✺', '⛧', '🜏', '☠'];
 const deathSymbols = ['⛧', '🜏', '☠', 'ᛉ', 'ᛟ', 'ᚦ', 'ᚱ', '☽', '☾', '✹', '✺', '✶', '✷'];
@@ -163,6 +166,8 @@ function reset() {
   pilotVisible = true;
   screenRotation = 0;
   backgroundTheme = 0;
+  nextEyeBlinkAt = performance.now() + 2500 + Math.random() * 4500;
+  eyeBlinkUntil = 0;
   nextVoidWhisperAt = 0;
   nextComboBellAt = 5;
   random777Title = '';
@@ -516,7 +521,9 @@ function spawnMeteor() {
     spin: Math.random() * Math.PI * 2,
     spinSpeed: (Math.random() < 0.5 ? -1 : 1) * (0.018 + Math.random() * 0.017),
     flashOffset: Math.random() * Math.PI * 2,
-    symbol: meteorSymbols[Math.floor(Math.random() * meteorSymbols.length)]
+    symbol: meteorSymbols[Math.floor(Math.random() * meteorSymbols.length)],
+    color: '#ffffff',
+    mouthTouched: false
   });
 }
 
@@ -1484,6 +1491,11 @@ function step(timestamp, token = runToken) {
   for (const meteor of meteors) {
     meteor.y += meteor.speed;
     meteor.x += meteor.vx;
+    if (!meteor.mouthTouched && meteor.y + meteor.size >= canvas.height - 34) {
+      meteor.mouthTouched = true;
+      meteor.color = meteorImpactColors[Math.floor(Math.random() * meteorImpactColors.length)];
+      meteor.spinSpeed *= 1.35;
+    }
     if (meteor.x <= 0 || meteor.x + meteor.size >= canvas.width) {
       meteor.vx *= -1;
       meteor.x = Math.max(0, Math.min(canvas.width - meteor.size, meteor.x));
@@ -1634,11 +1646,20 @@ function step(timestamp, token = runToken) {
 function drawGiantBlinkingEye(bg) {
   const cx = canvas.width / 2;
   const cy = canvas.height / 2;
-  const blink = Math.pow(Math.abs(Math.sin(frame * 0.026)), 8);
-  const open = 0.12 + blink * 0.42;
+  const now = performance.now();
+
+  if (!nextEyeBlinkAt) nextEyeBlinkAt = now + 2500 + Math.random() * 4500;
+  if (now >= nextEyeBlinkAt) {
+    eyeBlinkUntil = now + 1550 + Math.random() * 950;
+    nextEyeBlinkAt = eyeBlinkUntil + 4200 + Math.random() * 7600;
+  }
+
+  const blinkProgress = now < eyeBlinkUntil ? 1 - (eyeBlinkUntil - now) / 2200 : 1;
+  const closeAmount = now < eyeBlinkUntil ? Math.sin(Math.max(0, Math.min(1, blinkProgress)) * Math.PI) : 0;
+  const open = 0.48 - closeAmount * 0.38;
 
   ctx.save();
-  ctx.globalAlpha = 0.16 + blink * 0.08;
+  ctx.globalAlpha = 0.14 + (1 - closeAmount) * 0.08;
   ctx.globalCompositeOperation = 'screen';
   ctx.translate(cx, cy);
   ctx.scale(1, open);
@@ -1697,12 +1718,12 @@ function drawGiantMouth() {
   ctx.stroke();
 
   ctx.fillStyle = 'rgba(255, 255, 255, .72)';
-  for (let x = 10; x < canvas.width; x += 28) {
-    const tooth = 8 + ((x / 28) % 2) * 5;
+  for (let x = 6; x < canvas.width; x += 14) {
+    const tooth = 7 + ((x / 14) % 2) * 4;
     ctx.beginPath();
     ctx.moveTo(x, y + 8 + pulse);
-    ctx.lineTo(x + 8, y + 8 + pulse);
-    ctx.lineTo(x + 4, y + 8 + pulse + tooth);
+    ctx.lineTo(x + 7, y + 8 + pulse);
+    ctx.lineTo(x + 3.5, y + 8 + pulse + tooth);
     ctx.closePath();
     ctx.fill();
   }
@@ -1926,11 +1947,11 @@ function draw() {
 
     ctx.save();
     ctx.globalAlpha = flash;
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = meteor.color || '#ffffff';
     ctx.font = `bold ${meteor.size}px serif`;
     ctx.translate(meteor.x + meteor.size / 2, meteor.y + meteor.size / 2);
     ctx.rotate(meteor.spin);
-    glowText(meteor.symbol, -meteor.size / 2, meteor.size / 2, '#050006', 18 + flash * 10, 7, '#050006');
+    glowText(meteor.symbol, -meteor.size / 2, meteor.size / 2, meteor.color || '#ffffff', 18 + flash * 10, 7, '#050006');
     ctx.restore();
   }
 
