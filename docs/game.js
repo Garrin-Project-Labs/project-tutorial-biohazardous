@@ -359,15 +359,18 @@ function playComboBell(milestone) {
   chime.stop(now + 0.75);
 }
 
-function awardPoints(basePoints) {
+function addCombo(amount) {
   const previousCombo = combo;
-  combo = Math.min(69, combo + 0.25);
+  combo = Math.min(69, combo + amount);
 
   while (nextComboBellAt <= combo && nextComboBellAt > previousCombo) {
     playComboBell(nextComboBellAt);
     nextComboBellAt += 5;
   }
+}
 
+function awardPoints(basePoints) {
+  addCombo(0.25);
   score += Math.max(1, Math.round(basePoints * (1 + combo)));
 }
 
@@ -761,9 +764,9 @@ function playBitCrushedBePrepared() {
 
   if ('speechSynthesis' in window) {
     const utterance = new SpeechSynthesisUtterance('be prepared.');
-    utterance.rate = 0.34;
+    utterance.rate = 0.26;
     utterance.pitch = 0;
-    utterance.volume = 0.26;
+    utterance.volume = 0.08;
     window.speechSynthesis.cancel();
     window.speechSynthesis.speak(utterance);
   }
@@ -796,10 +799,10 @@ function playBitCrushedBePrepared() {
   crusher.curve = curve;
   crusher.oversample = 'none';
   filter.type = 'bandpass';
-  filter.frequency.setValueAtTime(92, now);
-  filter.Q.value = 9;
+  filter.frequency.setValueAtTime(48, now);
+  filter.Q.value = 11;
   output.gain.setValueAtTime(0.0001, now);
-  output.gain.exponentialRampToValueAtTime(0.045, now + 0.06);
+  output.gain.exponentialRampToValueAtTime(0.06, now + 0.08);
   output.gain.exponentialRampToValueAtTime(0.0001, now + 1.2);
   output.connect(crusher);
   crusher.connect(filter);
@@ -807,9 +810,9 @@ function playBitCrushedBePrepared() {
 
   whisper.buffer = buffer;
   whisperFilter.type = 'highpass';
-  whisperFilter.frequency.setValueAtTime(620, now);
+  whisperFilter.frequency.setValueAtTime(260, now);
   whisperGain.gain.setValueAtTime(0.0001, now);
-  whisperGain.gain.exponentialRampToValueAtTime(0.022, now + 0.04);
+  whisperGain.gain.exponentialRampToValueAtTime(0.014, now + 0.04);
   whisperGain.gain.exponentialRampToValueAtTime(0.0001, now + 1.1);
   whisper.connect(whisperFilter);
   whisperFilter.connect(whisperGain);
@@ -817,20 +820,26 @@ function playBitCrushedBePrepared() {
   whisper.start(now);
   whisper.stop(now + 1.15);
 
-  [0, 0.18, 0.42, 0.68].forEach((offset, index) => {
+  [0, 0.2, 0.48, 0.78].forEach((offset, index) => {
     const voice = audio.createOscillator();
+    const sub = audio.createOscillator();
     const gate = audio.createGain();
     const start = now + offset;
     voice.type = index % 2 ? 'square' : 'sawtooth';
-    voice.frequency.setValueAtTime([38, 31, 34, 27][index], start);
-    voice.detune.setValueAtTime(index % 2 ? -26 : 12, start);
+    sub.type = 'sine';
+    voice.frequency.setValueAtTime([19, 16, 18, 13.5][index], start);
+    sub.frequency.setValueAtTime([9.5, 8, 9, 6.75][index], start);
+    voice.detune.setValueAtTime(index % 2 ? -34 : 18, start);
     gate.gain.setValueAtTime(0.0001, start);
-    gate.gain.exponentialRampToValueAtTime(0.075, start + 0.03);
-    gate.gain.exponentialRampToValueAtTime(0.0001, start + 0.22);
+    gate.gain.exponentialRampToValueAtTime(0.11, start + 0.045);
+    gate.gain.exponentialRampToValueAtTime(0.0001, start + 0.34);
     voice.connect(gate);
+    sub.connect(gate);
     gate.connect(output);
     voice.start(start);
-    voice.stop(start + 0.25);
+    sub.start(start);
+    voice.stop(start + 0.38);
+    sub.stop(start + 0.38);
   });
 }
 
@@ -1236,8 +1245,10 @@ function step(timestamp, token = runToken) {
       relic = null;
       playRelicPunch();
       fateModeUntil = timestamp + 1200;
+      addCombo(5);
       awardPoints(relicBonus);
-      statusEl.textContent = 'Relic taken: fate sees you.';
+      popups.push({ text: '+5 combo', x: pilot.x + pilot.w / 2 - 48, y: pilot.y - 34, born: timestamp });
+      statusEl.textContent = 'Relic taken: +5 combo. Fate sees you.';
       updateHud();
     } else if (relic.y > canvas.height + relic.size) {
       relic = null;
@@ -1441,10 +1452,26 @@ function draw() {
     const blink = 0.45 + Math.abs(Math.sin(frame * 0.18 + relic.flashOffset)) * 0.55;
     ctx.save();
     ctx.globalAlpha = blink;
-    ctx.font = `${relic.size}px serif`;
     ctx.translate(relic.x + relic.size / 2, relic.y + relic.size / 2);
     ctx.rotate(relic.spin);
-    glowText('🧿', -relic.size / 2, relic.size / 2, '#9dff6e', 30 + blink * 8, 7);
+    ctx.fillStyle = '#050006';
+    ctx.beginPath();
+    ctx.arc(0, 0, relic.size * 0.48, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#ffea00';
+    ctx.shadowColor = '#ffea00';
+    ctx.shadowBlur = 30 + blink * 8;
+    ctx.beginPath();
+    ctx.arc(0, 0, relic.size * 0.38, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#050006';
+    ctx.font = `bold ${relic.size * 0.82}px serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('☢', 0, 1);
+    ctx.textAlign = 'start';
+    ctx.textBaseline = 'alphabetic';
     ctx.restore();
   }
 

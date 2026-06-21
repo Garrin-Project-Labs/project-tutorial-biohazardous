@@ -223,8 +223,8 @@ canvas {
   text-shadow: 0 0 10px #ffffff, 0 0 16px #050006;
 }
 .relic-preview {
-  color: #9dff6e;
-  text-shadow: 0 0 10px #9dff6e, 0 0 18px #050006;
+  color: #ffea00;
+  text-shadow: 0 0 10px #ffea00, 0 0 18px #050006, 1px 1px 0 #050006;
 }
 .eye-preview {
   filter: invert(1) hue-rotate(180deg);
