@@ -70,6 +70,9 @@ let levelLaserShots = [];
 const transcendWord = 'TRANSCEND';
 let transcendLetters = [];
 let transcendSpitLetters = [];
+let transcendCollectedLetters = [];
+let transcendSpitQueue = [];
+let nextTranscendSpitAt = 0;
 let transcendFilled = Array(transcendWord.length).fill(false);
 let transcendenceCount = 0;
 let transcendX = 210;
@@ -225,6 +228,9 @@ function reset() {
   levelLaserShots = [];
   transcendLetters = [];
   transcendSpitLetters = [];
+  transcendCollectedLetters = [];
+  transcendSpitQueue = [];
+  nextTranscendSpitAt = 0;
   transcendFilled = Array(transcendWord.length).fill(false);
   transcendenceCount = 0;
   transcendX = canvas.width / 2 - 150;
@@ -1620,32 +1626,71 @@ function isTranscendAnimating(timestamp = performance.now()) {
   return transcendAnimation && timestamp - transcendAnimation.born < 2600;
 }
 
-function spawnTranscendSpitLetters(timestamp) {
-  const collected = transcendFilled
-    .map((filled, index) => filled ? { letter: transcendWord[index], index } : null)
-    .filter(Boolean);
+function playTranscendGunshot() {
+  const audio = getAudioContext();
+  if (!audio) return;
 
-  if (!collected.length) return false;
+  const now = audio.currentTime;
+  const crack = audio.createOscillator();
+  const thump = audio.createOscillator();
+  const gain = audio.createGain();
+  const filter = audio.createBiquadFilter();
 
+  crack.type = 'square';
+  thump.type = 'sawtooth';
+  crack.frequency.setValueAtTime(520, now);
+  crack.frequency.exponentialRampToValueAtTime(120, now + 0.055);
+  thump.frequency.setValueAtTime(90, now);
+  thump.frequency.exponentialRampToValueAtTime(38, now + 0.16);
+  filter.type = 'bandpass';
+  filter.frequency.setValueAtTime(1400, now);
+  filter.frequency.exponentialRampToValueAtTime(260, now + 0.12);
+  filter.Q.value = 5;
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.exponentialRampToValueAtTime(0.16, now + 0.006);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
+  crack.connect(gain);
+  thump.connect(gain);
+  gain.connect(filter);
+  filter.connect(audio.destination);
+  crack.start(now);
+  thump.start(now);
+  crack.stop(now + 0.08);
+  thump.stop(now + 0.18);
+  playNoiseBurst(0.12, 0.055, 2200, 260);
+}
+
+function spawnOneTranscendSpitLetter(letter, timestamp, index = 0) {
   const mouthY = canvas.height - 34;
-  transcendSpitLetters.push(...collected.map(({ letter }, i) => ({
+  const originX = Math.max(28, Math.min(canvas.width - 28, transcendX + 18 + (index % transcendWord.length) * 32));
+  transcendSpitLetters.push({
     letter,
-    x: transcendX + 18 + i * 32,
+    x: originX,
     y: mouthY - 4,
-    vx: (Math.random() < 0.5 ? -1 : 1) * (1.2 + Math.random() * 3.2),
-    vy: -(7.5 + Math.random() * 5.5),
-    gravity: 0.24 + Math.random() * 0.08,
+    vx: (Math.random() < 0.5 ? -1 : 1) * (1.6 + Math.random() * 3.8),
+    vy: -(8.5 + Math.random() * 6.2),
+    gravity: 0.25 + Math.random() * 0.09,
     size: 28,
     born: timestamp
-  })));
+  });
+  playTranscendGunshot();
+}
+
+function startTranscendSpitOut(timestamp) {
+  if (!transcendCollectedLetters.length) return false;
+
+  transcendSpitQueue = [...transcendCollectedLetters];
+  transcendCollectedLetters = [];
   transcendFilled = Array(transcendWord.length).fill(false);
   transcendLetters = [];
   transcendAnimation = null;
   transcendenceCount = 0;
   nextTranscendLetterAt = timestamp + 1400;
-  statusEl.textContent = 'The mouth rejected TRANSCEND.';
+  nextTranscendSpitAt = timestamp;
+  statusEl.textContent = 'The mouth rejected every collected TRANSCEND letter.';
   return true;
 }
+
 
 function triggerPlayerHit(timestamp, message = `Bonked! ${whisperScream()} Try again.`) {
   running = false;
@@ -1699,7 +1744,7 @@ function updateTranscendSystem(timestamp, delta) {
       index,
       x: Math.max(32, Math.min(canvas.width - 32, slotX + (Math.random() * 48 - 24))),
       y: -24,
-      vy: 1.35 + Math.random() * 0.45,
+      vy: 1.35 + Math.random() * 0.45 + transcendenceCount * 0.22,
       sway: Math.random() * Math.PI * 2,
       size: 30
     });
@@ -1710,17 +1755,24 @@ function updateTranscendSystem(timestamp, delta) {
     letter.y += letter.vy * delta;
     letter.x += Math.sin(frame * 0.04 + letter.sway) * 0.28 * delta;
     if (hit(pilot, { x: letter.x - letter.size / 2, y: letter.y - letter.size / 2, size: letter.size, hitPad: -6 })) {
-      spawnTranscendSpitLetters(timestamp);
+      startTranscendSpitOut(timestamp);
       letter.consumed = true;
       continue;
     }
     if (letter.y >= mouthY - 4) {
       transcendFilled[letter.index] = true;
+      transcendCollectedLetters.push(letter.letter);
       letter.consumed = true;
       popups.push({ text: letter.letter, x: letter.x - 6, y: mouthY - 18, born: timestamp });
     }
   }
   transcendLetters = transcendLetters.filter(letter => !letter.consumed && letter.y < canvas.height + 30);
+
+  if (transcendSpitQueue.length && timestamp >= nextTranscendSpitAt) {
+    const letter = transcendSpitQueue.shift();
+    spawnOneTranscendSpitLetter(letter, timestamp, transcendSpitLetters.length);
+    nextTranscendSpitAt = timestamp + 115;
+  }
 
   for (const letter of transcendSpitLetters) {
     letter.x += letter.vx * delta;
