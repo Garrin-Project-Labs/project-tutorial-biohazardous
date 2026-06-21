@@ -24,6 +24,8 @@ const startBtn = document.querySelector('#start');
 const resetBtn = document.querySelector('#reset');
 let welcomeHomeInterval = null;
 let deathEyeInterval = null;
+let welcomeHomeSpawnCount = 0;
+let sadViolinPlayed = false;
 const welcomeHomeEls = [];
 const deathEyeEls = [];
 const maxDeathMessages = 13;
@@ -211,6 +213,11 @@ function spawnWelcomeHome() {
   message.textContent = randomDeathSymbols();
   document.body.append(message);
   welcomeHomeEls.push(message);
+  welcomeHomeSpawnCount++;
+  if (welcomeHomeSpawnCount >= 7 && !sadViolinPlayed) {
+    sadViolinPlayed = true;
+    playSadViolinSong();
+  }
 
   while (welcomeHomeEls.length > maxDeathMessages) {
     welcomeHomeEls.shift().remove();
@@ -234,6 +241,8 @@ function spawnDeathEye() {
 
 function showWelcomeHome() {
   hideWelcomeHome();
+  welcomeHomeSpawnCount = 0;
+  sadViolinPlayed = false;
   spawnWelcomeHome();
   spawnDeathEye();
   welcomeHomeInterval = setInterval(spawnWelcomeHome, 1000);
@@ -749,9 +758,10 @@ function playBitCrushedBePrepared() {
 
   if ('speechSynthesis' in window) {
     const utterance = new SpeechSynthesisUtterance('be prepared.');
-    utterance.rate = 0.68;
-    utterance.pitch = 0.28;
-    utterance.volume = 0.85;
+    utterance.rate = 0.46;
+    utterance.pitch = 0.04;
+    utterance.volume = 0.42;
+    window.speechSynthesis.cancel();
     window.speechSynthesis.speak(utterance);
   }
 
@@ -761,42 +771,148 @@ function playBitCrushedBePrepared() {
   const output = audio.createGain();
   const crusher = audio.createWaveShaper();
   const filter = audio.createBiquadFilter();
+  const whisper = audio.createBufferSource();
+  const whisperGain = audio.createGain();
+  const whisperFilter = audio.createBiquadFilter();
+  const buffer = audio.createBuffer(1, Math.floor(audio.sampleRate * 1.15), audio.sampleRate);
+  const samples = buffer.getChannelData(0);
   const curve = new Float32Array(256);
+
+  for (let i = 0; i < samples.length; i++) {
+    const t = i / samples.length;
+    const gate = Math.sin(t * Math.PI);
+    const chopped = Math.floor(t * 32) % 2 ? 0.65 : 1;
+    samples[i] = (Math.random() * 2 - 1) * gate * chopped;
+  }
 
   for (let i = 0; i < curve.length; i++) {
     const x = i / (curve.length - 1) * 2 - 1;
-    curve[i] = Math.round(x * 7) / 7;
+    curve[i] = Math.round(x * 5) / 5;
   }
 
   crusher.curve = curve;
   crusher.oversample = 'none';
   filter.type = 'bandpass';
-  filter.frequency.setValueAtTime(720, now);
-  filter.Q.value = 6;
+  filter.frequency.setValueAtTime(210, now);
+  filter.Q.value = 8;
   output.gain.setValueAtTime(0.0001, now);
-  output.gain.exponentialRampToValueAtTime(0.16, now + 0.035);
-  output.gain.exponentialRampToValueAtTime(0.0001, now + 0.95);
+  output.gain.exponentialRampToValueAtTime(0.08, now + 0.06);
+  output.gain.exponentialRampToValueAtTime(0.0001, now + 1.2);
   output.connect(crusher);
   crusher.connect(filter);
   filter.connect(audio.destination);
 
-  [0, 0.14, 0.3, 0.48, 0.62].forEach((offset, index) => {
+  whisper.buffer = buffer;
+  whisperFilter.type = 'highpass';
+  whisperFilter.frequency.setValueAtTime(620, now);
+  whisperGain.gain.setValueAtTime(0.0001, now);
+  whisperGain.gain.exponentialRampToValueAtTime(0.035, now + 0.04);
+  whisperGain.gain.exponentialRampToValueAtTime(0.0001, now + 1.1);
+  whisper.connect(whisperFilter);
+  whisperFilter.connect(whisperGain);
+  whisperGain.connect(audio.destination);
+  whisper.start(now);
+  whisper.stop(now + 1.15);
+
+  [0, 0.18, 0.42, 0.68].forEach((offset, index) => {
     const voice = audio.createOscillator();
     const gate = audio.createGain();
     const start = now + offset;
     voice.type = index % 2 ? 'square' : 'sawtooth';
-    voice.frequency.setValueAtTime([132, 98, 118, 86, 72][index], start);
-    voice.detune.setValueAtTime(index % 2 ? -18 : 18, start);
+    voice.frequency.setValueAtTime([72, 58, 64, 45][index], start);
+    voice.detune.setValueAtTime(index % 2 ? -26 : 12, start);
     gate.gain.setValueAtTime(0.0001, start);
-    gate.gain.exponentialRampToValueAtTime(0.34, start + 0.018);
-    gate.gain.exponentialRampToValueAtTime(0.0001, start + 0.16);
+    gate.gain.exponentialRampToValueAtTime(0.12, start + 0.03);
+    gate.gain.exponentialRampToValueAtTime(0.0001, start + 0.22);
     voice.connect(gate);
     gate.connect(output);
     voice.start(start);
-    voice.stop(start + 0.19);
+    voice.stop(start + 0.25);
   });
+}
 
-  playNoiseBurst(0.22, 0.06, 2600, 300);
+function playRecordScratch() {
+  const audio = getAudioContext();
+  if (!audio) return;
+
+  const now = audio.currentTime;
+  const scratch = audio.createBufferSource();
+  const gain = audio.createGain();
+  const filter = audio.createBiquadFilter();
+  const buffer = audio.createBuffer(1, Math.floor(audio.sampleRate * 0.42), audio.sampleRate);
+  const samples = buffer.getChannelData(0);
+
+  for (let i = 0; i < samples.length; i++) {
+    const t = i / samples.length;
+    const chirp = Math.sin((1 - t) * (1 - t) * 900 + Math.sin(t * 120) * 16);
+    const grit = Math.random() * 2 - 1;
+    samples[i] = (chirp * 0.58 + grit * 0.42) * (1 - t);
+  }
+
+  scratch.buffer = buffer;
+  scratch.playbackRate.setValueAtTime(1.35, now);
+  scratch.playbackRate.exponentialRampToValueAtTime(0.38, now + 0.38);
+  filter.type = 'bandpass';
+  filter.frequency.setValueAtTime(3400, now);
+  filter.frequency.exponentialRampToValueAtTime(620, now + 0.36);
+  filter.Q.value = 7;
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.exponentialRampToValueAtTime(0.18, now + 0.018);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.42);
+  scratch.connect(filter);
+  filter.connect(gain);
+  gain.connect(audio.destination);
+  scratch.start(now);
+  scratch.stop(now + 0.43);
+}
+
+function playSadViolinSong() {
+  const audio = getAudioContext();
+  if (!audio) return;
+
+  const now = audio.currentTime;
+  const output = audio.createGain();
+  const filter = audio.createBiquadFilter();
+  output.gain.setValueAtTime(0.0001, now);
+  output.gain.exponentialRampToValueAtTime(0.11, now + 0.16);
+  output.gain.exponentialRampToValueAtTime(0.0001, now + 4.7);
+  filter.type = 'lowpass';
+  filter.frequency.setValueAtTime(2800, now);
+  output.connect(filter);
+  filter.connect(audio.destination);
+
+  const notes = [392, 370, 329.63, 293.66, 277.18, 246.94, 220];
+  notes.forEach((frequency, index) => {
+    const start = now + index * 0.52;
+    const stop = start + 0.9;
+    const osc = audio.createOscillator();
+    const shadow = audio.createOscillator();
+    const gain = audio.createGain();
+    const vibrato = audio.createOscillator();
+    const vibratoGain = audio.createGain();
+
+    osc.type = 'sawtooth';
+    shadow.type = 'triangle';
+    osc.frequency.setValueAtTime(frequency, start);
+    shadow.frequency.setValueAtTime(frequency * 0.997, start);
+    vibrato.frequency.setValueAtTime(5.6, start);
+    vibratoGain.gain.setValueAtTime(5.5, start);
+    vibrato.connect(vibratoGain);
+    vibratoGain.connect(osc.frequency);
+    vibratoGain.connect(shadow.frequency);
+    gain.gain.setValueAtTime(0.0001, start);
+    gain.gain.linearRampToValueAtTime(0.07, start + 0.18);
+    gain.gain.exponentialRampToValueAtTime(0.0001, stop);
+    osc.connect(gain);
+    shadow.connect(gain);
+    gain.connect(output);
+    vibrato.start(start);
+    osc.start(start);
+    shadow.start(start);
+    vibrato.stop(stop);
+    osc.stop(stop);
+    shadow.stop(stop);
+  });
 }
 
 function playRelicPunch() {
@@ -1000,6 +1116,7 @@ function countSuccessfulDodges(timestamp) {
         lastSpawn = timestamp + 5000;
         resetPowerupTimers(timestamp);
         playThunderCrash();
+        playRecordScratch();
         playBitCrushedBePrepared();
         statusEl.textContent = `Level ${level}: fate surge awakened.`;
       }
