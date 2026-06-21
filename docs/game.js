@@ -76,6 +76,7 @@ let nextTranscendSpitAt = 0;
 let transcendLetterSpeedBoost = 0;
 let transcendShakeUntil = 0;
 let transcendFilled = Array(transcendWord.length).fill(false);
+let transcendRuneSlots = [];
 let transcendenceCount = 0;
 let transcendX = 210;
 let transcendVx = 0.62;
@@ -130,6 +131,10 @@ let titleEchoWrapQueued = false;
 let titleEchoClearedForTitle = '';
 let deadEchoInterval = null;
 let random777Title = '';
+
+function randomTranscendRuneSlots() {
+  return Array.from({ length: transcendWord.length }, () => meteorSymbols[Math.floor(Math.random() * meteorSymbols.length)]);
+}
 
 function resetPowerupTimers(timestamp = performance.now()) {
   lastRelicSpawn = timestamp;
@@ -236,6 +241,7 @@ function reset() {
   transcendLetterSpeedBoost = 0;
   transcendShakeUntil = 0;
   transcendFilled = Array(transcendWord.length).fill(false);
+  transcendRuneSlots = randomTranscendRuneSlots();
   transcendenceCount = 0;
   transcendX = canvas.width / 2 - 150;
   transcendVx = 0.62;
@@ -1690,6 +1696,7 @@ function startTranscendSpitOut(timestamp) {
   transcendSpitQueue = [...transcendCollectedLetters];
   transcendCollectedLetters = [];
   transcendFilled = Array(transcendWord.length).fill(false);
+  transcendRuneSlots = randomTranscendRuneSlots();
   transcendLetters = [];
   transcendAnimation = null;
   transcendenceCount = 0;
@@ -1733,6 +1740,7 @@ function updateTranscendSystem(timestamp, delta) {
   if (transcendAnimation && timestamp - transcendAnimation.born >= 2600) {
     transcendAnimation = null;
     transcendFilled = Array(transcendWord.length).fill(false);
+    transcendRuneSlots = randomTranscendRuneSlots();
     transcendLetters = [];
     nextTranscendLetterAt = timestamp + 1800;
   }
@@ -1752,7 +1760,7 @@ function updateTranscendSystem(timestamp, delta) {
       index,
       x: Math.max(32, Math.min(canvas.width - 32, slotX + (Math.random() * 48 - 24))),
       y: -24,
-      vy: 2.05 + Math.random() * 0.65 + transcendenceCount * 0.3 + transcendLetterSpeedBoost,
+      vy: 4.1 + Math.random() * 1.3 + transcendenceCount * 0.6 + transcendLetterSpeedBoost * 2,
       sway: Math.random() * Math.PI * 2,
       size: 30
     });
@@ -1836,16 +1844,17 @@ function drawTranscendSystem(now) {
 
   for (let i = 0; i < word.length; i++) {
     const lx = i * spacing;
+    const displayChar = (transcendFilled[i] || transcendAnimation) ? word[i] : (transcendRuneSlots[i] || '?');
     ctx.strokeStyle = '#ffcf33';
     ctx.shadowColor = '#9dff6e';
     ctx.shadowBlur = 12;
-    ctx.strokeText(word[i], lx, 0);
+    ctx.strokeText(displayChar, lx, 0);
     if (transcendFilled[i] || transcendAnimation) {
       ctx.fillStyle = '#ffcf33';
-      ctx.fillText(word[i], lx, 0);
+      ctx.fillText(displayChar, lx, 0);
     } else {
       ctx.fillStyle = 'rgba(0, 0, 0, .72)';
-      ctx.fillText(word[i], lx, 0);
+      ctx.fillText(displayChar, lx, 0);
     }
   }
   ctx.restore();
@@ -2426,6 +2435,8 @@ function draw() {
   }
 
 
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.fillStyle = comboColor();
   ctx.font = 'bold 13px Papyrus, \"Cinzel Decorative\", Georgia, serif';
   if (combo >= 69) {
@@ -2449,6 +2460,8 @@ function draw() {
   ctx.font = 'bold 12px "Cinzel Decorative", Georgia, serif';
   glowText(`TRANSCEDENCE ${transcendenceCount}`, 22, 48, '#ffcf33', 10, 2, '#050006');
   ctx.restore();
+  ctx.restore();
+
 
   if (fateMode) {
     ctx.fillStyle = '#050006';
