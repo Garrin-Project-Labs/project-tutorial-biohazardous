@@ -122,13 +122,13 @@ h1 {
 }
 .tentacle-border {
   position: absolute;
-  inset: -24px;
-  width: calc(100% + 48px);
-  height: calc(100% + 48px);
+  inset: -42px;
+  width: calc(100% + 84px);
+  height: calc(100% + 84px);
   z-index: 1;
   pointer-events: none;
   overflow: visible;
-  filter: drop-shadow(0 0 8px var(--tentacle-svg-glow, #9dff6e));
+  filter: drop-shadow(0 0 14px var(--tentacle-svg-glow, #9dff6e));
 }
 .tentacle-border path {
   stroke: var(--tentacle-svg-glow, #9dff6e);

@@ -64,6 +64,7 @@ let dodges = 0;
 let level = 1;
 let speedLevel = 1;
 let running = false;
+let paused = false;
 let animationFrameId = null;
 let runToken = 0;
 let lastSpawn = 0;
@@ -127,6 +128,7 @@ const backgroundThemes = [
 
 function reset() {
   running = false;
+  paused = false;
   runToken++;
   if (animationFrameId) {
     cancelAnimationFrame(animationFrameId);
@@ -1393,7 +1395,7 @@ function countSuccessfulDodges(timestamp) {
         playThunderCrash();
         playRecordScratch();
         playBitCrushedBePrepared();
-        statusEl.textContent = `Level ${level}: fate surge awakened.`;
+        statusEl.textContent = `Level ${level}: the screen turns.`;
       }
     }
   }
@@ -1446,6 +1448,11 @@ function pullPowerupTowardPilot(powerup, strength = 0.018) {
 
 function step(timestamp, token = runToken) {
   if (!running || token !== runToken) return;
+  if (paused) {
+    draw();
+    animationFrameId = requestAnimationFrame(nextTimestamp => step(nextTimestamp, token));
+    return;
+  }
   frame++;
   maybeSummonVoidWhisper(timestamp);
 
@@ -1659,7 +1666,7 @@ function drawGiantBlinkingEye(bg) {
   const open = 0.48 - closeAmount * 0.38;
 
   ctx.save();
-  ctx.globalAlpha = 0.14 + (1 - closeAmount) * 0.08;
+  ctx.globalAlpha = (1 - closeAmount) * 0.22;
   ctx.globalCompositeOperation = 'screen';
   ctx.translate(cx, cy);
   ctx.scale(1, open);
@@ -1720,10 +1727,18 @@ function drawGiantMouth() {
   ctx.fillStyle = 'rgba(255, 255, 255, .72)';
   for (let x = 6; x < canvas.width; x += 14) {
     const tooth = 7 + ((x / 14) % 2) * 4;
+    const curveY = px => {
+      const t = px / canvas.width;
+      const start = y + 8 + pulse;
+      const control = y - 7 - pulse;
+      return (1 - t) * (1 - t) * start + 2 * (1 - t) * t * control + t * t * start;
+    };
+    const y1 = curveY(x);
+    const y2 = curveY(x + 7);
     ctx.beginPath();
-    ctx.moveTo(x, y + 8 + pulse);
-    ctx.lineTo(x + 7, y + 8 + pulse);
-    ctx.lineTo(x + 3.5, y + 8 + pulse + tooth);
+    ctx.moveTo(x, y1);
+    ctx.lineTo(x + 7, y2);
+    ctx.lineTo(x + 3.5, (y1 + y2) / 2 + tooth);
     ctx.closePath();
     ctx.fill();
   }
@@ -1860,6 +1875,17 @@ function draw() {
     ctx.textAlign = 'start';
   }
 
+  if (paused) {
+    ctx.save();
+    ctx.fillStyle = 'rgba(0, 0, 0, .35)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.font = 'bold 42px Georgia, serif';
+    ctx.textAlign = 'center';
+    glowText('PAUSED', canvas.width / 2, canvas.height / 2, '#b388ff', 22, 4, '#050006');
+    ctx.textAlign = 'start';
+    ctx.restore();
+  }
+
   ctx.fillStyle = bg.mist;
   for (let i = 0; i < 70; i++) {
     const x = (i * 97 + frame * 1.9) % canvas.width;
@@ -1897,12 +1923,6 @@ function draw() {
       glowText('YOU WILL NOT ESCAPE YOUR FATE', x, y, '#9dff6e', 12, 2);
       glowText('YOU WILL NOT ESCAPE YOUR FATE', x + 420, y, '#9dff6e', 12, 2);
     }
-  }
-
-  if (levelSurge) {
-    ctx.fillStyle = '#050006';
-    ctx.font = 'bold 30px sans-serif';
-    glowText('FATE SURGE', 24, canvas.height - 34, '#9dff6e', 10, 2);
   }
 
   if (pilotVisible) {
@@ -2073,6 +2093,7 @@ function startGame() {
   pilotVisible = true;
   resetPowerupTimers();
   running = true;
+  paused = false;
   runToken++;
   const token = runToken;
   startBassMusic();
@@ -2086,6 +2107,15 @@ function resetAndStartGame() {
 }
 
 window.addEventListener('keydown', event => {
+  if (event.code === 'Space') {
+    if (running) {
+      paused = !paused;
+      statusEl.textContent = paused ? 'Paused' : 'Dodging!';
+    }
+    event.preventDefault();
+    return;
+  }
+
   if (event.key.toLowerCase() === 'r') {
     resetAndStartGame();
     event.preventDefault();
