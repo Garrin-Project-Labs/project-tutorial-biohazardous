@@ -52,6 +52,7 @@ const pilot = { x: 340, y: 360, w: 34, h: 30, emoji: '🚀', name: 'Pilot' };
 const keys = { ArrowLeft: false, ArrowRight: false, ArrowUp: false, ArrowDown: false, a: false, d: false, w: false, s: false };
 let meteors = [];
 let popups = [];
+let levelLaserShots = [];
 let relic = null;
 let eyePowerup = null;
 let pentagramPowerup = null;
@@ -142,6 +143,7 @@ function reset() {
   pilot.x = canvas.width / 2 - pilot.w / 2;
   meteors = [];
   popups = [];
+  levelLaserShots = [];
   relic = null;
   eyePowerup = null;
   pentagramPowerup = null;
@@ -862,6 +864,71 @@ function playEvilLaugh() {
   });
 }
 
+function playLaserCannonSound() {
+  const audio = getAudioContext();
+  if (!audio) return;
+
+  const now = audio.currentTime;
+  const blast = audio.createOscillator();
+  const boom = audio.createOscillator();
+  const gain = audio.createGain();
+  const filter = audio.createBiquadFilter();
+
+  blast.type = 'square';
+  boom.type = 'sawtooth';
+  blast.frequency.setValueAtTime(220, now);
+  blast.frequency.exponentialRampToValueAtTime(54, now + 0.22);
+  boom.frequency.setValueAtTime(78, now);
+  boom.frequency.exponentialRampToValueAtTime(26, now + 0.38);
+  filter.type = 'lowpass';
+  filter.frequency.setValueAtTime(1800, now);
+  filter.frequency.exponentialRampToValueAtTime(120, now + 0.34);
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.exponentialRampToValueAtTime(0.22, now + 0.012);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.42);
+  blast.connect(gain);
+  boom.connect(gain);
+  gain.connect(filter);
+  filter.connect(audio.destination);
+  blast.start(now);
+  boom.start(now);
+  blast.stop(now + 0.28);
+  boom.stop(now + 0.44);
+  playNoiseBurst(0.26, 0.09, 2600, 90);
+}
+
+function fireLevelUpLasers(timestamp) {
+  if (!meteors.length) return false;
+
+  const originX = pilot.x + pilot.w / 2;
+  const originY = pilot.y + pilot.h / 2;
+  const targets = [...meteors]
+    .map(meteor => ({
+      meteor,
+      distance: Math.hypot(meteor.x + meteor.size / 2 - originX, meteor.y + meteor.size / 2 - originY)
+    }))
+    .sort((a, b) => a.distance - b.distance)
+    .slice(0, 5)
+    .map(entry => entry.meteor);
+
+  if (!targets.length) return false;
+
+  const targetSet = new Set(targets);
+  targets.forEach(meteor => { meteor.laserDestroyed = true; });
+  meteors = meteors.filter(meteor => !targetSet.has(meteor));
+  levelLaserShots.push(...targets.map((meteor, index) => ({
+    x1: originX,
+    y1: originY,
+    x2: meteor.x + meteor.size / 2,
+    y2: meteor.y + meteor.size / 2,
+    born: timestamp,
+    offset: index * 0.04
+  })));
+  playLaserCannonSound();
+  popups.push({ text: `lasers x${targets.length}`, x: originX - 48, y: originY - 44, born: timestamp });
+  return true;
+}
+
 function playLevelLaser() {
   const audio = getAudioContext();
   if (!audio) return;
@@ -1380,7 +1447,8 @@ function countSuccessfulDodges(timestamp) {
     if (dodges % dodgesPerLevel === 0) {
       level++;
       shakePageText();
-      playLevelLaser();
+      const firedLevelLasers = fireLevelUpLasers(timestamp);
+      if (!firedLevelLasers) playLevelLaser();
       speedLevel = level;
       pilotSpinUntil = timestamp + 1100;
       statusEl.textContent = `Level ${level}: the sins move faster.`;
@@ -1406,7 +1474,7 @@ function countSuccessfulDodges(timestamp) {
     }
   }
 
-  meteors = clearMeteorsForRotation ? [] : stillFalling;
+  meteors = clearMeteorsForRotation ? [] : stillFalling.filter(meteor => !meteor.laserDestroyed);
   updateHud();
 }
 
@@ -1534,6 +1602,7 @@ function step(timestamp, token = runToken) {
     }
   }
   popups = popups.filter(popup => timestamp - popup.born < 900);
+  levelLaserShots = levelLaserShots.filter(shot => timestamp - shot.born < 420);
   awardNearMisses(timestamp);
   countSuccessfulDodges(timestamp);
 
@@ -1966,6 +2035,37 @@ function draw() {
       }
       ctx.restore();
     }
+  }
+
+  for (const shot of levelLaserShots) {
+    const age = now - shot.born - shot.offset * 1000;
+    if (age < 0 || age > 420) continue;
+    const progress = Math.min(1, age / 140);
+    const fade = Math.max(0, 1 - age / 420);
+    const endX = shot.x1 + (shot.x2 - shot.x1) * progress;
+    const endY = shot.y1 + (shot.y2 - shot.y1) * progress;
+
+    ctx.save();
+    ctx.globalAlpha = fade;
+    ctx.strokeStyle = '#ff8c00';
+    ctx.lineWidth = 6;
+    ctx.shadowColor = '#ff8c00';
+    ctx.shadowBlur = 24;
+    ctx.beginPath();
+    ctx.moveTo(shot.x1, shot.y1);
+    ctx.lineTo(endX, endY);
+    ctx.stroke();
+    ctx.strokeStyle = '#ffea00';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(shot.x1, shot.y1);
+    ctx.lineTo(endX, endY);
+    ctx.stroke();
+    ctx.fillStyle = '#ff8c00';
+    ctx.beginPath();
+    ctx.arc(shot.x2, shot.y2, 10 + (1 - fade) * 18, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
   }
 
   for (const meteor of meteors) {
