@@ -8,6 +8,20 @@ const heroTitleEl = document.querySelector('.hero h1');
 const taglineEl = document.querySelector('#tagline');
 const titleEchoesEl = document.querySelector('#title-echoes');
 const gameCardEl = document.querySelector('.game-card');
+const runeBorderSymbols = ['ᚠ', 'ᚢ', 'ᚦ', 'ᚨ', 'ᚱ', 'ᚲ', 'ᚷ', 'ᚹ', 'ᚺ', 'ᚾ', 'ᛁ', 'ᛃ', 'ᛉ', 'ᛟ', '✦', '☽'];
+const runeBorderEl = document.createElement('div');
+runeBorderEl.className = 'rune-border';
+['top', 'right', 'bottom', 'left'].forEach(side => {
+  const strip = document.createElement('div');
+  strip.className = `rune-border-side rune-border-${side}`;
+  for (let i = 0; i < (side === 'top' || side === 'bottom' ? 72 : 48); i++) {
+    const rune = document.createElement('span');
+    rune.textContent = runeBorderSymbols[i % runeBorderSymbols.length];
+    strip.append(rune);
+  }
+  runeBorderEl.append(strip);
+});
+gameCardEl?.append(runeBorderEl);
 const hitSlimeEl = document.createElement('div');
 hitSlimeEl.className = 'hit-slime';
 for (let i = 0; i < 18; i++) {
@@ -73,6 +87,7 @@ let lastRelicSpawn = 0;
 let lastEyeSpawn = 0;
 let lastPentagramSpawn = 0;
 let lastBlackHoleSpawn = 0;
+let lastMoveSoundAt = 0;
 let lastThirdEyeSpawn = 0;
 let fateModeUntil = 0;
 let levelSurgeUntil = 0;
@@ -156,6 +171,7 @@ function reset() {
   speedLevel = 1;
   frame = 0;
   resetPowerupTimers();
+  lastMoveSoundAt = 0;
   fateModeUntil = 0;
   levelSurgeUntil = 0;
   bePreparedUntil = 0;
@@ -332,10 +348,7 @@ function randomDeathSymbols() {
 }
 
 function updateTentacleClass() {
-  if (!gameCardEl) return;
-
-  gameCardEl.classList.remove('tentacle-style-1', 'tentacle-style-2', 'tentacle-style-3');
-  gameCardEl.classList.add(`tentacle-style-${((level - 1) % 3) + 1}`);
+  // Tentacles were replaced by the rune border.
 }
 
 function shakePageText() {
@@ -862,6 +875,29 @@ function playEvilLaugh() {
     voice.start(start);
     voice.stop(start + 0.24);
   });
+}
+
+function playRocketMoveSound() {
+  const audio = getAudioContext();
+  if (!audio) return;
+
+  const now = audio.currentTime;
+  const thrust = audio.createOscillator();
+  const gain = audio.createGain();
+  const filter = audio.createBiquadFilter();
+  thrust.type = 'triangle';
+  thrust.frequency.setValueAtTime(92, now);
+  thrust.frequency.exponentialRampToValueAtTime(148, now + 0.08);
+  filter.type = 'lowpass';
+  filter.frequency.setValueAtTime(620, now);
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.exponentialRampToValueAtTime(0.035, now + 0.012);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.11);
+  thrust.connect(filter);
+  filter.connect(gain);
+  gain.connect(audio.destination);
+  thrust.start(now);
+  thrust.stop(now + 0.12);
 }
 
 function playLaserCannonSound() {
@@ -1447,8 +1483,7 @@ function countSuccessfulDodges(timestamp) {
     if (dodges % dodgesPerLevel === 0) {
       level++;
       shakePageText();
-      const firedLevelLasers = fireLevelUpLasers(timestamp);
-      if (!firedLevelLasers) playLevelLaser();
+      fireLevelUpLasers(timestamp);
       speedLevel = level;
       pilotSpinUntil = timestamp + 1100;
       statusEl.textContent = `Level ${level}: the sins move faster.`;
@@ -1530,10 +1565,15 @@ function step(timestamp, token = runToken) {
   frame++;
   maybeSummonVoidWhisper(timestamp);
 
+  const movingRocket = keys.ArrowLeft || keys.a || keys.ArrowRight || keys.d || keys.ArrowUp || keys.w || keys.ArrowDown || keys.s;
   if (keys.ArrowLeft || keys.a) pilot.x -= pilotSpeed;
   if (keys.ArrowRight || keys.d) pilot.x += pilotSpeed;
   if (keys.ArrowUp || keys.w) pilot.y -= pilotSpeed;
   if (keys.ArrowDown || keys.s) pilot.y += pilotSpeed;
+  if (movingRocket && timestamp - lastMoveSoundAt > 135) {
+    playRocketMoveSound();
+    lastMoveSoundAt = timestamp;
+  }
   pilot.x = Math.max(0, Math.min(canvas.width - pilot.w, pilot.x));
   const mouthHeight = 34;
   pilot.y = Math.max(0, Math.min(canvas.height - mouthHeight - pilot.h, pilot.y));
@@ -1968,7 +2008,6 @@ function draw() {
     glowRect(x, y, 3, 10, i % 2 ? '#9dff6e' : bg.alt, 10);
   }
 
-  drawTentacleBorder();
 
   ctx.fillStyle = comboColor();
   ctx.font = 'bold 13px Papyrus, \"Cinzel Decorative\", Georgia, serif';

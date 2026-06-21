@@ -129,7 +129,35 @@ h1 {
   pointer-events: none;
   overflow: visible;
   filter: drop-shadow(0 0 12px var(--tentacle-svg-glow, #2f7a24));
+  display: none;
 }
+.rune-border {
+  position: absolute;
+  inset: -28px;
+  z-index: 3;
+  pointer-events: none;
+  color: rgba(255, 255, 255, .76);
+  text-shadow: 1px 1px 0 #000, 0 0 4px rgba(255, 255, 255, .22);
+  font-family: "Courier New", monospace;
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1;
+  mix-blend-mode: screen;
+}
+.rune-border-side {
+  position: absolute;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2px;
+}
+.rune-border-side span:nth-child(2n) { color: rgba(0, 0, 0, .82); text-shadow: 0 0 3px rgba(255, 255, 255, .65); }
+.rune-border-top, .rune-border-bottom { left: 0; right: 0; height: 14px; }
+.rune-border-top { top: 0; }
+.rune-border-bottom { bottom: 0; }
+.rune-border-left, .rune-border-right { top: 0; bottom: 0; width: 14px; flex-direction: column; }
+.rune-border-left { left: 0; }
+.rune-border-right { right: 0; }
 .tentacle-border path {
   stroke: var(--tentacle-svg-glow, #9dff6e);
   stroke-linecap: round;
