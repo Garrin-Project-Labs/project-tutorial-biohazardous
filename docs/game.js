@@ -66,6 +66,7 @@ let levelSurgeUntil = 0;
 let bePreparedUntil = 0;
 let spawnPauseUntil = 0;
 let rotationSlowUntil = 0;
+let rotationCount = 0;
 let pilotSpinUntil = 0;
 let screenRotation = 0;
 let backgroundTheme = 0;
@@ -85,6 +86,7 @@ function resetPowerupTimers(timestamp = performance.now()) {
 const pilotSpeed = 7;
 const dodgesPerLevel = 13;
 const speedBoostPerLevel = 0.9;
+const normalMeteorSpawnDelay = 420;
 const relicBonus = 13;
 const quietScreams = ['aah.', 'eep.', 'oh no.', 'tiny scream.', '...'];
 const voidColors = ['#9dff6e', '#ff1744', '#00f5ff', '#b388ff', '#ffffff', '#ffea00'];
@@ -126,6 +128,7 @@ function reset() {
   bePreparedUntil = 0;
   spawnPauseUntil = 0;
   rotationSlowUntil = 0;
+  rotationCount = 0;
   pilotSpinUntil = 0;
   screenRotation = 0;
   backgroundTheme = 0;
@@ -214,7 +217,7 @@ function spawnWelcomeHome() {
   document.body.append(message);
   welcomeHomeEls.push(message);
   welcomeHomeSpawnCount++;
-  if (welcomeHomeSpawnCount >= 7 && !sadViolinPlayed) {
+  if (welcomeHomeSpawnCount >= 3 && !sadViolinPlayed) {
     sadViolinPlayed = true;
     playSadViolinSong();
   }
@@ -758,9 +761,9 @@ function playBitCrushedBePrepared() {
 
   if ('speechSynthesis' in window) {
     const utterance = new SpeechSynthesisUtterance('be prepared.');
-    utterance.rate = 0.46;
-    utterance.pitch = 0.04;
-    utterance.volume = 0.42;
+    utterance.rate = 0.34;
+    utterance.pitch = 0;
+    utterance.volume = 0.26;
     window.speechSynthesis.cancel();
     window.speechSynthesis.speak(utterance);
   }
@@ -793,10 +796,10 @@ function playBitCrushedBePrepared() {
   crusher.curve = curve;
   crusher.oversample = 'none';
   filter.type = 'bandpass';
-  filter.frequency.setValueAtTime(210, now);
-  filter.Q.value = 8;
+  filter.frequency.setValueAtTime(92, now);
+  filter.Q.value = 9;
   output.gain.setValueAtTime(0.0001, now);
-  output.gain.exponentialRampToValueAtTime(0.08, now + 0.06);
+  output.gain.exponentialRampToValueAtTime(0.045, now + 0.06);
   output.gain.exponentialRampToValueAtTime(0.0001, now + 1.2);
   output.connect(crusher);
   crusher.connect(filter);
@@ -806,7 +809,7 @@ function playBitCrushedBePrepared() {
   whisperFilter.type = 'highpass';
   whisperFilter.frequency.setValueAtTime(620, now);
   whisperGain.gain.setValueAtTime(0.0001, now);
-  whisperGain.gain.exponentialRampToValueAtTime(0.035, now + 0.04);
+  whisperGain.gain.exponentialRampToValueAtTime(0.022, now + 0.04);
   whisperGain.gain.exponentialRampToValueAtTime(0.0001, now + 1.1);
   whisper.connect(whisperFilter);
   whisperFilter.connect(whisperGain);
@@ -819,10 +822,10 @@ function playBitCrushedBePrepared() {
     const gate = audio.createGain();
     const start = now + offset;
     voice.type = index % 2 ? 'square' : 'sawtooth';
-    voice.frequency.setValueAtTime([72, 58, 64, 45][index], start);
+    voice.frequency.setValueAtTime([38, 31, 34, 27][index], start);
     voice.detune.setValueAtTime(index % 2 ? -26 : 12, start);
     gate.gain.setValueAtTime(0.0001, start);
-    gate.gain.exponentialRampToValueAtTime(0.12, start + 0.03);
+    gate.gain.exponentialRampToValueAtTime(0.075, start + 0.03);
     gate.gain.exponentialRampToValueAtTime(0.0001, start + 0.22);
     voice.connect(gate);
     gate.connect(output);
@@ -1108,12 +1111,15 @@ function countSuccessfulDodges(timestamp) {
       if ((level - 1) % 3 === 0) {
         levelSurgeUntil = timestamp + 3600;
         bePreparedUntil = timestamp + 3000;
-        spawnPauseUntil = timestamp + 5000;
-        rotationSlowUntil = timestamp + 9000;
-        screenRotation = (screenRotation + 90) % 360;
+        rotationCount++;
+        const rotationPause = Math.max(normalMeteorSpawnDelay, 5000 - rotationCount * 760);
+        const rotationOptions = [90, 180, -90, -180];
+        spawnPauseUntil = timestamp + rotationPause;
+        rotationSlowUntil = timestamp + Math.max(2400, rotationPause + 4000);
+        screenRotation = rotationOptions[Math.floor(Math.random() * rotationOptions.length)];
         backgroundTheme = 1 + Math.floor(Math.random() * (backgroundThemes.length - 1));
         clearMeteorsForRotation = true;
-        lastSpawn = timestamp + 5000;
+        lastSpawn = timestamp + rotationPause;
         resetPowerupTimers(timestamp);
         playThunderCrash();
         playRecordScratch();
@@ -1171,7 +1177,7 @@ function step(timestamp, token = runToken) {
   pilot.x = Math.max(0, Math.min(canvas.width - pilot.w, pilot.x));
   pilot.y = Math.max(0, Math.min(canvas.height - pilot.h, pilot.y));
 
-  if (timestamp >= spawnPauseUntil && timestamp - lastSpawn > 420) {
+  if (timestamp >= spawnPauseUntil && timestamp - lastSpawn > normalMeteorSpawnDelay) {
     spawnMeteor();
     lastSpawn = timestamp;
   }
