@@ -62,7 +62,7 @@ const spaceStars = Array.from({ length: 58 }, () => ({
   drift: Math.random() * Math.PI * 2
 }));
 
-const pilot = { x: 340, y: 360, w: 34, h: 30, emoji: '🚀', name: 'Pilot' };
+const pilot = { x: 340, y: 360, w: 34, h: 30, hitInsetX: 7, hitInsetY: 6, emoji: '🚀', name: 'Pilot' };
 const keys = { ArrowLeft: false, ArrowRight: false, ArrowUp: false, ArrowDown: false, a: false, d: false, w: false, s: false };
 let meteors = [];
 let popups = [];
@@ -135,6 +135,60 @@ const meteorImpactColors = ['#ff1744', '#ffea00', '#9dff6e', '#00f5ff', '#b388ff
 const meteorSymbols = ['☄', 'ᚠ', 'ᚢ', 'ᚦ', 'ᚨ', 'ᚱ', 'ᚲ', 'ᚷ', 'ᚹ', 'ᚺ', 'ᚾ', 'ᛁ', 'ᛃ', 'ᛇ', 'ᛈ', 'ᛉ', 'ᛋ', 'ᛏ', 'ᛒ', 'ᛖ', 'ᛗ', 'ᛚ', 'ᛜ', 'ᛞ', 'ᛟ', 'ᛝ', '✦', '✧', '✶', '✹', '✷', '☽', '☾', '✺'];
 const titleSymbols = ['☄', 'ᚱ', 'ᛉ', 'ᛟ', 'ᚦ', '✦', '✧', '✶', '✹', '✷', '☽', '☾', '✺', '⛧', '🜏', '☠'];
 const deathSymbols = ['⛧', '🜏', '☠', 'ᛉ', 'ᛟ', 'ᚦ', 'ᚱ', '☽', '☾', '✹', '✺', '✶', '✷'];
+const asciiEyeArts = [
+  `  .-"""-.
+ /  ◉ ◉  \
+|    ─    |
+ \  ___  /
+  \`-...-\``,
+  `  /\_/\
+ (  o o  )
+  >  ^  <`,
+  ` .-------.
+|  O   O  |
+|    ∩    |
+ '-------'`,
+  `   .---.
+  / ◐ ◑ \
+ |   ▽   |
+  \_._./`,
+  `  <\   />
+   (• •)
+  /  V  \
+  \_____/`,
+  `  .-^-.
+ / 0 0 \
+|   -   |
+ \_===_/`,
+  `  .oOOo.
+ (  @ @  )
+  \  =  /
+   '---'`,
+  `  /-----\
+ |  -   -  |
+ |    o    |
+  \_____/`,
+  `   _   _
+  (\_/ )
+  (◌ ◌ )
+   \_=/`,
+  `  .-...-.
+ /  < >  \
+|    ^    |
+ \  ---  /`,
+  `  .:::::.
+ (::o o::)
+  :: v ::
+   ':::'`,
+  `  /\___/\
+ |  ◍ ◍  |
+ |   W   |
+  \_____/`,
+  `  ._____.
+ /  ◒ ◓  \
+|    ~    |
+ \__-__/`
+];
 const backgroundThemes = [
   { base: '#030006', mist: 'rgba(157, 255, 110, .42)', alt: '#00f5ff', nebula: '#2b0038' },
   { base: '#030014', mist: 'rgba(179, 136, 255, .46)', alt: '#ff1744', nebula: '#40008a' },
@@ -203,11 +257,7 @@ function summonVoidWhisper() {
   const isEye = Math.random() < 0.45;
 
   whisper.className = isEye ? 'void-whisper void-eye' : 'void-whisper';
-  whisper.textContent = isEye ? `  .-"""-.
- /  ◉ ◉  \
-|    ─    |
- \  ___  /
-  \`-...-\`` : 'The Void Watches';
+  whisper.textContent = isEye ? asciiEyeArts[Math.floor(Math.random() * asciiEyeArts.length)] : 'The Void Watches';
   whisper.style.left = `${Math.random() * 82 + 6}vw`;
   whisper.style.top = `${Math.random() * 78 + 8}vh`;
   whisper.style.color = voidColors[Math.floor(Math.random() * voidColors.length)];
@@ -533,6 +583,7 @@ function spawnMeteor() {
     x: Math.random() * (canvas.width - size),
     y: -size,
     size,
+    hitPad: -8,
     baseSpeed,
     speed: baseSpeed + levelSpeedBoost,
     vx: (Math.random() < 0.5 ? -1 : 1) * (0.25 + Math.random() * 0.45),
