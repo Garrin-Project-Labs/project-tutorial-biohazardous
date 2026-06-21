@@ -106,7 +106,7 @@ function resetPowerupTimers(timestamp = performance.now()) {
 }
 const pilotSpeed = 7;
 const dodgesPerLevel = 13;
-const speedBoostPerLevel = 0.9;
+const speedBoostPerLevel = 0.52;
 const normalMeteorSpawnDelay = 420;
 const relicBonus = 13;
 const quietScreams = ['aah.', 'eep.', 'oh no.', 'tiny scream.', '...'];
@@ -299,7 +299,7 @@ function rewriteOneEchoToDead() {
 
   nextEcho.classList.add('dead-echo');
   nextEcho.textContent = '';
-  for (const char of 'You Should Stay Dead.') {
+  for (const char of 'Stay Dead...') {
     const letter = document.createElement('span');
     letter.className = 'title-letter';
     letter.textContent = char === ' ' ? '\u00a0' : char;
@@ -502,7 +502,7 @@ function awardPoints(basePoints) {
 
 function spawnMeteor() {
   const size = Math.max(pilot.w, pilot.h) + Math.random() * 24;
-  const baseSpeed = 2.7 + Math.random() * 1.3;
+  const baseSpeed = 2.1 + Math.random() * 0.95;
   const effectiveSpeedLevel = performance.now() < rotationSlowUntil ? Math.max(1, speedLevel - 2) : speedLevel;
   const levelSpeedBoost = (effectiveSpeedLevel - 1) * speedBoostPerLevel;
   meteors.push({
@@ -1447,7 +1447,8 @@ function step(timestamp, token = runToken) {
   if (keys.ArrowUp || keys.w) pilot.y -= pilotSpeed;
   if (keys.ArrowDown || keys.s) pilot.y += pilotSpeed;
   pilot.x = Math.max(0, Math.min(canvas.width - pilot.w, pilot.x));
-  pilot.y = Math.max(0, Math.min(canvas.height - pilot.h, pilot.y));
+  const mouthHeight = 34;
+  pilot.y = Math.max(0, Math.min(canvas.height - mouthHeight - pilot.h, pilot.y));
 
   if (timestamp >= spawnPauseUntil && timestamp - lastSpawn > normalMeteorSpawnDelay) {
     spawnMeteor();
@@ -1643,15 +1644,15 @@ function drawGiantBlinkingEye(bg) {
   ctx.scale(1, open);
 
   const eyeGlow = ctx.createRadialGradient(0, 0, 20, 0, 0, canvas.width * 0.48);
-  eyeGlow.addColorStop(0, 'rgba(255, 23, 68, .28)');
-  eyeGlow.addColorStop(0.35, bg.mist || 'rgba(179, 136, 255, .18)');
+  eyeGlow.addColorStop(0, 'rgba(255, 255, 255, .22)');
+  eyeGlow.addColorStop(0.35, 'rgba(160, 160, 160, .16)');
   eyeGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
   ctx.fillStyle = eyeGlow;
   ctx.beginPath();
   ctx.ellipse(0, 0, canvas.width * 0.46, canvas.height * 0.34, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  ctx.strokeStyle = 'rgba(255, 23, 68, .26)';
+  ctx.strokeStyle = 'rgba(255, 255, 255, .24)';
   ctx.lineWidth = 7;
   ctx.beginPath();
   ctx.ellipse(0, 0, canvas.width * 0.42, canvas.height * 0.28, 0, 0, Math.PI * 2);
@@ -1662,11 +1663,49 @@ function drawGiantBlinkingEye(bg) {
   ctx.arc(0, 0, canvas.width * 0.075, 0, Math.PI * 2);
   ctx.fill();
 
-  ctx.strokeStyle = 'rgba(179, 136, 255, .3)';
+  ctx.strokeStyle = 'rgba(255, 255, 255, .26)';
   ctx.lineWidth = 4;
   ctx.beginPath();
   ctx.arc(0, 0, canvas.width * 0.13, 0, Math.PI * 2);
   ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawGiantMouth() {
+  const mouthHeight = 34;
+  const y = canvas.height - mouthHeight;
+  const pulse = Math.sin(frame * 0.08) * 2;
+
+  ctx.save();
+  ctx.fillStyle = '#050006';
+  ctx.shadowColor = '#000';
+  ctx.shadowBlur = 18;
+  ctx.beginPath();
+  ctx.moveTo(0, y + 8 + pulse);
+  ctx.quadraticCurveTo(canvas.width / 2, y - 7 - pulse, canvas.width, y + 8 + pulse);
+  ctx.lineTo(canvas.width, canvas.height);
+  ctx.lineTo(0, canvas.height);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.strokeStyle = 'rgba(255, 255, 255, .20)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(0, y + 9 + pulse);
+  ctx.quadraticCurveTo(canvas.width / 2, y - 7 - pulse, canvas.width, y + 9 + pulse);
+  ctx.stroke();
+
+  ctx.fillStyle = 'rgba(255, 255, 255, .72)';
+  for (let x = 10; x < canvas.width; x += 28) {
+    const tooth = 8 + ((x / 28) % 2) * 5;
+    ctx.beginPath();
+    ctx.moveTo(x, y + 8 + pulse);
+    ctx.lineTo(x + 8, y + 8 + pulse);
+    ctx.lineTo(x + 4, y + 8 + pulse + tooth);
+    ctx.closePath();
+    ctx.fill();
+  }
 
   ctx.restore();
 }
@@ -1780,6 +1819,7 @@ function draw() {
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   drawGiantBlinkingEye(bg);
   drawFlyingSpace(bg);
+  drawGiantMouth();
 
   if (fateMode) {
     ctx.fillStyle = `rgba(255, 255, 255, ${0.06 + Math.abs(Math.sin(frame * 0.08)) * 0.05})`;
