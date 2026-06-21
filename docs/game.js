@@ -106,6 +106,7 @@ let backgroundTheme = 0;
 let nextEyeBlinkAt = 0;
 let eyeBlinkUntil = 0;
 let frame = 0;
+let lastFrameTimestamp = 0;
 let audioContext = null;
 let bassMusic = null;
 let nextVoidWhisperAt = 0;
@@ -126,7 +127,7 @@ function resetPowerupTimers(timestamp = performance.now()) {
 const pilotSpeed = 7;
 const dodgesPerLevel = 13;
 const speedBoostPerLevel = 0.52;
-const normalMeteorSpawnDelay = 420;
+const normalMeteorSpawnDelay = 560;
 const relicBonus = 13;
 const quietScreams = ['aah.', 'eep.', 'oh no.', 'tiny scream.', '...'];
 const voidColors = ['#9dff6e', '#ff1744', '#00f5ff', '#b388ff', '#ffffff', '#ffea00'];
@@ -170,6 +171,7 @@ function reset() {
   level = 1;
   speedLevel = 1;
   frame = 0;
+  lastFrameTimestamp = 0;
   resetPowerupTimers();
   lastMoveSoundAt = 0;
   fateModeUntil = 0;
@@ -1558,18 +1560,21 @@ function pullPowerupTowardPilot(powerup, strength = 0.018) {
 function step(timestamp, token = runToken) {
   if (!running || token !== runToken) return;
   if (paused) {
+    lastFrameTimestamp = timestamp;
     draw();
     animationFrameId = requestAnimationFrame(nextTimestamp => step(nextTimestamp, token));
     return;
   }
+  const delta = lastFrameTimestamp ? Math.min(1.6, Math.max(0.35, (timestamp - lastFrameTimestamp) / 16.67)) : 1;
+  lastFrameTimestamp = timestamp;
   frame++;
   maybeSummonVoidWhisper(timestamp);
 
   const movingRocket = keys.ArrowLeft || keys.a || keys.ArrowRight || keys.d || keys.ArrowUp || keys.w || keys.ArrowDown || keys.s;
-  if (keys.ArrowLeft || keys.a) pilot.x -= pilotSpeed;
-  if (keys.ArrowRight || keys.d) pilot.x += pilotSpeed;
-  if (keys.ArrowUp || keys.w) pilot.y -= pilotSpeed;
-  if (keys.ArrowDown || keys.s) pilot.y += pilotSpeed;
+  if (keys.ArrowLeft || keys.a) pilot.x -= pilotSpeed * delta;
+  if (keys.ArrowRight || keys.d) pilot.x += pilotSpeed * delta;
+  if (keys.ArrowUp || keys.w) pilot.y -= pilotSpeed * delta;
+  if (keys.ArrowDown || keys.s) pilot.y += pilotSpeed * delta;
   if (movingRocket && timestamp - lastMoveSoundAt > 135) {
     playRocketMoveSound();
     lastMoveSoundAt = timestamp;
@@ -1610,8 +1615,8 @@ function step(timestamp, token = runToken) {
   }
 
   for (const meteor of meteors) {
-    meteor.y += meteor.speed;
-    meteor.x += meteor.vx;
+    meteor.y += meteor.speed * delta;
+    meteor.x += meteor.vx * delta;
     if (!meteor.mouthTouched && meteor.y + meteor.size >= canvas.height - 34) {
       meteor.mouthTouched = true;
       meteor.color = meteorImpactColors[Math.floor(Math.random() * meteorImpactColors.length)];
@@ -1647,8 +1652,8 @@ function step(timestamp, token = runToken) {
   countSuccessfulDodges(timestamp);
 
   if (relic) {
-    relic.y += relic.speed;
-    relic.spin += relic.spinSpeed;
+    relic.y += relic.speed * delta;
+    relic.spin += relic.spinSpeed * delta;
     pullPowerupTowardPilot(relic, 0.022);
 
     if (hit(pilot, relic)) {
@@ -1671,8 +1676,8 @@ function step(timestamp, token = runToken) {
   }
 
   if (eyePowerup) {
-    eyePowerup.y += eyePowerup.speed;
-    eyePowerup.spin += eyePowerup.spinSpeed;
+    eyePowerup.y += eyePowerup.speed * delta;
+    eyePowerup.spin += eyePowerup.spinSpeed * delta;
     pullPowerupTowardPilot(eyePowerup, 0.022);
 
     if (hit(pilot, eyePowerup)) {
@@ -1687,8 +1692,8 @@ function step(timestamp, token = runToken) {
   }
 
   if (pentagramPowerup) {
-    pentagramPowerup.y += pentagramPowerup.speed;
-    pentagramPowerup.spin += pentagramPowerup.spinSpeed;
+    pentagramPowerup.y += pentagramPowerup.speed * delta;
+    pentagramPowerup.spin += pentagramPowerup.spinSpeed * delta;
     pullPowerupTowardPilot(pentagramPowerup, 0.022);
 
     if (hit(pilot, pentagramPowerup)) {
@@ -1703,13 +1708,13 @@ function step(timestamp, token = runToken) {
   }
 
   if (thirdEyePowerup) {
-    thirdEyePowerup.y += thirdEyePowerup.speed;
-    thirdEyePowerup.spin += thirdEyePowerup.spinSpeed;
+    thirdEyePowerup.y += thirdEyePowerup.speed * delta;
+    thirdEyePowerup.spin += thirdEyePowerup.spinSpeed * delta;
     pullPowerupTowardPilot(thirdEyePowerup, 0.022);
 
     if (hit(pilot, thirdEyePowerup)) {
       thirdEyePowerup = null;
-      speedLevel = Math.max(3, speedLevel - 3);
+      speedLevel = speedLevel <= 3 ? speedLevel : Math.max(3, speedLevel - 3);
       for (const meteor of meteors) {
         meteor.speed = (meteor.baseSpeed || meteor.speed) + Math.max(0, speedLevel - 1) * speedBoostPerLevel;
       }
@@ -1723,8 +1728,8 @@ function step(timestamp, token = runToken) {
   }
 
   if (blackHolePowerup) {
-    blackHolePowerup.y += blackHolePowerup.speed;
-    blackHolePowerup.spin += blackHolePowerup.spinSpeed;
+    blackHolePowerup.y += blackHolePowerup.speed * delta;
+    blackHolePowerup.spin += blackHolePowerup.spinSpeed * delta;
 
     if (hit(pilot, blackHolePowerup)) {
       blackHolePowerup = null;
@@ -1792,24 +1797,48 @@ function drawGiantBlinkingEye(bg) {
   eyeGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
   ctx.fillStyle = eyeGlow;
   ctx.beginPath();
-  ctx.ellipse(0, 0, canvas.width * 0.46, canvas.height * 0.34, 0, 0, Math.PI * 2);
+  ctx.moveTo(-canvas.width * 0.46, 0);
+  ctx.lineTo(-canvas.width * 0.22, -canvas.height * 0.28);
+  ctx.lineTo(0, -canvas.height * 0.34);
+  ctx.lineTo(canvas.width * 0.22, -canvas.height * 0.28);
+  ctx.lineTo(canvas.width * 0.46, 0);
+  ctx.lineTo(canvas.width * 0.22, canvas.height * 0.28);
+  ctx.lineTo(0, canvas.height * 0.34);
+  ctx.lineTo(-canvas.width * 0.22, canvas.height * 0.28);
+  ctx.closePath();
   ctx.fill();
 
   ctx.strokeStyle = 'rgba(255, 255, 255, .24)';
   ctx.lineWidth = 7;
   ctx.beginPath();
-  ctx.ellipse(0, 0, canvas.width * 0.42, canvas.height * 0.28, 0, 0, Math.PI * 2);
+  ctx.moveTo(-canvas.width * 0.42, 0);
+  ctx.lineTo(-canvas.width * 0.2, -canvas.height * 0.23);
+  ctx.lineTo(0, -canvas.height * 0.28);
+  ctx.lineTo(canvas.width * 0.2, -canvas.height * 0.23);
+  ctx.lineTo(canvas.width * 0.42, 0);
+  ctx.lineTo(canvas.width * 0.2, canvas.height * 0.23);
+  ctx.lineTo(0, canvas.height * 0.28);
+  ctx.lineTo(-canvas.width * 0.2, canvas.height * 0.23);
+  ctx.closePath();
   ctx.stroke();
 
   ctx.fillStyle = 'rgba(0, 0, 0, .62)';
   ctx.beginPath();
-  ctx.arc(0, 0, canvas.width * 0.075, 0, Math.PI * 2);
+  ctx.moveTo(0, -canvas.width * 0.09);
+  ctx.lineTo(canvas.width * 0.075, 0);
+  ctx.lineTo(0, canvas.width * 0.09);
+  ctx.lineTo(-canvas.width * 0.075, 0);
+  ctx.closePath();
   ctx.fill();
 
   ctx.strokeStyle = 'rgba(255, 255, 255, .26)';
   ctx.lineWidth = 4;
   ctx.beginPath();
-  ctx.arc(0, 0, canvas.width * 0.13, 0, Math.PI * 2);
+  ctx.moveTo(0, -canvas.width * 0.15);
+  ctx.lineTo(canvas.width * 0.13, 0);
+  ctx.lineTo(0, canvas.width * 0.15);
+  ctx.lineTo(-canvas.width * 0.13, 0);
+  ctx.closePath();
   ctx.stroke();
 
   ctx.restore();
