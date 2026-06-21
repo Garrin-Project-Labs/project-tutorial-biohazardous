@@ -67,6 +67,13 @@ const keys = { ArrowLeft: false, ArrowRight: false, ArrowUp: false, ArrowDown: f
 let meteors = [];
 let popups = [];
 let levelLaserShots = [];
+const transcendWord = 'TRANSCEND';
+let transcendLetters = [];
+let transcendFilled = Array(transcendWord.length).fill(false);
+let transcendX = 210;
+let transcendVx = 0.62;
+let nextTranscendLetterAt = 0;
+let transcendAnimation = null;
 let relic = null;
 let eyePowerup = null;
 let pentagramPowerup = null;
@@ -214,6 +221,12 @@ function reset() {
   meteors = [];
   popups = [];
   levelLaserShots = [];
+  transcendLetters = [];
+  transcendFilled = Array(transcendWord.length).fill(false);
+  transcendX = canvas.width / 2 - 150;
+  transcendVx = 0.62;
+  nextTranscendLetterAt = performance.now() + 1800;
+  transcendAnimation = null;
   relic = null;
   eyePowerup = null;
   pentagramPowerup = null;
@@ -1599,6 +1612,141 @@ function glowRect(x, y, w, h, color, blur = 12) {
   ctx.restore();
 }
 
+function isTranscendAnimating(timestamp = performance.now()) {
+  return transcendAnimation && timestamp - transcendAnimation.born < 2600;
+}
+
+function updateTranscendSystem(timestamp, delta) {
+  const mouthY = canvas.height - 34;
+  const wordWidth = 300;
+  const wordY = mouthY - 42;
+
+  if (isTranscendAnimating(timestamp)) {
+    meteors = [];
+    return;
+  }
+
+  if (transcendAnimation && timestamp - transcendAnimation.born >= 2600) {
+    transcendAnimation = null;
+    transcendFilled = Array(transcendWord.length).fill(false);
+    transcendLetters = [];
+    nextTranscendLetterAt = timestamp + 1800;
+  }
+
+  transcendX += transcendVx * delta;
+  if (transcendX <= 12 || transcendX + wordWidth >= canvas.width - 12) {
+    transcendVx *= -1;
+    transcendX = Math.max(12, Math.min(canvas.width - 12 - wordWidth, transcendX));
+  }
+
+  if (timestamp >= nextTranscendLetterAt && transcendLetters.length < 3 && !transcendFilled.every(Boolean)) {
+    const pendingIndexes = new Set(transcendLetters.map(letter => letter.index));
+    const openIndexes = transcendFilled
+      .map((filled, index) => filled || pendingIndexes.has(index) ? -1 : index)
+      .filter(index => index >= 0);
+    if (!openIndexes.length) {
+      nextTranscendLetterAt = timestamp + 500;
+      return;
+    }
+    const index = openIndexes[Math.floor(Math.random() * openIndexes.length)];
+    transcendLetters.push({
+      letter: transcendWord[index],
+      index,
+      x: 32 + Math.random() * (canvas.width - 64),
+      y: -24,
+      vy: 1.35 + Math.random() * 0.55,
+      sway: Math.random() * Math.PI * 2
+    });
+    nextTranscendLetterAt = timestamp + 1900 + Math.random() * 2200;
+  }
+
+  for (const letter of transcendLetters) {
+    letter.y += letter.vy * delta;
+    letter.x += Math.sin(frame * 0.04 + letter.sway) * 0.28 * delta;
+    if (letter.y >= mouthY - 4) {
+      transcendFilled[letter.index] = true;
+      letter.consumed = true;
+      popups.push({ text: letter.letter, x: letter.x - 6, y: mouthY - 18, born: timestamp });
+    }
+  }
+  transcendLetters = transcendLetters.filter(letter => !letter.consumed && letter.y < canvas.height + 30);
+
+  if (transcendFilled.every(Boolean) && !transcendAnimation) {
+    transcendAnimation = { born: timestamp, startX: transcendX, startY: wordY };
+    meteors = [];
+    transcendLetters = [];
+    statusEl.textContent = 'TRANSCEND complete.';
+  }
+}
+
+function drawTranscendSystem(now) {
+  const mouthY = canvas.height - 34;
+  const word = transcendWord;
+  const spacing = 32;
+  const fontSize = 34;
+  const baseY = mouthY - 42;
+  let x = transcendX;
+  let y = baseY;
+  let rotation = 0;
+  let alpha = 1;
+
+  if (transcendAnimation) {
+    const age = now - transcendAnimation.born;
+    const raise = Math.min(1, age / 850);
+    const hold = Math.max(0, Math.min(1, (age - 850) / 650));
+    const slam = Math.max(0, Math.min(1, (age - 1500) / 700));
+    x = transcendAnimation.startX;
+    y = transcendAnimation.startY + (canvas.height / 2 - transcendAnimation.startY) * raise;
+    if (hold > 0) rotation = hold * Math.PI * 2;
+    if (slam > 0) {
+      y = canvas.height / 2 + (canvas.height + 80 - canvas.height / 2) * Math.pow(slam, 2.2);
+      rotation = Math.PI * 2 + slam * Math.PI * 3;
+      alpha = 1 - Math.max(0, (slam - 0.6) / 0.4);
+    }
+  }
+
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.font = `900 ${fontSize}px 'Courier New', monospace`;
+  ctx.lineWidth = 2;
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.translate(x + (word.length * spacing) / 2, y);
+  ctx.rotate(rotation);
+  ctx.translate(-(word.length * spacing) / 2, 0);
+
+  for (let i = 0; i < word.length; i++) {
+    const lx = i * spacing;
+    ctx.strokeStyle = '#ffffff';
+    ctx.shadowColor = '#ffffff';
+    ctx.shadowBlur = 8;
+    ctx.strokeText(word[i], lx, 0);
+    if (transcendFilled[i] || transcendAnimation) {
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText(word[i], lx, 0);
+    } else {
+      ctx.fillStyle = 'rgba(0, 0, 0, .72)';
+      ctx.fillText(word[i], lx, 0);
+    }
+  }
+  ctx.restore();
+
+  for (const letter of transcendLetters) {
+    ctx.save();
+    ctx.font = `900 30px 'Courier New', monospace`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#ffffff';
+    ctx.strokeStyle = '#050006';
+    ctx.lineWidth = 5;
+    ctx.shadowColor = '#ffffff';
+    ctx.shadowBlur = 12;
+    ctx.strokeText(letter.letter, letter.x, letter.y);
+    ctx.fillText(letter.letter, letter.x, letter.y);
+    ctx.restore();
+  }
+}
+
 function pullPowerupTowardPilot(powerup, strength = 0.018) {
   if (!powerup || performance.now() >= blackHoleUntil) return;
 
@@ -1633,8 +1781,10 @@ function step(timestamp, token = runToken) {
   pilot.x = Math.max(0, Math.min(canvas.width - pilot.w, pilot.x));
   const mouthHeight = 34;
   pilot.y = Math.max(0, Math.min(canvas.height - mouthHeight - pilot.h, pilot.y));
+  updateTranscendSystem(timestamp, delta);
+  const transcendLockout = isTranscendAnimating(timestamp);
 
-  if (timestamp >= spawnPauseUntil && timestamp - lastSpawn > normalMeteorSpawnDelay) {
+  if (!transcendLockout && timestamp >= spawnPauseUntil && timestamp - lastSpawn > normalMeteorSpawnDelay) {
     spawnMeteor();
     lastSpawn = timestamp;
   }
@@ -1664,6 +1814,8 @@ function step(timestamp, token = runToken) {
     lastThirdEyeSpawn = timestamp;
     thirdEyeCooldownUntil = timestamp + 26000;
   }
+
+  if (transcendLockout) meteors = [];
 
   for (const meteor of meteors) {
     meteor.y += meteor.speed * delta;
@@ -2051,6 +2203,7 @@ function draw() {
   drawGiantBlinkingEye(bg);
   drawFlyingSpace(bg);
   drawGiantMouth();
+  drawTranscendSystem(now);
 
   if (fateMode) {
     ctx.fillStyle = `rgba(255, 255, 255, ${0.06 + Math.abs(Math.sin(frame * 0.08)) * 0.05})`;
