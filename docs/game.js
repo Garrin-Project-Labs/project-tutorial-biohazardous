@@ -69,7 +69,9 @@ let popups = [];
 let levelLaserShots = [];
 const transcendWord = 'TRANSCEND';
 let transcendLetters = [];
+let transcendSpitLetters = [];
 let transcendFilled = Array(transcendWord.length).fill(false);
+let transcendenceCount = 0;
 let transcendX = 210;
 let transcendVx = 0.62;
 let nextTranscendLetterAt = 0;
@@ -222,7 +224,9 @@ function reset() {
   popups = [];
   levelLaserShots = [];
   transcendLetters = [];
+  transcendSpitLetters = [];
   transcendFilled = Array(transcendWord.length).fill(false);
+  transcendenceCount = 0;
   transcendX = canvas.width / 2 - 150;
   transcendVx = 0.62;
   nextTranscendLetterAt = performance.now() + 1800;
@@ -1616,6 +1620,53 @@ function isTranscendAnimating(timestamp = performance.now()) {
   return transcendAnimation && timestamp - transcendAnimation.born < 2600;
 }
 
+function spawnTranscendSpitLetters(timestamp) {
+  const collected = transcendFilled
+    .map((filled, index) => filled ? { letter: transcendWord[index], index } : null)
+    .filter(Boolean);
+
+  if (!collected.length) return false;
+
+  const mouthY = canvas.height - 34;
+  transcendSpitLetters.push(...collected.map(({ letter }, i) => ({
+    letter,
+    x: transcendX + 18 + i * 32,
+    y: mouthY - 4,
+    vx: (Math.random() < 0.5 ? -1 : 1) * (1.2 + Math.random() * 3.2),
+    vy: -(7.5 + Math.random() * 5.5),
+    gravity: 0.24 + Math.random() * 0.08,
+    size: 28,
+    born: timestamp
+  })));
+  transcendFilled = Array(transcendWord.length).fill(false);
+  transcendLetters = [];
+  transcendAnimation = null;
+  transcendenceCount = 0;
+  nextTranscendLetterAt = timestamp + 1400;
+  statusEl.textContent = 'The mouth rejected TRANSCEND.';
+  return true;
+}
+
+function triggerPlayerHit(timestamp, message = `Bonked! ${whisperScream()} Try again.`) {
+  running = false;
+  combo = 0;
+  nextComboBellAt = 5;
+  stopBassMusic();
+  playQuietScream();
+  playRocketExplosion();
+  hitExplosion = { x: pilot.x + pilot.w / 2, y: pilot.y + pilot.h / 2, born: performance.now() };
+  pilotVisible = false;
+  setTimeout(() => { hitExplosion = null; draw(); }, 650);
+  playSadGameOverJingle();
+  playEvilLaugh();
+  statusEl.textContent = message;
+  animationFrameId = null;
+  showSlimeDrips();
+  startDeadEchoRewrite();
+  showWelcomeHome();
+  draw();
+}
+
 function updateTranscendSystem(timestamp, delta) {
   const mouthY = canvas.height - 34;
   const wordWidth = 300;
@@ -1639,30 +1690,30 @@ function updateTranscendSystem(timestamp, delta) {
     transcendX = Math.max(12, Math.min(canvas.width - 12 - wordWidth, transcendX));
   }
 
-  if (timestamp >= nextTranscendLetterAt && transcendLetters.length < 3 && !transcendFilled.every(Boolean)) {
-    const pendingIndexes = new Set(transcendLetters.map(letter => letter.index));
-    const openIndexes = transcendFilled
-      .map((filled, index) => filled || pendingIndexes.has(index) ? -1 : index)
-      .filter(index => index >= 0);
-    if (!openIndexes.length) {
-      nextTranscendLetterAt = timestamp + 500;
-      return;
-    }
-    const index = openIndexes[Math.floor(Math.random() * openIndexes.length)];
+  if (timestamp >= nextTranscendLetterAt && !transcendLetters.length && !transcendFilled.every(Boolean)) {
+    const index = transcendFilled.findIndex(filled => !filled);
+    if (index < 0) return;
+    const slotX = transcendX + 16 + index * 32;
     transcendLetters.push({
       letter: transcendWord[index],
       index,
-      x: 32 + Math.random() * (canvas.width - 64),
+      x: Math.max(32, Math.min(canvas.width - 32, slotX + (Math.random() * 48 - 24))),
       y: -24,
-      vy: 1.35 + Math.random() * 0.55,
-      sway: Math.random() * Math.PI * 2
+      vy: 1.35 + Math.random() * 0.45,
+      sway: Math.random() * Math.PI * 2,
+      size: 30
     });
-    nextTranscendLetterAt = timestamp + 1900 + Math.random() * 2200;
+    nextTranscendLetterAt = timestamp + 900;
   }
 
   for (const letter of transcendLetters) {
     letter.y += letter.vy * delta;
     letter.x += Math.sin(frame * 0.04 + letter.sway) * 0.28 * delta;
+    if (hit(pilot, { x: letter.x - letter.size / 2, y: letter.y - letter.size / 2, size: letter.size, hitPad: -6 })) {
+      spawnTranscendSpitLetters(timestamp);
+      letter.consumed = true;
+      continue;
+    }
     if (letter.y >= mouthY - 4) {
       transcendFilled[letter.index] = true;
       letter.consumed = true;
@@ -1671,7 +1722,15 @@ function updateTranscendSystem(timestamp, delta) {
   }
   transcendLetters = transcendLetters.filter(letter => !letter.consumed && letter.y < canvas.height + 30);
 
+  for (const letter of transcendSpitLetters) {
+    letter.x += letter.vx * delta;
+    letter.y += letter.vy * delta;
+    letter.vy += letter.gravity * delta;
+  }
+  transcendSpitLetters = transcendSpitLetters.filter(letter => letter.y < canvas.height + 48 && timestamp - letter.born < 5200);
+
   if (transcendFilled.every(Boolean) && !transcendAnimation) {
+    transcendenceCount++;
     transcendAnimation = { born: timestamp, startX: transcendX, startY: wordY };
     meteors = [];
     transcendLetters = [];
@@ -1707,7 +1766,7 @@ function drawTranscendSystem(now) {
 
   ctx.save();
   ctx.globalAlpha = alpha;
-  ctx.font = `900 ${fontSize}px 'Courier New', monospace`;
+  ctx.font = `900 ${fontSize}px 'Creepster', 'Nosifer', 'Metal Mania', 'Cinzel Decorative', Georgia, serif`;
   ctx.lineWidth = 2;
   ctx.textAlign = 'left';
   ctx.textBaseline = 'middle';
@@ -1717,12 +1776,12 @@ function drawTranscendSystem(now) {
 
   for (let i = 0; i < word.length; i++) {
     const lx = i * spacing;
-    ctx.strokeStyle = '#ffffff';
-    ctx.shadowColor = '#ffffff';
-    ctx.shadowBlur = 8;
+    ctx.strokeStyle = '#ffcf33';
+    ctx.shadowColor = '#9dff6e';
+    ctx.shadowBlur = 12;
     ctx.strokeText(word[i], lx, 0);
     if (transcendFilled[i] || transcendAnimation) {
-      ctx.fillStyle = '#ffffff';
+      ctx.fillStyle = '#ffcf33';
       ctx.fillText(word[i], lx, 0);
     } else {
       ctx.fillStyle = 'rgba(0, 0, 0, .72)';
@@ -1733,14 +1792,29 @@ function drawTranscendSystem(now) {
 
   for (const letter of transcendLetters) {
     ctx.save();
-    ctx.font = `900 30px 'Courier New', monospace`;
+    ctx.font = `900 30px 'Creepster', 'Nosifer', 'Metal Mania', 'Cinzel Decorative', Georgia, serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = '#ffcf33';
     ctx.strokeStyle = '#050006';
     ctx.lineWidth = 5;
-    ctx.shadowColor = '#ffffff';
-    ctx.shadowBlur = 12;
+    ctx.shadowColor = '#9dff6e';
+    ctx.shadowBlur = 16;
+    ctx.strokeText(letter.letter, letter.x, letter.y);
+    ctx.fillText(letter.letter, letter.x, letter.y);
+    ctx.restore();
+  }
+
+  for (const letter of transcendSpitLetters) {
+    ctx.save();
+    ctx.font = `900 28px 'Creepster', 'Nosifer', 'Metal Mania', 'Cinzel Decorative', Georgia, serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#ffcf33';
+    ctx.strokeStyle = '#050006';
+    ctx.lineWidth = 5;
+    ctx.shadowColor = '#9dff6e';
+    ctx.shadowBlur = 18;
     ctx.strokeText(letter.letter, letter.x, letter.y);
     ctx.fillText(letter.letter, letter.x, letter.y);
     ctx.restore();
@@ -1946,25 +2020,16 @@ function step(timestamp, token = runToken) {
     }
   }
 
+  for (const letter of transcendSpitLetters) {
+    if (hit(pilot, { x: letter.x - letter.size / 2, y: letter.y - letter.size / 2, size: letter.size, hitPad: -5 })) {
+      triggerPlayerHit(timestamp, 'TRANSCEND rejected you. Try again.');
+      return;
+    }
+  }
+
   for (const meteor of meteors) {
     if (hit(pilot, meteor)) {
-      running = false;
-      combo = 0;
-      nextComboBellAt = 5;
-      stopBassMusic();
-      playQuietScream();
-      playRocketExplosion();
-      hitExplosion = { x: pilot.x + pilot.w / 2, y: pilot.y + pilot.h / 2, born: performance.now() };
-      pilotVisible = false;
-      setTimeout(() => { hitExplosion = null; draw(); }, 650);
-      playSadGameOverJingle();
-      playEvilLaugh();
-      statusEl.textContent = `Bonked! ${whisperScream()} Try again.`;
-      animationFrameId = null;
-      showSlimeDrips();
-      startDeadEchoRewrite();
-      showWelcomeHome();
-      draw();
+      triggerPlayerHit(timestamp);
       return;
     }
   }
@@ -2260,6 +2325,11 @@ function draw() {
   } else {
     glowText(`COMBO ${combo.toFixed(2)}`, 22, 28, comboColor(), 8, 1.5, '#050006');
   }
+
+  ctx.save();
+  ctx.font = 'bold 12px "Cinzel Decorative", Georgia, serif';
+  glowText(`TRANSCEDENCE ${transcendenceCount}`, 22, 48, '#ffcf33', 10, 2, '#050006');
+  ctx.restore();
 
   if (fateMode) {
     ctx.fillStyle = '#050006';
