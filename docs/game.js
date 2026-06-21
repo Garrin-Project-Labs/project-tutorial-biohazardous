@@ -1625,6 +1625,58 @@ function isTranscendAnimating(timestamp = performance.now()) {
   return transcendAnimation && timestamp - transcendAnimation.born < 1550;
 }
 
+function playTranscendJackpot() {
+  const audio = getAudioContext();
+  if (!audio) return;
+
+  const now = audio.currentTime;
+  const master = audio.createGain();
+  const filter = audio.createBiquadFilter();
+  master.gain.setValueAtTime(0.0001, now);
+  master.gain.exponentialRampToValueAtTime(0.16, now + 0.05);
+  master.gain.exponentialRampToValueAtTime(0.0001, now + 3.2);
+  filter.type = 'highpass';
+  filter.frequency.setValueAtTime(280, now);
+  master.connect(filter);
+  filter.connect(audio.destination);
+
+  const notes = [1046.5, 1318.5, 1568, 2093, 1568, 1318.5, 1760, 2349.3];
+  for (let i = 0; i < 26; i++) {
+    const start = now + i * 0.105;
+    const coin = audio.createOscillator();
+    const ring = audio.createOscillator();
+    const gain = audio.createGain();
+    coin.type = 'square';
+    ring.type = 'sine';
+    coin.frequency.setValueAtTime(notes[i % notes.length], start);
+    coin.frequency.exponentialRampToValueAtTime(notes[(i + 2) % notes.length] * 0.92, start + 0.08);
+    ring.frequency.setValueAtTime(notes[(i + 3) % notes.length] * 1.5, start);
+    gain.gain.setValueAtTime(0.0001, start);
+    gain.gain.exponentialRampToValueAtTime(0.045 + (i % 4) * 0.008, start + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.16);
+    coin.connect(gain);
+    ring.connect(gain);
+    gain.connect(master);
+    coin.start(start);
+    ring.start(start);
+    coin.stop(start + 0.16);
+    ring.stop(start + 0.12);
+  }
+
+  const roll = audio.createOscillator();
+  const rollGain = audio.createGain();
+  roll.type = 'triangle';
+  roll.frequency.setValueAtTime(196, now);
+  roll.frequency.exponentialRampToValueAtTime(784, now + 2.5);
+  rollGain.gain.setValueAtTime(0.0001, now);
+  rollGain.gain.exponentialRampToValueAtTime(0.035, now + 0.12);
+  rollGain.gain.exponentialRampToValueAtTime(0.0001, now + 3.1);
+  roll.connect(rollGain);
+  rollGain.connect(master);
+  roll.start(now);
+  roll.stop(now + 3.15);
+}
+
 function playTranscendGunshot() {
   const audio = getAudioContext();
   if (!audio) return;
@@ -1789,6 +1841,7 @@ function updateTranscendSystem(timestamp, delta) {
   if (transcendFilled.every(Boolean) && !transcendAnimation) {
     transcendenceCount++;
     transcendAnimation = { born: timestamp, startX: transcendX, startY: wordY };
+    playTranscendJackpot();
     meteors = [];
     transcendLetters = [];
     statusEl.textContent = 'TRANSCEND complete.';
