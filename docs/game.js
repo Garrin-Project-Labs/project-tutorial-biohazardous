@@ -73,6 +73,8 @@ let transcendSpitLetters = [];
 let transcendCollectedLetters = [];
 let transcendSpitQueue = [];
 let nextTranscendSpitAt = 0;
+let transcendLetterSpeedBoost = 0;
+let transcendShakeUntil = 0;
 let transcendFilled = Array(transcendWord.length).fill(false);
 let transcendenceCount = 0;
 let transcendX = 210;
@@ -231,6 +233,8 @@ function reset() {
   transcendCollectedLetters = [];
   transcendSpitQueue = [];
   nextTranscendSpitAt = 0;
+  transcendLetterSpeedBoost = 0;
+  transcendShakeUntil = 0;
   transcendFilled = Array(transcendWord.length).fill(false);
   transcendenceCount = 0;
   transcendX = canvas.width / 2 - 150;
@@ -1663,6 +1667,8 @@ function playTranscendGunshot() {
 function spawnOneTranscendSpitLetter(letter, timestamp, index = 0) {
   const mouthY = canvas.height - 34;
   const originX = Math.max(28, Math.min(canvas.width - 28, transcendX + 18 + (index % transcendWord.length) * 32));
+  const effects = ['jitter', 'spin', 'stretch', 'flicker', 'mirror', 'blur'];
+  transcendShakeUntil = timestamp + 140;
   transcendSpitLetters.push({
     letter,
     x: originX,
@@ -1671,6 +1677,8 @@ function spawnOneTranscendSpitLetter(letter, timestamp, index = 0) {
     vy: -(8.5 + Math.random() * 6.2),
     gravity: 0.25 + Math.random() * 0.09,
     size: 28,
+    effect: effects[Math.floor(Math.random() * effects.length)],
+    effectSeed: Math.random() * Math.PI * 2,
     born: timestamp
   });
   playTranscendGunshot();
@@ -1744,7 +1752,7 @@ function updateTranscendSystem(timestamp, delta) {
       index,
       x: Math.max(32, Math.min(canvas.width - 32, slotX + (Math.random() * 48 - 24))),
       y: -24,
-      vy: 1.35 + Math.random() * 0.45 + transcendenceCount * 0.22,
+      vy: 1.35 + Math.random() * 0.45 + transcendenceCount * 0.22 + transcendLetterSpeedBoost,
       sway: Math.random() * Math.PI * 2,
       size: 30
     });
@@ -1858,17 +1866,28 @@ function drawTranscendSystem(now) {
   }
 
   for (const letter of transcendSpitLetters) {
+    const age = now - letter.born;
+    const pulse = Math.sin(age * 0.035 + letter.effectSeed);
+    const jitterX = letter.effect === 'jitter' ? (Math.random() * 5 - 2.5) : 0;
+    const jitterY = letter.effect === 'jitter' ? (Math.random() * 5 - 2.5) : 0;
+
     ctx.save();
+    ctx.translate(letter.x + jitterX, letter.y + jitterY);
+    if (letter.effect === 'spin') ctx.rotate(age * 0.018);
+    if (letter.effect === 'mirror') ctx.scale(pulse > 0 ? 1 : -1, 1);
+    if (letter.effect === 'stretch') ctx.scale(1 + Math.abs(pulse) * 0.35, 1 - Math.abs(pulse) * 0.18);
+    if (letter.effect === 'flicker') ctx.globalAlpha = 0.35 + Math.abs(pulse) * 0.65;
+    if (letter.effect === 'blur') ctx.filter = `blur(${Math.abs(pulse) * 1.6}px)`;
     ctx.font = `900 28px 'Creepster', 'Nosifer', 'Metal Mania', 'Cinzel Decorative', Georgia, serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillStyle = '#ffcf33';
+    ctx.fillStyle = letter.effect === 'flicker' ? '#ffffff' : '#ffcf33';
     ctx.strokeStyle = '#050006';
     ctx.lineWidth = 5;
-    ctx.shadowColor = '#9dff6e';
-    ctx.shadowBlur = 18;
-    ctx.strokeText(letter.letter, letter.x, letter.y);
-    ctx.fillText(letter.letter, letter.x, letter.y);
+    ctx.shadowColor = letter.effect === 'blur' ? '#ffffff' : '#9dff6e';
+    ctx.shadowBlur = letter.effect === 'blur' ? 28 : 18;
+    ctx.strokeText(letter.letter, 0, 0);
+    ctx.fillText(letter.letter, 0, 0);
     ctx.restore();
   }
 }
@@ -2013,8 +2032,9 @@ function step(timestamp, token = runToken) {
       eyePowerup = null;
       playEyeSquish();
       resetMeteorSpeed();
+      transcendLetterSpeedBoost += 0.18;
       popups.push({ text: 'speed reset', x: pilot.x + pilot.w / 2 - 52, y: pilot.y - 12, born: timestamp });
-      statusEl.textContent = 'Floating eye collected: game speed reset until the next level.';
+      statusEl.textContent = 'Floating eye collected: game speed reset. TRANSCEND letters fall faster.';
     } else if (eyePowerup.y > canvas.height + eyePowerup.size) {
       eyePowerup = null;
     }
@@ -2311,6 +2331,11 @@ function draw() {
 
   const pulse = Math.sin(frame * 0.12) * 18;
   const now = performance.now();
+  if (now < transcendShakeUntil) {
+    const shake = (transcendShakeUntil - now) / 140;
+    ctx.translate((Math.random() * 2 - 1) * 4 * shake, (Math.random() * 2 - 1) * 3 * shake);
+  }
+  if (isTranscendAnimating(now)) ctx.filter = 'invert(1) hue-rotate(180deg)';
   const fateMode = now < fateModeUntil;
   const levelSurge = now < levelSurgeUntil;
   const pilotSpin = now < pilotSpinUntil;
