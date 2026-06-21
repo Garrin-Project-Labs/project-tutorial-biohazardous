@@ -40,7 +40,7 @@ const tentaclePaths = Array.from({ length: 4 }, () => {
   return path;
 });
 gameCardEl?.append(tentacleBorderSvg);
-const spaceStars = Array.from({ length: 140 }, () => ({
+const spaceStars = Array.from({ length: 58 }, () => ({
   x: Math.random() * canvas.width,
   y: Math.random() * canvas.height,
   z: 0.2 + Math.random() * 1.8,
@@ -1291,12 +1291,12 @@ function step(timestamp, token = runToken) {
       const hadMaxCombo = combo >= 69;
       addCombo(5);
       if (hadMaxCombo) {
-        score += 313;
+        score += Math.max(1, Math.round(313 * (1 + combo)));
       } else {
         awardPoints(relicBonus);
       }
-      popups.push({ text: hadMaxCombo ? '+313 score' : '+5 combo', x: pilot.x + pilot.w / 2 - 54, y: pilot.y - 34, born: timestamp });
-      statusEl.textContent = hadMaxCombo ? 'Relic taken at max combo: +313 score.' : 'Relic taken: +5 combo. Fate sees you.';
+      popups.push({ text: hadMaxCombo ? '+313 x combo' : '+5 combo', x: pilot.x + pilot.w / 2 - 54, y: pilot.y - 34, born: timestamp });
+      statusEl.textContent = hadMaxCombo ? 'Relic taken at max combo: +313 score times combo.' : 'Relic taken: +5 combo. Fate sees you.';
       updateHud();
     } else if (relic.y > canvas.height + relic.size) {
       relic = null;
@@ -1363,7 +1363,7 @@ function drawFlyingSpace(bg) {
   ctx.globalCompositeOperation = 'screen';
 
   for (const star of spaceStars) {
-    const speed = running ? 1.8 + level * 0.28 : 0.7;
+    const speed = running ? 1.25 + level * 0.16 : 0.45;
     star.z += 0.018 * speed;
     if (star.z > 2.2) {
       star.x = Math.random() * canvas.width;
@@ -1374,11 +1374,11 @@ function drawFlyingSpace(bg) {
 
     const dx = star.x - cx;
     const dy = star.y - cy;
-    const stretch = star.z * (running ? 10 + level * 0.7 : 5);
+    const stretch = star.z * (running ? 6 + level * 0.35 : 3);
     const x = cx + dx * star.z;
     const y = cy + dy * star.z;
     const angle = Math.atan2(dy, dx);
-    const alpha = Math.min(0.88, 0.18 + star.z * 0.34);
+    const alpha = Math.min(0.42, 0.08 + star.z * 0.16);
 
     if (x < -40 || x > canvas.width + 40 || y < -40 || y > canvas.height + 40) {
       star.z = 0.2;
@@ -1395,11 +1395,11 @@ function drawFlyingSpace(bg) {
     ctx.stroke();
   }
 
-  const warp = 0.12 + Math.abs(Math.sin(frame * 0.035)) * 0.08;
+  const warp = 0.045 + Math.abs(Math.sin(frame * 0.035)) * 0.035;
   const gradient = ctx.createRadialGradient(cx, cy, 20, cx, cy, canvas.width * 0.65);
   gradient.addColorStop(0, `rgba(255, 255, 255, ${warp})`);
-  gradient.addColorStop(0.22, 'rgba(0, 245, 255, .06)');
-  gradient.addColorStop(0.6, 'rgba(179, 136, 255, .035)');
+  gradient.addColorStop(0.22, 'rgba(0, 245, 255, .025)');
+  gradient.addColorStop(0.6, 'rgba(179, 136, 255, .018)');
   gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
