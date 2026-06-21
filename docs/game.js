@@ -56,6 +56,7 @@ let relic = null;
 let eyePowerup = null;
 let pentagramPowerup = null;
 let blackHolePowerup = null;
+let thirdEyePowerup = null;
 let score = 0;
 let combo = 0;
 let highScore = Number(localStorage.getItem('meteorHighScore') || 0);
@@ -70,6 +71,7 @@ let lastRelicSpawn = 0;
 let lastEyeSpawn = 0;
 let lastPentagramSpawn = 0;
 let lastBlackHoleSpawn = 0;
+let lastThirdEyeSpawn = 0;
 let fateModeUntil = 0;
 let levelSurgeUntil = 0;
 let bePreparedUntil = 0;
@@ -78,6 +80,8 @@ let rotationSlowUntil = 0;
 let rotationCount = 0;
 let pilotSpinUntil = 0;
 let blackHoleUntil = 0;
+let blackHoleCooldownUntil = 0;
+let thirdEyeCooldownUntil = 0;
 let hitExplosion = null;
 let pilotVisible = true;
 let screenRotation = 0;
@@ -97,6 +101,7 @@ function resetPowerupTimers(timestamp = performance.now()) {
   lastEyeSpawn = timestamp;
   lastPentagramSpawn = timestamp;
   lastBlackHoleSpawn = timestamp;
+  lastThirdEyeSpawn = timestamp;
 }
 const pilotSpeed = 7;
 const dodgesPerLevel = 13;
@@ -134,6 +139,7 @@ function reset() {
   eyePowerup = null;
   pentagramPowerup = null;
   blackHolePowerup = null;
+  thirdEyePowerup = null;
   score = 0;
   combo = 0;
   dodges = 0;
@@ -149,6 +155,8 @@ function reset() {
   rotationCount = 0;
   pilotSpinUntil = 0;
   blackHoleUntil = 0;
+  blackHoleCooldownUntil = 0;
+  thirdEyeCooldownUntil = 0;
   hitExplosion = null;
   pilotVisible = true;
   screenRotation = 0;
@@ -495,6 +503,12 @@ function spawnPentagramPowerup() {
 function spawnBlackHolePowerup() {
   const size = 38;
   blackHolePowerup = { x: Math.random() * (canvas.width - size), y: -size, size, speed: 2.05, spin: 0, spinSpeed: 0.035, flashOffset: Math.random() * Math.PI * 2 };
+  playBlackHoleSpawnSound();
+}
+
+function spawnThirdEyePowerup() {
+  const size = 36;
+  thirdEyePowerup = { x: Math.random() * (canvas.width - size), y: -size, size, speed: 2.1, spin: 0, spinSpeed: -0.025, flashOffset: Math.random() * Math.PI * 2 };
 }
 
 function whisperScream() {
@@ -809,20 +823,33 @@ function playLevelLaser() {
   if (!audio) return;
 
   const now = audio.currentTime;
-  const laser = audio.createOscillator();
-  const laserGain = audio.createGain();
+  const output = audio.createGain();
+  const filter = audio.createBiquadFilter();
+  const zap = audio.createOscillator();
+  const sparkle = audio.createOscillator();
 
-  laser.type = 'sawtooth';
-  laser.frequency.setValueAtTime(980, now);
-  laser.frequency.exponentialRampToValueAtTime(140, now + 0.34);
-  laserGain.gain.setValueAtTime(0.0001, now);
-  laserGain.gain.exponentialRampToValueAtTime(0.12, now + 0.015);
-  laserGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.38);
-
-  laser.connect(laserGain);
-  laserGain.connect(audio.destination);
-  laser.start(now);
-  laser.stop(now + 0.4);
+  output.gain.setValueAtTime(0.0001, now);
+  output.gain.exponentialRampToValueAtTime(0.11, now + 0.012);
+  output.gain.exponentialRampToValueAtTime(0.0001, now + 0.52);
+  filter.type = 'bandpass';
+  filter.frequency.setValueAtTime(2600, now);
+  filter.frequency.exponentialRampToValueAtTime(520, now + 0.48);
+  filter.Q.value = 9;
+  zap.type = 'square';
+  sparkle.type = 'triangle';
+  zap.frequency.setValueAtTime(1440, now);
+  zap.frequency.exponentialRampToValueAtTime(180, now + 0.42);
+  sparkle.frequency.setValueAtTime(2160, now + 0.03);
+  sparkle.frequency.exponentialRampToValueAtTime(720, now + 0.34);
+  zap.connect(output);
+  sparkle.connect(output);
+  output.connect(filter);
+  filter.connect(audio.destination);
+  zap.start(now);
+  sparkle.start(now + 0.03);
+  zap.stop(now + 0.54);
+  sparkle.stop(now + 0.39);
+  playNoiseBurst(0.12, 0.026, 6800, 1800);
 }
 
 function playThunderCrash() {
@@ -1128,6 +1155,39 @@ function playPentagramPortal() {
   playNoiseBurst(0.42, 0.04, 3200, 360);
 }
 
+function playBlackHoleSpawnSound() {
+  const audio = getAudioContext();
+  if (!audio) return;
+
+  const now = audio.currentTime;
+  const ping = audio.createOscillator();
+  const hollow = audio.createOscillator();
+  const gain = audio.createGain();
+  const filter = audio.createBiquadFilter();
+
+  ping.type = 'sine';
+  hollow.type = 'triangle';
+  ping.frequency.setValueAtTime(740, now);
+  ping.frequency.exponentialRampToValueAtTime(185, now + 0.46);
+  hollow.frequency.setValueAtTime(92, now);
+  hollow.frequency.exponentialRampToValueAtTime(46, now + 0.5);
+  filter.type = 'bandpass';
+  filter.frequency.setValueAtTime(920, now);
+  filter.frequency.exponentialRampToValueAtTime(160, now + 0.5);
+  filter.Q.value = 5;
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.exponentialRampToValueAtTime(0.07, now + 0.025);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.58);
+  ping.connect(gain);
+  hollow.connect(gain);
+  gain.connect(filter);
+  filter.connect(audio.destination);
+  ping.start(now);
+  hollow.start(now);
+  ping.stop(now + 0.58);
+  hollow.stop(now + 0.58);
+}
+
 function playBlackHoleSpaceSound() {
   const audio = getAudioContext();
   if (!audio) return;
@@ -1277,14 +1337,14 @@ function countSuccessfulDodges(timestamp) {
 
       if ((level - 1) % 3 === 0) {
         levelSurgeUntil = timestamp + 3600;
-        bePreparedUntil = timestamp + 3000;
+        bePreparedUntil = timestamp + 1300;
         rotationCount++;
-        const rotationPause = Math.max(normalMeteorSpawnDelay, 5000 - rotationCount * 760);
+        const rotationPause = Math.max(normalMeteorSpawnDelay, 3200 - rotationCount * 520);
         const rotationOptions = [90, 180, -90, -180];
         spawnPauseUntil = timestamp + rotationPause;
         rotationSlowUntil = timestamp + Math.max(2400, rotationPause + 4000);
         screenRotation = rotationOptions[Math.floor(Math.random() * rotationOptions.length)];
-        backgroundTheme = 1 + Math.floor(Math.random() * (backgroundThemes.length - 1));
+        backgroundTheme = (backgroundTheme + 1 + Math.floor(Math.random() * (backgroundThemes.length - 1))) % backgroundThemes.length;
         clearMeteorsForRotation = true;
         lastSpawn = timestamp + rotationPause;
         resetPowerupTimers(timestamp);
@@ -1373,9 +1433,15 @@ function step(timestamp, token = runToken) {
     lastPentagramSpawn = timestamp;
   }
 
-  if (timestamp >= spawnPauseUntil && !blackHolePowerup && timestamp - lastBlackHoleSpawn > 11000) {
+  if (timestamp >= spawnPauseUntil && !blackHolePowerup && timestamp >= blackHoleCooldownUntil && timestamp - lastBlackHoleSpawn > 11000) {
     spawnBlackHolePowerup();
     lastBlackHoleSpawn = timestamp;
+  }
+
+  if (timestamp >= spawnPauseUntil && level >= 6 && !thirdEyePowerup && timestamp >= thirdEyeCooldownUntil && timestamp - lastThirdEyeSpawn > 9000) {
+    spawnThirdEyePowerup();
+    lastThirdEyeSpawn = timestamp;
+    thirdEyeCooldownUntil = timestamp + 52000;
   }
 
   for (const meteor of meteors) {
@@ -1465,6 +1531,26 @@ function step(timestamp, token = runToken) {
     }
   }
 
+  if (thirdEyePowerup) {
+    thirdEyePowerup.y += thirdEyePowerup.speed;
+    thirdEyePowerup.spin += thirdEyePowerup.spinSpeed;
+    pullPowerupTowardPilot(thirdEyePowerup, 0.022);
+
+    if (hit(pilot, thirdEyePowerup)) {
+      thirdEyePowerup = null;
+      speedLevel = Math.max(3, speedLevel - 3);
+      for (const meteor of meteors) {
+        meteor.speed = (meteor.baseSpeed || meteor.speed) + Math.max(0, speedLevel - 1) * speedBoostPerLevel;
+      }
+      thirdEyeCooldownUntil = timestamp + 52000;
+      playEyeSquish();
+      popups.push({ text: '-3 speed', x: pilot.x + pilot.w / 2 - 42, y: pilot.y - 30, born: timestamp });
+      statusEl.textContent = 'The Third Eye opened: game speed dropped by 3 levels.';
+    } else if (thirdEyePowerup.y > canvas.height + thirdEyePowerup.size) {
+      thirdEyePowerup = null;
+    }
+  }
+
   if (blackHolePowerup) {
     blackHolePowerup.y += blackHolePowerup.speed;
     blackHolePowerup.spin += blackHolePowerup.spinSpeed;
@@ -1472,6 +1558,7 @@ function step(timestamp, token = runToken) {
     if (hit(pilot, blackHolePowerup)) {
       blackHolePowerup = null;
       blackHoleUntil = timestamp + 13000;
+      blackHoleCooldownUntil = timestamp + 39000;
       playBlackHoleSpaceSound();
       popups.push({ text: 'black hole', x: pilot.x + pilot.w / 2 - 46, y: pilot.y - 16, born: timestamp });
       statusEl.textContent = 'Black hole collected: powerups are pulled toward you for 13 seconds.';
@@ -1763,6 +1850,17 @@ function draw() {
     ctx.rotate(eyePowerup.spin);
     ctx.filter = 'invert(1) hue-rotate(180deg)';
     glowText('👁️', -eyePowerup.size / 2, eyePowerup.size / 2, '#4c7700', 30 + blink * 8, 7);
+    ctx.restore();
+  }
+
+  if (thirdEyePowerup) {
+    const blink = 0.45 + Math.abs(Math.sin(frame * 0.21 + thirdEyePowerup.flashOffset)) * 0.55;
+    ctx.save();
+    ctx.globalAlpha = blink;
+    ctx.font = `${thirdEyePowerup.size}px serif`;
+    ctx.translate(thirdEyePowerup.x + thirdEyePowerup.size / 2, thirdEyePowerup.y + thirdEyePowerup.size / 2);
+    ctx.rotate(thirdEyePowerup.spin);
+    glowText('🔮', -thirdEyePowerup.size / 2, thirdEyePowerup.size / 2, '#b388ff', 32 + blink * 8, 7, '#050006');
     ctx.restore();
   }
 
