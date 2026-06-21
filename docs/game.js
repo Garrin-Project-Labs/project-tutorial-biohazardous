@@ -55,6 +55,7 @@ let popups = [];
 let relic = null;
 let eyePowerup = null;
 let pentagramPowerup = null;
+let blackHolePowerup = null;
 let score = 0;
 let combo = 0;
 let highScore = Number(localStorage.getItem('meteorHighScore') || 0);
@@ -68,6 +69,7 @@ let lastSpawn = 0;
 let lastRelicSpawn = 0;
 let lastEyeSpawn = 0;
 let lastPentagramSpawn = 0;
+let lastBlackHoleSpawn = 0;
 let fateModeUntil = 0;
 let levelSurgeUntil = 0;
 let bePreparedUntil = 0;
@@ -75,6 +77,9 @@ let spawnPauseUntil = 0;
 let rotationSlowUntil = 0;
 let rotationCount = 0;
 let pilotSpinUntil = 0;
+let blackHoleUntil = 0;
+let hitExplosion = null;
+let pilotVisible = true;
 let screenRotation = 0;
 let backgroundTheme = 0;
 let frame = 0;
@@ -91,6 +96,7 @@ function resetPowerupTimers(timestamp = performance.now()) {
   lastRelicSpawn = timestamp;
   lastEyeSpawn = timestamp;
   lastPentagramSpawn = timestamp;
+  lastBlackHoleSpawn = timestamp;
 }
 const pilotSpeed = 7;
 const dodgesPerLevel = 13;
@@ -119,12 +125,15 @@ function reset() {
   }
   hideWelcomeHome();
   hideSlimeDrips();
+  hitExplosion = null;
+  pilotVisible = true;
   pilot.x = canvas.width / 2 - pilot.w / 2;
   meteors = [];
   popups = [];
   relic = null;
   eyePowerup = null;
   pentagramPowerup = null;
+  blackHolePowerup = null;
   score = 0;
   combo = 0;
   dodges = 0;
@@ -139,6 +148,9 @@ function reset() {
   rotationSlowUntil = 0;
   rotationCount = 0;
   pilotSpinUntil = 0;
+  blackHoleUntil = 0;
+  hitExplosion = null;
+  pilotVisible = true;
   screenRotation = 0;
   backgroundTheme = 0;
   nextVoidWhisperAt = 0;
@@ -219,21 +231,44 @@ function updateTitleEchoWrap() {
   titleEchoWrapQueued = false;
   if (!titleEchoesEl || !canvas || !titleEchoesEl.children.length) return;
 
+  for (const echo of titleEchoesEl.querySelectorAll('.title-echo')) {
+    echo.style.position = '';
+    echo.style.left = '';
+    echo.style.top = '';
+  }
+
   const echoRect = titleEchoesEl.getBoundingClientRect();
   const gameRect = canvas.getBoundingClientRect();
   const bottomAlignedHeight = Math.max(120, gameRect.bottom - echoRect.top);
+  const columnWidth = Math.max(142, Math.min(220, window.innerWidth * 0.14));
+  const columnGap = 12;
   titleEchoesEl.style.maxHeight = `${bottomAlignedHeight}px`;
 
-  for (const letter of titleEchoesEl.querySelectorAll('.title-letter')) {
-    const letterRect = letter.getBoundingClientRect();
-    letter.classList.toggle('title-letter-clear', rectsOverlap(letterRect, gameRect));
-  }
+  requestAnimationFrame(() => {
+    const leftRect = titleEchoesEl.getBoundingClientRect();
+    const entries = [...titleEchoesEl.querySelectorAll('.title-echo')].map(echo => ({ echo, rect: echo.getBoundingClientRect() }));
 
-  const updatedRect = titleEchoesEl.getBoundingClientRect();
-  if (updatedRect.right >= window.innerWidth - 2) {
-    titleEchoesEl.textContent = '';
-    titleEchoClearedForTitle = lastEchoedTitle;
-  }
+    for (const { echo, rect } of entries) {
+      const columnIndex = Math.max(0, Math.round((rect.left - leftRect.left) / (columnWidth + columnGap)));
+      if (columnIndex >= 3) {
+        echo.style.position = 'fixed';
+        echo.style.left = `${gameRect.right + 18 + (columnIndex - 3) * (columnWidth + columnGap)}px`;
+        echo.style.top = `${rect.top}px`;
+      }
+    }
+
+    for (const letter of titleEchoesEl.querySelectorAll('.title-letter')) {
+      const letterRect = letter.getBoundingClientRect();
+      letter.classList.toggle('title-letter-clear', rectsOverlap(letterRect, gameRect));
+    }
+
+    const updatedRect = titleEchoesEl.getBoundingClientRect();
+    const anyEchoPastEdge = [...titleEchoesEl.querySelectorAll('.title-echo')].some(echo => echo.getBoundingClientRect().right >= window.innerWidth - 2);
+    if (updatedRect.right >= window.innerWidth - 2 || anyEchoPastEdge) {
+      titleEchoesEl.textContent = '';
+      titleEchoClearedForTitle = lastEchoedTitle;
+    }
+  });
 }
 
 function randomTitleSymbols() {
@@ -455,6 +490,11 @@ function spawnEyePowerup() {
 function spawnPentagramPowerup() {
   const size = 36;
   pentagramPowerup = { x: Math.random() * (canvas.width - size), y: -size, size, speed: 1.6, spin: 0, spinSpeed: 0, flashOffset: Math.random() * Math.PI * 2 };
+}
+
+function spawnBlackHolePowerup() {
+  const size = 38;
+  blackHolePowerup = { x: Math.random() * (canvas.width - size), y: -size, size, speed: 2.05, spin: 0, spinSpeed: 0.035, flashOffset: Math.random() * Math.PI * 2 };
 }
 
 function whisperScream() {
@@ -1088,6 +1128,59 @@ function playPentagramPortal() {
   playNoiseBurst(0.42, 0.04, 3200, 360);
 }
 
+function playBlackHoleSpaceSound() {
+  const audio = getAudioContext();
+  if (!audio) return;
+
+  const now = audio.currentTime;
+  const output = audio.createGain();
+  const filter = audio.createBiquadFilter();
+  const gravity = audio.createOscillator();
+  const shimmer = audio.createOscillator();
+
+  output.gain.setValueAtTime(0.0001, now);
+  output.gain.exponentialRampToValueAtTime(0.18, now + 0.05);
+  output.gain.exponentialRampToValueAtTime(0.0001, now + 1.6);
+  filter.type = 'lowpass';
+  filter.frequency.setValueAtTime(2200, now);
+  filter.frequency.exponentialRampToValueAtTime(90, now + 1.45);
+  gravity.type = 'sawtooth';
+  shimmer.type = 'triangle';
+  gravity.frequency.setValueAtTime(46, now);
+  gravity.frequency.exponentialRampToValueAtTime(14, now + 1.45);
+  shimmer.frequency.setValueAtTime(880, now);
+  shimmer.frequency.exponentialRampToValueAtTime(110, now + 1.2);
+  gravity.connect(output);
+  shimmer.connect(output);
+  output.connect(filter);
+  filter.connect(audio.destination);
+  gravity.start(now);
+  shimmer.start(now);
+  gravity.stop(now + 1.65);
+  shimmer.stop(now + 1.25);
+  playNoiseBurst(0.58, 0.06, 4200, 120);
+}
+
+function playRocketExplosion() {
+  const audio = getAudioContext();
+  if (!audio) return;
+
+  const now = audio.currentTime;
+  const blast = audio.createOscillator();
+  const gain = audio.createGain();
+  blast.type = 'sawtooth';
+  blast.frequency.setValueAtTime(180, now);
+  blast.frequency.exponentialRampToValueAtTime(32, now + 0.28);
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.exponentialRampToValueAtTime(0.18, now + 0.012);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.36);
+  blast.connect(gain);
+  gain.connect(audio.destination);
+  blast.start(now);
+  blast.stop(now + 0.38);
+  playNoiseBurst(0.32, 0.11, 1800, 90);
+}
+
 function playBottomExplosion() {
   const audio = getAudioContext();
   if (!audio) return;
@@ -1239,6 +1332,15 @@ function glowRect(x, y, w, h, color, blur = 12) {
   ctx.restore();
 }
 
+function pullPowerupTowardPilot(powerup, strength = 0.018) {
+  if (!powerup || performance.now() >= blackHoleUntil) return;
+
+  const targetX = pilot.x + pilot.w / 2 - powerup.size / 2;
+  const targetY = pilot.y + pilot.h / 2 - powerup.size / 2;
+  powerup.x += (targetX - powerup.x) * strength;
+  powerup.y += (targetY - powerup.y) * strength;
+}
+
 function step(timestamp, token = runToken) {
   if (!running || token !== runToken) return;
   frame++;
@@ -1269,6 +1371,11 @@ function step(timestamp, token = runToken) {
   if (timestamp >= spawnPauseUntil && screenRotation && !pentagramPowerup && timestamp - lastPentagramSpawn > 3200) {
     spawnPentagramPowerup();
     lastPentagramSpawn = timestamp;
+  }
+
+  if (timestamp >= spawnPauseUntil && !blackHolePowerup && timestamp - lastBlackHoleSpawn > 11000) {
+    spawnBlackHolePowerup();
+    lastBlackHoleSpawn = timestamp;
   }
 
   for (const meteor of meteors) {
@@ -1305,6 +1412,7 @@ function step(timestamp, token = runToken) {
   if (relic) {
     relic.y += relic.speed;
     relic.spin += relic.spinSpeed;
+    pullPowerupTowardPilot(relic, 0.022);
 
     if (hit(pilot, relic)) {
       relic = null;
@@ -1328,6 +1436,7 @@ function step(timestamp, token = runToken) {
   if (eyePowerup) {
     eyePowerup.y += eyePowerup.speed;
     eyePowerup.spin += eyePowerup.spinSpeed;
+    pullPowerupTowardPilot(eyePowerup, 0.022);
 
     if (hit(pilot, eyePowerup)) {
       eyePowerup = null;
@@ -1343,6 +1452,7 @@ function step(timestamp, token = runToken) {
   if (pentagramPowerup) {
     pentagramPowerup.y += pentagramPowerup.speed;
     pentagramPowerup.spin += pentagramPowerup.spinSpeed;
+    pullPowerupTowardPilot(pentagramPowerup, 0.022);
 
     if (hit(pilot, pentagramPowerup)) {
       pentagramPowerup = null;
@@ -1355,6 +1465,21 @@ function step(timestamp, token = runToken) {
     }
   }
 
+  if (blackHolePowerup) {
+    blackHolePowerup.y += blackHolePowerup.speed;
+    blackHolePowerup.spin += blackHolePowerup.spinSpeed;
+
+    if (hit(pilot, blackHolePowerup)) {
+      blackHolePowerup = null;
+      blackHoleUntil = timestamp + 13000;
+      playBlackHoleSpaceSound();
+      popups.push({ text: 'black hole', x: pilot.x + pilot.w / 2 - 46, y: pilot.y - 16, born: timestamp });
+      statusEl.textContent = 'Black hole collected: powerups are pulled toward you for 13 seconds.';
+    } else if (blackHolePowerup.y > canvas.height + blackHolePowerup.size) {
+      blackHolePowerup = null;
+    }
+  }
+
   for (const meteor of meteors) {
     if (hit(pilot, meteor)) {
       running = false;
@@ -1362,6 +1487,10 @@ function step(timestamp, token = runToken) {
       nextComboBellAt = 5;
       stopBassMusic();
       playQuietScream();
+      playRocketExplosion();
+      hitExplosion = { x: pilot.x + pilot.w / 2, y: pilot.y + pilot.h / 2, born: performance.now() };
+      pilotVisible = false;
+      setTimeout(() => { hitExplosion = null; draw(); }, 650);
       playSadGameOverJingle();
       playEvilLaugh();
       statusEl.textContent = `Bonked! ${whisperScream()} Try again.`;
@@ -1549,13 +1678,41 @@ function draw() {
     glowText('FATE SURGE', 24, canvas.height - 34, '#9dff6e', 10, 2);
   }
 
-  ctx.font = '34px serif';
-  ctx.save();
-  ctx.translate(pilot.x + pilot.w / 2, pilot.y + pilot.h / 2);
-  ctx.rotate(-Math.PI / 4 + (pilotSpin ? frame * 0.28 : 0));
-  ctx.filter = 'invert(1) hue-rotate(180deg)';
-  glowText(pilot.emoji, -pilot.w / 2, pilot.h / 2, '#ff1744', 24, 6, '#ffffff');
-  ctx.restore();
+  if (pilotVisible) {
+    ctx.font = '34px serif';
+    ctx.save();
+    ctx.translate(pilot.x + pilot.w / 2, pilot.y + pilot.h / 2);
+    ctx.rotate(-Math.PI / 4 + (pilotSpin ? frame * 0.28 : 0));
+    ctx.filter = 'invert(1) hue-rotate(180deg)';
+    glowText(pilot.emoji, -pilot.w / 2, pilot.h / 2, '#ff1744', 24, 6, '#ffffff');
+    ctx.restore();
+  }
+
+  if (now < blackHoleUntil && pilotVisible) {
+    const secondsLeft = Math.max(0, (blackHoleUntil - now) / 1000);
+    ctx.save();
+    ctx.font = 'bold 16px monospace';
+    ctx.textAlign = 'center';
+    glowText(`🕳 ${secondsLeft.toFixed(1)}s`, pilot.x + pilot.w / 2, pilot.y + pilot.h + 24, '#b388ff', 16, 3, '#050006');
+    ctx.textAlign = 'start';
+    ctx.restore();
+  }
+
+  if (hitExplosion) {
+    const age = now - hitExplosion.born;
+    if (age < 650) {
+      const t = age / 650;
+      ctx.save();
+      ctx.globalAlpha = 1 - t;
+      ctx.translate(hitExplosion.x, hitExplosion.y);
+      for (let i = 0; i < 14; i++) {
+        const angle = i / 14 * Math.PI * 2 + frame * 0.04;
+        const distance = 10 + t * 46;
+        glowRect(Math.cos(angle) * distance - 3, Math.sin(angle) * distance - 3, 6 + t * 8, 6 + t * 8, i % 2 ? '#ffea00' : '#ff1744', 22);
+      }
+      ctx.restore();
+    }
+  }
 
   for (const meteor of meteors) {
     const flash = 0.55 + Math.abs(Math.sin(frame * 0.16 + meteor.flashOffset)) * 0.45;
@@ -1621,6 +1778,31 @@ function draw() {
     ctx.restore();
   }
 
+  if (blackHolePowerup) {
+    const blink = 0.55 + Math.abs(Math.sin(frame * 0.24 + blackHolePowerup.flashOffset)) * 0.45;
+    ctx.save();
+    ctx.globalAlpha = blink;
+    ctx.translate(blackHolePowerup.x + blackHolePowerup.size / 2, blackHolePowerup.y + blackHolePowerup.size / 2);
+    ctx.rotate(blackHolePowerup.spin);
+    ctx.fillStyle = '#050006';
+    ctx.shadowColor = '#b388ff';
+    ctx.shadowBlur = 34;
+    ctx.beginPath();
+    ctx.arc(0, 0, blackHolePowerup.size * 0.48, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#b388ff';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, blackHolePowerup.size * 0.58, blackHolePowerup.size * 0.22, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.strokeStyle = '#00f5ff';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(0, 0, blackHolePowerup.size * 0.34, 0, Math.PI * 1.65);
+    ctx.stroke();
+    ctx.restore();
+  }
+
   for (const popup of popups) {
     const age = performance.now() - popup.born;
     const rise = age / 14;
@@ -1647,6 +1829,8 @@ function startGame() {
   if (running) return;
   hideWelcomeHome();
   hideSlimeDrips();
+  hitExplosion = null;
+  pilotVisible = true;
   resetPowerupTimers();
   running = true;
   runToken++;

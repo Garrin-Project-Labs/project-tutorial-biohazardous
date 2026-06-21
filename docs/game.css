@@ -256,6 +256,10 @@ canvas {
   color: #ff1744;
   text-shadow: 0 0 10px #ff1744, 0 0 20px #ff1744;
 }
+.blackhole-preview {
+  color: #b388ff;
+  text-shadow: 0 0 10px #b388ff, 0 0 20px #00f5ff, 1px 1px 0 #050006;
+}
 
 .high-score {
   color: #ffe58a;
