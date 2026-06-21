@@ -504,25 +504,3 @@ body.text-shake main {
   0%, 100% { transform: scaleY(.72) translateY(-18px); opacity: .66; }
   50% { transform: scaleY(1.12) translateY(12px); opacity: 1; }
 }
-
-.title-echoes {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  padding: 0;
-  min-height: 100vh;
-}
-.title-echo {
-  position: fixed;
-  margin: 0;
-  opacity: .82;
-}
-.title-echo-clear {
-  opacity: .08;
-  text-shadow: none;
-}
-.shell, .game-layout, .hero, .game-card, .game-side-panel, .instructions {
-  position: relative;
-  z-index: 1;
-}

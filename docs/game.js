@@ -73,7 +73,6 @@ let bassMusic = null;
 let nextVoidWhisperAt = 0;
 let nextComboBellAt = 5;
 let lastEchoedTitle = heroTitleEl?.textContent || '';
-let titleEchoLayoutQueued = false;
 let random777Title = '';
 
 function resetPowerupTimers(timestamp = performance.now()) {
@@ -175,56 +174,13 @@ function updateHud() {
 }
 
 function addTitleEcho(title) {
-  if (!titleEchoesEl || !title) return;
+  if (!titleEchoesEl || title === lastEchoedTitle) return;
 
-  titleEchoesEl.dataset.echoTitle = title;
-  if (title !== lastEchoedTitle) lastEchoedTitle = title;
-  scheduleTitleEchoLayout();
-}
-
-function scheduleTitleEchoLayout() {
-  if (titleEchoLayoutQueued || !titleEchoesEl) return;
-
-  titleEchoLayoutQueued = true;
-  requestAnimationFrame(layoutTitleEchoes);
-}
-
-function touchesGameCanvas(rect) {
-  const gameRect = canvas.getBoundingClientRect();
-  return rect.left < gameRect.right &&
-    rect.right > gameRect.left &&
-    rect.top < gameRect.bottom &&
-    rect.bottom > gameRect.top;
-}
-
-function layoutTitleEchoes() {
-  titleEchoLayoutQueued = false;
-  if (!titleEchoesEl) return;
-
-  const title = titleEchoesEl.dataset.echoTitle || heroTitleEl?.textContent || '';
-  if (!title) return;
-
-  titleEchoesEl.textContent = '';
-  const columnWidth = Math.max(146, Math.min(230, window.innerWidth * 0.14));
-  const maxHeight = window.innerHeight;
-
-  for (let x = 10; x < window.innerWidth; x += columnWidth) {
-    let y = 10;
-
-    while (y < maxHeight) {
-      const echo = document.createElement('div');
-      echo.className = 'title-echo';
-      echo.textContent = title;
-      echo.style.left = `${x}px`;
-      echo.style.top = `${y}px`;
-      echo.style.width = `${columnWidth - 18}px`;
-      titleEchoesEl.appendChild(echo);
-
-      const rect = echo.getBoundingClientRect();
-      if (touchesGameCanvas(rect)) echo.classList.add('title-echo-clear');
-      y += Math.max(34, rect.height + 10);
-    }
-  }
+  const echo = document.createElement('div');
+  echo.className = 'title-echo';
+  echo.textContent = title;
+  titleEchoesEl.appendChild(echo);
+  lastEchoedTitle = title;
 }
 
 function randomTitleSymbols() {
@@ -1456,8 +1412,6 @@ window.addEventListener('keyup', event => {
 });
 
 startBtn.addEventListener('click', startGame);
-window.addEventListener('resize', scheduleTitleEchoLayout);
-
 resetBtn.addEventListener('click', () => {
   stopBassMusic();
   reset();
