@@ -40,6 +40,13 @@ const tentaclePaths = Array.from({ length: 4 }, () => {
   return path;
 });
 gameCardEl?.append(tentacleBorderSvg);
+const spaceStars = Array.from({ length: 140 }, () => ({
+  x: Math.random() * canvas.width,
+  y: Math.random() * canvas.height,
+  z: 0.2 + Math.random() * 1.8,
+  hue: Math.random() < 0.72 ? 210 : (Math.random() < 0.5 ? 115 : 285),
+  drift: Math.random() * Math.PI * 2
+}));
 
 const pilot = { x: 340, y: 360, w: 34, h: 30, emoji: '🚀', name: 'Pilot' };
 const keys = { ArrowLeft: false, ArrowRight: false, ArrowUp: false, ArrowDown: false, a: false, d: false, w: false, s: false };
@@ -76,6 +83,7 @@ let bassMusic = null;
 let nextVoidWhisperAt = 0;
 let nextComboBellAt = 5;
 let lastEchoedTitle = heroTitleEl?.textContent || '';
+let titleEchoWrapQueued = false;
 let random777Title = '';
 
 function resetPowerupTimers(timestamp = performance.now()) {
@@ -186,6 +194,24 @@ function addTitleEcho(title) {
   echo.textContent = title;
   titleEchoesEl.appendChild(echo);
   lastEchoedTitle = title;
+  scheduleTitleEchoWrap();
+}
+
+function scheduleTitleEchoWrap() {
+  if (titleEchoWrapQueued || !titleEchoesEl) return;
+
+  titleEchoWrapQueued = true;
+  requestAnimationFrame(updateTitleEchoWrap);
+}
+
+function updateTitleEchoWrap() {
+  titleEchoWrapQueued = false;
+  if (!titleEchoesEl || !canvas) return;
+
+  const echoRect = titleEchoesEl.getBoundingClientRect();
+  const gameRect = canvas.getBoundingClientRect();
+  const bottomAlignedHeight = Math.max(120, gameRect.bottom - echoRect.top);
+  titleEchoesEl.style.maxHeight = `${bottomAlignedHeight}px`;
 }
 
 function randomTitleSymbols() {
@@ -761,86 +787,103 @@ function playThunderCrash() {
 
 function playBitCrushedBePrepared() {
   const audio = getAudioContext();
-
-  if ('speechSynthesis' in window) {
-    const utterance = new SpeechSynthesisUtterance('be prepared.');
-    utterance.rate = 0.26;
-    utterance.pitch = 0;
-    utterance.volume = 0.08;
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(utterance);
-  }
-
   if (!audio) return;
 
   const now = audio.currentTime;
   const output = audio.createGain();
+  const lowFilter = audio.createBiquadFilter();
+  const throatFilter = audio.createBiquadFilter();
   const crusher = audio.createWaveShaper();
-  const filter = audio.createBiquadFilter();
   const whisper = audio.createBufferSource();
   const whisperGain = audio.createGain();
   const whisperFilter = audio.createBiquadFilter();
-  const buffer = audio.createBuffer(1, Math.floor(audio.sampleRate * 1.15), audio.sampleRate);
+  const buffer = audio.createBuffer(1, Math.floor(audio.sampleRate * 1.55), audio.sampleRate);
   const samples = buffer.getChannelData(0);
-  const curve = new Float32Array(256);
-
-  for (let i = 0; i < samples.length; i++) {
-    const t = i / samples.length;
-    const gate = Math.sin(t * Math.PI);
-    const chopped = Math.floor(t * 32) % 2 ? 0.65 : 1;
-    samples[i] = (Math.random() * 2 - 1) * gate * chopped;
-  }
+  const curve = new Float32Array(512);
 
   for (let i = 0; i < curve.length; i++) {
     const x = i / (curve.length - 1) * 2 - 1;
-    curve[i] = Math.round(x * 5) / 5;
+    curve[i] = Math.tanh(5.5 * x) * 0.82;
   }
 
+  for (let i = 0; i < samples.length; i++) {
+    const t = i / samples.length;
+    const syllableGate = Math.sin(t * Math.PI) * (Math.floor(t * 18) % 2 ? 0.42 : 1);
+    samples[i] = (Math.random() * 2 - 1) * syllableGate;
+  }
+
+  output.gain.setValueAtTime(0.0001, now);
+  output.gain.exponentialRampToValueAtTime(0.13, now + 0.08);
+  output.gain.exponentialRampToValueAtTime(0.0001, now + 1.55);
+  lowFilter.type = 'lowpass';
+  lowFilter.frequency.setValueAtTime(130, now);
+  lowFilter.Q.value = 3.5;
+  throatFilter.type = 'bandpass';
+  throatFilter.frequency.setValueAtTime(72, now);
+  throatFilter.Q.value = 12;
   crusher.curve = curve;
   crusher.oversample = 'none';
-  filter.type = 'bandpass';
-  filter.frequency.setValueAtTime(48, now);
-  filter.Q.value = 11;
-  output.gain.setValueAtTime(0.0001, now);
-  output.gain.exponentialRampToValueAtTime(0.06, now + 0.08);
-  output.gain.exponentialRampToValueAtTime(0.0001, now + 1.2);
   output.connect(crusher);
-  crusher.connect(filter);
-  filter.connect(audio.destination);
+  crusher.connect(throatFilter);
+  throatFilter.connect(lowFilter);
+  lowFilter.connect(audio.destination);
+
+  const syllables = [
+    { offset: 0, root: 24, length: 0.42 },
+    { offset: 0.43, root: 18, length: 0.5 },
+    { offset: 0.93, root: 14, length: 0.58 }
+  ];
+
+  syllables.forEach(({ offset, root, length }, index) => {
+    const start = now + offset;
+    const growl = audio.createOscillator();
+    const sub = audio.createOscillator();
+    const rumble = audio.createOscillator();
+    const gate = audio.createGain();
+    const wobble = audio.createOscillator();
+    const wobbleGain = audio.createGain();
+
+    growl.type = 'sawtooth';
+    sub.type = 'triangle';
+    rumble.type = 'sine';
+    growl.frequency.setValueAtTime(root, start);
+    growl.frequency.exponentialRampToValueAtTime(Math.max(8, root * 0.62), start + length);
+    sub.frequency.setValueAtTime(root / 2, start);
+    sub.frequency.exponentialRampToValueAtTime(Math.max(5, root * 0.34), start + length);
+    rumble.frequency.setValueAtTime(root / 4, start);
+    wobble.frequency.setValueAtTime(7 + index * 1.7, start);
+    wobbleGain.gain.setValueAtTime(3.5, start);
+    wobble.connect(wobbleGain);
+    wobbleGain.connect(growl.frequency);
+    gate.gain.setValueAtTime(0.0001, start);
+    gate.gain.exponentialRampToValueAtTime(0.18, start + 0.06);
+    gate.gain.exponentialRampToValueAtTime(0.0001, start + length);
+    growl.connect(gate);
+    sub.connect(gate);
+    rumble.connect(gate);
+    gate.connect(output);
+    wobble.start(start);
+    growl.start(start);
+    sub.start(start);
+    rumble.start(start);
+    wobble.stop(start + length);
+    growl.stop(start + length + 0.04);
+    sub.stop(start + length + 0.04);
+    rumble.stop(start + length + 0.04);
+  });
 
   whisper.buffer = buffer;
-  whisperFilter.type = 'highpass';
-  whisperFilter.frequency.setValueAtTime(260, now);
+  whisperFilter.type = 'bandpass';
+  whisperFilter.frequency.setValueAtTime(430, now);
+  whisperFilter.Q.value = 2;
   whisperGain.gain.setValueAtTime(0.0001, now);
-  whisperGain.gain.exponentialRampToValueAtTime(0.014, now + 0.04);
-  whisperGain.gain.exponentialRampToValueAtTime(0.0001, now + 1.1);
+  whisperGain.gain.exponentialRampToValueAtTime(0.026, now + 0.08);
+  whisperGain.gain.exponentialRampToValueAtTime(0.0001, now + 1.45);
   whisper.connect(whisperFilter);
   whisperFilter.connect(whisperGain);
   whisperGain.connect(audio.destination);
   whisper.start(now);
-  whisper.stop(now + 1.15);
-
-  [0, 0.2, 0.48, 0.78].forEach((offset, index) => {
-    const voice = audio.createOscillator();
-    const sub = audio.createOscillator();
-    const gate = audio.createGain();
-    const start = now + offset;
-    voice.type = index % 2 ? 'square' : 'sawtooth';
-    sub.type = 'sine';
-    voice.frequency.setValueAtTime([19, 16, 18, 13.5][index], start);
-    sub.frequency.setValueAtTime([9.5, 8, 9, 6.75][index], start);
-    voice.detune.setValueAtTime(index % 2 ? -34 : 18, start);
-    gate.gain.setValueAtTime(0.0001, start);
-    gate.gain.exponentialRampToValueAtTime(0.11, start + 0.045);
-    gate.gain.exponentialRampToValueAtTime(0.0001, start + 0.34);
-    voice.connect(gate);
-    sub.connect(gate);
-    gate.connect(output);
-    voice.start(start);
-    sub.start(start);
-    voice.stop(start + 0.38);
-    sub.stop(start + 0.38);
-  });
+  whisper.stop(now + 1.55);
 }
 
 function playRecordScratch() {
@@ -1245,10 +1288,15 @@ function step(timestamp, token = runToken) {
       relic = null;
       playRelicPunch();
       fateModeUntil = timestamp + 1200;
+      const hadMaxCombo = combo >= 69;
       addCombo(5);
-      awardPoints(relicBonus);
-      popups.push({ text: '+5 combo', x: pilot.x + pilot.w / 2 - 48, y: pilot.y - 34, born: timestamp });
-      statusEl.textContent = 'Relic taken: +5 combo. Fate sees you.';
+      if (hadMaxCombo) {
+        score += 313;
+      } else {
+        awardPoints(relicBonus);
+      }
+      popups.push({ text: hadMaxCombo ? '+313 score' : '+5 combo', x: pilot.x + pilot.w / 2 - 54, y: pilot.y - 34, born: timestamp });
+      statusEl.textContent = hadMaxCombo ? 'Relic taken at max combo: +313 score.' : 'Relic taken: +5 combo. Fate sees you.';
       updateHud();
     } else if (relic.y > canvas.height + relic.size) {
       relic = null;
@@ -1307,6 +1355,57 @@ function step(timestamp, token = runToken) {
   animationFrameId = requestAnimationFrame(nextTimestamp => step(nextTimestamp, token));
 }
 
+function drawFlyingSpace(bg) {
+  const cx = canvas.width / 2;
+  const cy = canvas.height / 2;
+
+  ctx.save();
+  ctx.globalCompositeOperation = 'screen';
+
+  for (const star of spaceStars) {
+    const speed = running ? 1.8 + level * 0.28 : 0.7;
+    star.z += 0.018 * speed;
+    if (star.z > 2.2) {
+      star.x = Math.random() * canvas.width;
+      star.y = Math.random() * canvas.height;
+      star.z = 0.2;
+      star.hue = Math.random() < 0.72 ? 210 : (Math.random() < 0.5 ? 115 : 285);
+    }
+
+    const dx = star.x - cx;
+    const dy = star.y - cy;
+    const stretch = star.z * (running ? 10 + level * 0.7 : 5);
+    const x = cx + dx * star.z;
+    const y = cy + dy * star.z;
+    const angle = Math.atan2(dy, dx);
+    const alpha = Math.min(0.88, 0.18 + star.z * 0.34);
+
+    if (x < -40 || x > canvas.width + 40 || y < -40 || y > canvas.height + 40) {
+      star.z = 0.2;
+      star.x = Math.random() * canvas.width;
+      star.y = Math.random() * canvas.height;
+      continue;
+    }
+
+    ctx.strokeStyle = `hsla(${star.hue}, 100%, ${72 + star.z * 9}%, ${alpha})`;
+    ctx.lineWidth = Math.max(1, star.z * 1.6);
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x - Math.cos(angle) * stretch, y - Math.sin(angle) * stretch);
+    ctx.stroke();
+  }
+
+  const warp = 0.12 + Math.abs(Math.sin(frame * 0.035)) * 0.08;
+  const gradient = ctx.createRadialGradient(cx, cy, 20, cx, cy, canvas.width * 0.65);
+  gradient.addColorStop(0, `rgba(255, 255, 255, ${warp})`);
+  gradient.addColorStop(0.22, 'rgba(0, 245, 255, .06)');
+  gradient.addColorStop(0.6, 'rgba(179, 136, 255, .035)');
+  gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.restore();
+}
+
 function drawTentacleBorder() {
   if (!tentacleBorderSvg) return;
 
@@ -1363,6 +1462,7 @@ function draw() {
   const bg = backgroundThemes[backgroundTheme] || backgroundThemes[0];
   ctx.fillStyle = bg.base;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
+  drawFlyingSpace(bg);
 
   if (fateMode) {
     ctx.fillStyle = `rgba(255, 255, 255, ${0.06 + Math.abs(Math.sin(frame * 0.08)) * 0.05})`;
@@ -1562,6 +1662,7 @@ window.addEventListener('keyup', event => {
 });
 
 startBtn.addEventListener('click', startGame);
+window.addEventListener('resize', scheduleTitleEchoWrap);
 resetBtn.addEventListener('click', () => {
   stopBassMusic();
   reset();

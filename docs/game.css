@@ -149,8 +149,21 @@ canvas {
   grid-row: 1;
   min-height: 1px;
   padding-top: 2px;
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 0 12px;
+  overflow: visible;
+  position: relative;
+  z-index: 3;
+  width: max-content;
+  max-width: none;
+  pointer-events: none;
 }
 .title-echo {
+  flex: 0 0 auto;
+  width: clamp(142px, 14vw, 220px);
   margin: 0 0 10px;
   color: #ff1744;
   font-family: "Old English Text MT", "UnifrakturMaguntia", "Blackletter", "Cinzel Decorative", Georgia, serif;
