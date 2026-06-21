@@ -114,11 +114,11 @@ const meteorSymbols = ['☄', 'ᚠ', 'ᚢ', 'ᚦ', 'ᚨ', 'ᚱ', 'ᚲ', 'ᚷ', '
 const titleSymbols = ['☄', 'ᚱ', 'ᛉ', 'ᛟ', 'ᚦ', '✦', '✧', '✶', '✹', '✷', '☽', '☾', '✺', '⛧', '🜏', '☠'];
 const deathSymbols = ['⛧', '🜏', '☠', 'ᛉ', 'ᛟ', 'ᚦ', 'ᚱ', '☽', '☾', '✹', '✺', '✶', '✷'];
 const backgroundThemes = [
-  { base: '#030006', mist: 'rgba(157, 255, 110, .72)', alt: '#00f5ff', nebula: '#2b0038' },
-  { base: '#030014', mist: 'rgba(179, 136, 255, .82)', alt: '#ff1744', nebula: '#40008a' },
-  { base: '#160000', mist: 'rgba(255, 23, 68, .72)', alt: '#ffea00', nebula: '#5a0000' },
-  { base: '#001114', mist: 'rgba(0, 245, 255, .75)', alt: '#9dff6e', nebula: '#003b47' },
-  { base: '#101000', mist: 'rgba(255, 234, 0, .62)', alt: '#b388ff', nebula: '#4a3900' }
+  { base: '#030006', mist: 'rgba(157, 255, 110, .42)', alt: '#00f5ff', nebula: '#2b0038' },
+  { base: '#030014', mist: 'rgba(179, 136, 255, .46)', alt: '#ff1744', nebula: '#40008a' },
+  { base: '#160000', mist: 'rgba(255, 23, 68, .42)', alt: '#ffea00', nebula: '#5a0000' },
+  { base: '#001114', mist: 'rgba(0, 245, 255, .44)', alt: '#9dff6e', nebula: '#003b47' },
+  { base: '#101000', mist: 'rgba(255, 234, 0, .36)', alt: '#b388ff', nebula: '#4a3900' }
 ];
 
 function reset() {
@@ -466,7 +466,7 @@ function awardPoints(basePoints) {
 }
 
 function spawnMeteor() {
-  const size = 26 + Math.random() * 22;
+  const size = 31 + Math.random() * 24;
   const baseSpeed = 2.7 + Math.random() * 1.3;
   const effectiveSpeedLevel = performance.now() < rotationSlowUntil ? Math.max(1, speedLevel - 2) : speedLevel;
   const levelSpeedBoost = (effectiveSpeedLevel - 1) * speedBoostPerLevel;
@@ -487,28 +487,28 @@ function spawnMeteor() {
 
 function spawnRelic() {
   const size = 32;
-  relic = { x: Math.random() * (canvas.width - size), y: -size, size, speed: 2.8, spin: 0, spinSpeed: 0, flashOffset: Math.random() * Math.PI * 2 };
+  relic = { x: Math.random() * (canvas.width - size), y: -size, size, hitPad: 8, speed: 2.8, spin: 0, spinSpeed: 0, flashOffset: Math.random() * Math.PI * 2 };
 }
 
 function spawnEyePowerup() {
   const size = 34;
-  eyePowerup = { x: Math.random() * (canvas.width - size), y: -size, size, speed: 2.4, spin: 0, spinSpeed: 0, flashOffset: Math.random() * Math.PI * 2 };
+  eyePowerup = { x: Math.random() * (canvas.width - size), y: -size, size, hitPad: 8, speed: 2.4, spin: 0, spinSpeed: 0, flashOffset: Math.random() * Math.PI * 2 };
 }
 
 function spawnPentagramPowerup() {
   const size = 36;
-  pentagramPowerup = { x: Math.random() * (canvas.width - size), y: -size, size, speed: 1.6, spin: 0, spinSpeed: 0, flashOffset: Math.random() * Math.PI * 2 };
+  pentagramPowerup = { x: Math.random() * (canvas.width - size), y: -size, size, hitPad: 8, speed: 1.6, spin: 0, spinSpeed: 0, flashOffset: Math.random() * Math.PI * 2 };
 }
 
 function spawnBlackHolePowerup() {
   const size = 38;
-  blackHolePowerup = { x: Math.random() * (canvas.width - size), y: -size, size, speed: 2.05, spin: 0, spinSpeed: 0.035, flashOffset: Math.random() * Math.PI * 2 };
+  blackHolePowerup = { x: Math.random() * (canvas.width - size), y: -size, size, hitPad: 8, speed: 2.05, spin: 0, spinSpeed: 0.035, flashOffset: Math.random() * Math.PI * 2 };
   playBlackHoleSpawnSound();
 }
 
 function spawnThirdEyePowerup() {
   const size = 36;
-  thirdEyePowerup = { x: Math.random() * (canvas.width - size), y: -size, size, speed: 2.1, spin: 0, spinSpeed: -0.025, flashOffset: Math.random() * Math.PI * 2 };
+  thirdEyePowerup = { x: Math.random() * (canvas.width - size), y: -size, size, hitPad: 8, speed: 2.1, spin: 0, spinSpeed: -0.025, flashOffset: Math.random() * Math.PI * 2 };
 }
 
 function whisperScream() {
@@ -1300,8 +1300,8 @@ function awardNearMisses(timestamp) {
 
     const meteorCenterX = meteor.x + meteor.size / 2;
     const meteorCenterY = meteor.y + meteor.size / 2;
-    const closeX = Math.abs(meteorCenterX - pilotCenterX) < meteor.size / 2 + pilot.w / 2 + 22;
-    const crossingPlayer = Math.abs(meteorCenterY - pilotCenterY) < meteor.size / 2 + pilot.h / 2 + 10;
+    const closeX = Math.abs(meteorCenterX - pilotCenterX) < meteor.size / 2 + pilot.w / 2 + 42;
+    const crossingPlayer = Math.abs(meteorCenterY - pilotCenterY) < meteor.size / 2 + pilot.h / 2 + 26;
 
     if (closeX && crossingPlayer) {
       meteor.nearMissed = true;
@@ -1363,10 +1363,11 @@ function countSuccessfulDodges(timestamp) {
 function hit(a, b) {
   const insetX = a.hitInsetX || 0;
   const insetY = a.hitInsetY || 0;
-  return a.x + insetX < b.x + b.size &&
-    a.x + a.w - insetX > b.x &&
-    a.y + insetY < b.y + b.size &&
-    a.y + a.h - insetY > b.y;
+  const pad = b.hitPad || 0;
+  return a.x + insetX < b.x + b.size + pad &&
+    a.x + a.w - insetX > b.x - pad &&
+    a.y + insetY < b.y + b.size + pad &&
+    a.y + a.h - insetY > b.y - pad;
 }
 
 function glowText(text, x, y, color, blur = 18, outline = 5, outlineColor = '#050006') {
@@ -1703,6 +1704,7 @@ function draw() {
   const nebula = ctx.createRadialGradient(canvas.width * 0.28, canvas.height * 0.18, 10, canvas.width * 0.5, canvas.height * 0.48, canvas.width * 0.88);
   nebula.addColorStop(0, bg.mist);
   nebula.addColorStop(0.45, bg.nebula || bg.base);
+  nebula.addColorStop(0.72, 'rgba(0, 0, 0, .22)');
   nebula.addColorStop(1, 'rgba(0, 0, 0, 0)');
   ctx.fillStyle = nebula;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -1774,8 +1776,9 @@ function draw() {
   if (pilotVisible) {
     ctx.font = '34px serif';
     ctx.save();
+    const steeringTilt = (keys.ArrowLeft || keys.a ? -0.28 : 0) + (keys.ArrowRight || keys.d ? 0.28 : 0);
     ctx.translate(pilot.x + pilot.w / 2, pilot.y + pilot.h / 2);
-    ctx.rotate(-Math.PI / 4 + (pilotSpin ? frame * 0.28 : 0));
+    ctx.rotate(-Math.PI / 4 + steeringTilt + (pilotSpin ? frame * 0.28 : 0));
     ctx.filter = 'invert(1) hue-rotate(180deg)';
     glowText(pilot.emoji, -pilot.w / 2, pilot.h / 2, '#ff1744', 24, 6, '#ffffff');
     ctx.restore();
