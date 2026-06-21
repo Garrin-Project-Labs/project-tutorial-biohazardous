@@ -183,6 +183,15 @@ canvas {
   opacity: 0;
   text-shadow: none;
 }
+.dead-echo {
+  color: #050006;
+  text-shadow:
+    0 0 8px rgba(0, 0, 0, .9),
+    2px 2px 0 rgba(255, 23, 68, .28);
+}
+.dead-echo .title-letter-clear {
+  opacity: .08;
+}
 .game-side-panel {
   grid-column: 3;
   grid-row: 1;

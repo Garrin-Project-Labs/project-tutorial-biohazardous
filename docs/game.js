@@ -94,6 +94,7 @@ let nextComboBellAt = 5;
 let lastEchoedTitle = heroTitleEl?.textContent || '';
 let titleEchoWrapQueued = false;
 let titleEchoClearedForTitle = '';
+let deadEchoInterval = null;
 let random777Title = '';
 
 function resetPowerupTimers(timestamp = performance.now()) {
@@ -130,6 +131,7 @@ function reset() {
   }
   hideWelcomeHome();
   hideSlimeDrips();
+  stopDeadEchoRewrite();
   hitExplosion = null;
   pilotVisible = true;
   pilot.x = canvas.width / 2 - pilot.w / 2;
@@ -277,6 +279,39 @@ function updateTitleEchoWrap() {
       titleEchoClearedForTitle = lastEchoedTitle;
     }
   });
+}
+
+function stopDeadEchoRewrite() {
+  if (deadEchoInterval) {
+    clearInterval(deadEchoInterval);
+    deadEchoInterval = null;
+  }
+}
+
+function rewriteOneEchoToDead() {
+  if (!titleEchoesEl) return;
+
+  const nextEcho = [...titleEchoesEl.querySelectorAll('.title-echo:not(.dead-echo)')][0];
+  if (!nextEcho) {
+    stopDeadEchoRewrite();
+    return;
+  }
+
+  nextEcho.classList.add('dead-echo');
+  nextEcho.textContent = '';
+  for (const char of 'You Should Stay Dead.') {
+    const letter = document.createElement('span');
+    letter.className = 'title-letter';
+    letter.textContent = char === ' ' ? '\u00a0' : char;
+    nextEcho.appendChild(letter);
+  }
+  scheduleTitleEchoWrap();
+}
+
+function startDeadEchoRewrite() {
+  stopDeadEchoRewrite();
+  rewriteOneEchoToDead();
+  deadEchoInterval = setInterval(rewriteOneEchoToDead, 650);
 }
 
 function randomTitleSymbols() {
@@ -466,7 +501,7 @@ function awardPoints(basePoints) {
 }
 
 function spawnMeteor() {
-  const size = 31 + Math.random() * 24;
+  const size = Math.max(pilot.w, pilot.h) + Math.random() * 24;
   const baseSpeed = 2.7 + Math.random() * 1.3;
   const effectiveSpeedLevel = performance.now() < rotationSlowUntil ? Math.max(1, speedLevel - 2) : speedLevel;
   const levelSpeedBoost = (effectiveSpeedLevel - 1) * speedBoostPerLevel;
@@ -1584,6 +1619,7 @@ function step(timestamp, token = runToken) {
       statusEl.textContent = `Bonked! ${whisperScream()} Try again.`;
       animationFrameId = null;
       showSlimeDrips();
+      startDeadEchoRewrite();
       showWelcomeHome();
       draw();
       return;
@@ -1592,6 +1628,47 @@ function step(timestamp, token = runToken) {
 
   draw();
   animationFrameId = requestAnimationFrame(nextTimestamp => step(nextTimestamp, token));
+}
+
+function drawGiantBlinkingEye(bg) {
+  const cx = canvas.width / 2;
+  const cy = canvas.height / 2;
+  const blink = Math.pow(Math.abs(Math.sin(frame * 0.026)), 8);
+  const open = 0.12 + blink * 0.42;
+
+  ctx.save();
+  ctx.globalAlpha = 0.16 + blink * 0.08;
+  ctx.globalCompositeOperation = 'screen';
+  ctx.translate(cx, cy);
+  ctx.scale(1, open);
+
+  const eyeGlow = ctx.createRadialGradient(0, 0, 20, 0, 0, canvas.width * 0.48);
+  eyeGlow.addColorStop(0, 'rgba(255, 23, 68, .28)');
+  eyeGlow.addColorStop(0.35, bg.mist || 'rgba(179, 136, 255, .18)');
+  eyeGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+  ctx.fillStyle = eyeGlow;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, canvas.width * 0.46, canvas.height * 0.34, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.strokeStyle = 'rgba(255, 23, 68, .26)';
+  ctx.lineWidth = 7;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, canvas.width * 0.42, canvas.height * 0.28, 0, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.fillStyle = 'rgba(0, 0, 0, .62)';
+  ctx.beginPath();
+  ctx.arc(0, 0, canvas.width * 0.075, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.strokeStyle = 'rgba(179, 136, 255, .3)';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.arc(0, 0, canvas.width * 0.13, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.restore();
 }
 
 function drawFlyingSpace(bg) {
@@ -1701,13 +1778,7 @@ function draw() {
   const bg = backgroundThemes[backgroundTheme] || backgroundThemes[0];
   ctx.fillStyle = bg.base;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
-  const nebula = ctx.createRadialGradient(canvas.width * 0.28, canvas.height * 0.18, 10, canvas.width * 0.5, canvas.height * 0.48, canvas.width * 0.88);
-  nebula.addColorStop(0, bg.mist);
-  nebula.addColorStop(0.45, bg.nebula || bg.base);
-  nebula.addColorStop(0.72, 'rgba(0, 0, 0, .22)');
-  nebula.addColorStop(1, 'rgba(0, 0, 0, 0)');
-  ctx.fillStyle = nebula;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  drawGiantBlinkingEye(bg);
   drawFlyingSpace(bg);
 
   if (fateMode) {
@@ -1936,6 +2007,7 @@ function startGame() {
   if (running) return;
   hideWelcomeHome();
   hideSlimeDrips();
+  stopDeadEchoRewrite();
   hitExplosion = null;
   pilotVisible = true;
   resetPowerupTimers();
