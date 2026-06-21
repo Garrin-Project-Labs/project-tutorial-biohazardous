@@ -86,7 +86,6 @@ let relic = null;
 let eyePowerup = null;
 let pentagramPowerup = null;
 let blackHolePowerup = null;
-let thirdEyePowerup = null;
 let score = 0;
 let combo = 0;
 let highScore = Number(localStorage.getItem('meteorHighScore') || 0);
@@ -103,7 +102,6 @@ let lastEyeSpawn = 0;
 let lastPentagramSpawn = 0;
 let lastBlackHoleSpawn = 0;
 let lastMoveSoundAt = 0;
-let lastThirdEyeSpawn = 0;
 let fateModeUntil = 0;
 let levelSurgeUntil = 0;
 let bePreparedUntil = 0;
@@ -113,7 +111,6 @@ let rotationCount = 0;
 let pilotSpinUntil = 0;
 let blackHoleUntil = 0;
 let blackHoleCooldownUntil = 0;
-let thirdEyeCooldownUntil = 0;
 let hitExplosion = null;
 let pilotVisible = true;
 let screenRotation = 0;
@@ -141,7 +138,6 @@ function resetPowerupTimers(timestamp = performance.now()) {
   lastEyeSpawn = timestamp;
   lastPentagramSpawn = timestamp;
   lastBlackHoleSpawn = timestamp;
-  lastThirdEyeSpawn = timestamp;
 }
 const pilotSpeed = 7;
 const dodgesPerLevel = 13;
@@ -251,7 +247,6 @@ function reset() {
   eyePowerup = null;
   pentagramPowerup = null;
   blackHolePowerup = null;
-  thirdEyePowerup = null;
   score = 0;
   combo = 0;
   dodges = 0;
@@ -270,7 +265,6 @@ function reset() {
   pilotSpinUntil = 0;
   blackHoleUntil = 0;
   blackHoleCooldownUntil = 0;
-  thirdEyeCooldownUntil = 0;
   hitExplosion = null;
   pilotVisible = true;
   screenRotation = 0;
@@ -649,11 +643,6 @@ function spawnBlackHolePowerup() {
   const size = 38;
   blackHolePowerup = { x: Math.random() * (canvas.width - size), y: -size, size, hitPad: 8, speed: 2.05, spin: 0, spinSpeed: 0.035, flashOffset: Math.random() * Math.PI * 2 };
   playBlackHoleSpawnSound();
-}
-
-function spawnThirdEyePowerup() {
-  const size = 36;
-  thirdEyePowerup = { x: Math.random() * (canvas.width - size), y: -size, size, hitPad: 8, speed: 2.1, spin: 0, spinSpeed: -0.025, flashOffset: Math.random() * Math.PI * 2 };
 }
 
 function whisperScream() {
@@ -1633,7 +1622,7 @@ function glowRect(x, y, w, h, color, blur = 12) {
 }
 
 function isTranscendAnimating(timestamp = performance.now()) {
-  return transcendAnimation && timestamp - transcendAnimation.born < 2600;
+  return transcendAnimation && timestamp - transcendAnimation.born < 1550;
 }
 
 function playTranscendGunshot() {
@@ -1737,12 +1726,12 @@ function updateTranscendSystem(timestamp, delta) {
     return;
   }
 
-  if (transcendAnimation && timestamp - transcendAnimation.born >= 2600) {
+  if (transcendAnimation && timestamp - transcendAnimation.born >= 1550) {
     transcendAnimation = null;
     transcendFilled = Array(transcendWord.length).fill(false);
     transcendRuneSlots = randomTranscendRuneSlots();
     transcendLetters = [];
-    nextTranscendLetterAt = timestamp + 1800;
+    nextTranscendLetterAt = timestamp + 850;
   }
 
   transcendX += transcendVx * delta;
@@ -1751,7 +1740,7 @@ function updateTranscendSystem(timestamp, delta) {
     transcendX = Math.max(12, Math.min(canvas.width - 12 - wordWidth, transcendX));
   }
 
-  if (timestamp >= nextTranscendLetterAt && !transcendLetters.length && !transcendFilled.every(Boolean)) {
+  if (timestamp >= nextTranscendLetterAt && !transcendLetters.length && !transcendSpitQueue.length && !transcendSpitLetters.length && !transcendFilled.every(Boolean)) {
     const index = transcendFilled.findIndex(filled => !filled);
     if (index < 0) return;
     const slotX = transcendX + 16 + index * 32;
@@ -1819,9 +1808,9 @@ function drawTranscendSystem(now) {
 
   if (transcendAnimation) {
     const age = now - transcendAnimation.born;
-    const raise = Math.min(1, age / 850);
-    const hold = Math.max(0, Math.min(1, (age - 850) / 650));
-    const slam = Math.max(0, Math.min(1, (age - 1500) / 700));
+    const raise = Math.min(1, age / 420);
+    const hold = Math.max(0, Math.min(1, (age - 420) / 360));
+    const slam = Math.max(0, Math.min(1, (age - 780) / 520));
     x = transcendAnimation.startX;
     y = transcendAnimation.startY + (canvas.height / 2 - transcendAnimation.startY) * raise;
     if (hold > 0) rotation = hold * Math.PI * 2;
@@ -1963,12 +1952,6 @@ function step(timestamp, token = runToken) {
     lastBlackHoleSpawn = timestamp;
   }
 
-  if (timestamp >= spawnPauseUntil && level >= 6 && !thirdEyePowerup && timestamp >= thirdEyeCooldownUntil && timestamp - lastThirdEyeSpawn > 9000) {
-    spawnThirdEyePowerup();
-    lastThirdEyeSpawn = timestamp;
-    thirdEyeCooldownUntil = timestamp + 26000;
-  }
-
   if (transcendLockout) meteors = [];
 
   for (const meteor of meteors) {
@@ -2062,26 +2045,6 @@ function step(timestamp, token = runToken) {
       statusEl.textContent = 'Pentagram collected: canvas reset.';
     } else if (pentagramPowerup.y > canvas.height + pentagramPowerup.size) {
       pentagramPowerup = null;
-    }
-  }
-
-  if (thirdEyePowerup) {
-    thirdEyePowerup.y += thirdEyePowerup.speed * delta;
-    thirdEyePowerup.spin += thirdEyePowerup.spinSpeed * delta;
-    pullPowerupTowardPilot(thirdEyePowerup, 0.022);
-
-    if (hit(pilot, thirdEyePowerup)) {
-      thirdEyePowerup = null;
-      speedLevel = speedLevel <= 3 ? speedLevel : Math.max(3, speedLevel - 3);
-      for (const meteor of meteors) {
-        meteor.speed = (meteor.baseSpeed || meteor.speed) + Math.max(0, speedLevel - 1) * speedBoostPerLevel;
-      }
-      thirdEyeCooldownUntil = timestamp + 26000;
-      playEyeSquish();
-      popups.push({ text: '-3 speed', x: pilot.x + pilot.w / 2 - 42, y: pilot.y - 30, born: timestamp });
-      statusEl.textContent = 'The Third Eye opened: game speed dropped by 3 levels.';
-    } else if (thirdEyePowerup.y > canvas.height + thirdEyePowerup.size) {
-      thirdEyePowerup = null;
     }
   }
 
@@ -2591,17 +2554,6 @@ function draw() {
     ctx.rotate(eyePowerup.spin);
     ctx.filter = 'invert(1) hue-rotate(180deg)';
     glowText('👁️', -eyePowerup.size / 2, eyePowerup.size / 2, '#4c7700', 30 + blink * 8, 7);
-    ctx.restore();
-  }
-
-  if (thirdEyePowerup) {
-    const blink = 0.45 + Math.abs(Math.sin(frame * 0.21 + thirdEyePowerup.flashOffset)) * 0.55;
-    ctx.save();
-    ctx.globalAlpha = blink;
-    ctx.font = `${thirdEyePowerup.size}px serif`;
-    ctx.translate(thirdEyePowerup.x + thirdEyePowerup.size / 2, thirdEyePowerup.y + thirdEyePowerup.size / 2);
-    ctx.rotate(thirdEyePowerup.spin);
-    glowText('🔮', -thirdEyePowerup.size / 2, thirdEyePowerup.size / 2, '#b388ff', 32 + blink * 8, 7, '#050006');
     ctx.restore();
   }
 
