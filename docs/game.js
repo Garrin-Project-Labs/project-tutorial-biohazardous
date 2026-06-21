@@ -1752,7 +1752,7 @@ function updateTranscendSystem(timestamp, delta) {
       index,
       x: Math.max(32, Math.min(canvas.width - 32, slotX + (Math.random() * 48 - 24))),
       y: -24,
-      vy: 1.35 + Math.random() * 0.45 + transcendenceCount * 0.22 + transcendLetterSpeedBoost,
+      vy: 2.05 + Math.random() * 0.65 + transcendenceCount * 0.3 + transcendLetterSpeedBoost,
       sway: Math.random() * Math.PI * 2,
       size: 30
     });
@@ -2281,6 +2281,44 @@ function drawFlyingSpace(bg) {
   ctx.restore();
 }
 
+function drawTranscendWhiteWarp() {
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.save();
+  ctx.strokeStyle = '#050006';
+  ctx.fillStyle = '#050006';
+  ctx.lineCap = 'round';
+  for (const star of spaceStars) {
+    const speed = 2.6 + transcendenceCount * 0.25;
+    star.z += 0.04 * speed;
+    if (star.z > 2.4) {
+      star.x = Math.random() * canvas.width;
+      star.y = Math.random() * canvas.height;
+      star.z = 0.18;
+    }
+
+    const cx = canvas.width / 2;
+    const cy = canvas.height / 2;
+    const dx = star.x - cx;
+    const dy = star.y - cy;
+    const x = cx + dx * star.z;
+    const y = cy + dy * star.z;
+    const angle = Math.atan2(dy, dx);
+    const length = star.z * 18;
+    const alpha = Math.min(0.7, 0.14 + star.z * 0.23);
+
+    ctx.globalAlpha = alpha;
+    ctx.lineWidth = Math.max(1, star.z * 1.4);
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x - Math.cos(angle) * length, y - Math.sin(angle) * length);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+  ctx.restore();
+}
+
 function drawTentacleBorder() {
   if (!tentacleBorderSvg) return;
 
@@ -2335,24 +2373,28 @@ function draw() {
     const shake = (transcendShakeUntil - now) / 140;
     ctx.translate((Math.random() * 2 - 1) * 4 * shake, (Math.random() * 2 - 1) * 3 * shake);
   }
-  if (isTranscendAnimating(now)) ctx.filter = 'invert(1) hue-rotate(180deg)';
+  const transcendAnimatingNow = isTranscendAnimating(now);
   const fateMode = now < fateModeUntil;
   const levelSurge = now < levelSurgeUntil;
   const pilotSpin = now < pilotSpinUntil;
   const bg = backgroundThemes[backgroundTheme] || backgroundThemes[0];
-  ctx.fillStyle = bg.base;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  drawGiantBlinkingEye(bg);
-  drawFlyingSpace(bg);
+  if (transcendAnimatingNow) {
+    drawTranscendWhiteWarp();
+  } else {
+    ctx.fillStyle = bg.base;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    drawGiantBlinkingEye(bg);
+    drawFlyingSpace(bg);
+  }
   drawGiantMouth();
   drawTranscendSystem(now);
 
-  if (fateMode) {
+  if (fateMode && !transcendAnimatingNow) {
     ctx.fillStyle = `rgba(255, 255, 255, ${0.06 + Math.abs(Math.sin(frame * 0.08)) * 0.05})`;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   }
 
-  if (levelSurge) {
+  if (levelSurge && !transcendAnimatingNow) {
     ctx.fillStyle = `rgba(255, 255, 255, ${0.10 + Math.abs(Math.sin(frame * 0.18)) * 0.08})`;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   }
