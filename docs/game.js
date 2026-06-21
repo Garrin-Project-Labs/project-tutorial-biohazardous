@@ -84,6 +84,7 @@ let nextVoidWhisperAt = 0;
 let nextComboBellAt = 5;
 let lastEchoedTitle = heroTitleEl?.textContent || '';
 let titleEchoWrapQueued = false;
+let titleEchoClearedForTitle = '';
 let random777Title = '';
 
 function resetPowerupTimers(timestamp = performance.now()) {
@@ -191,9 +192,15 @@ function addTitleEcho(title) {
 
   const echo = document.createElement('div');
   echo.className = 'title-echo';
-  echo.textContent = title;
+  for (const char of title) {
+    const letter = document.createElement('span');
+    letter.className = 'title-letter';
+    letter.textContent = char === ' ' ? '\u00a0' : char;
+    echo.appendChild(letter);
+  }
   titleEchoesEl.appendChild(echo);
   lastEchoedTitle = title;
+  titleEchoClearedForTitle = '';
   scheduleTitleEchoWrap();
 }
 
@@ -204,14 +211,29 @@ function scheduleTitleEchoWrap() {
   requestAnimationFrame(updateTitleEchoWrap);
 }
 
+function rectsOverlap(a, b) {
+  return a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+}
+
 function updateTitleEchoWrap() {
   titleEchoWrapQueued = false;
-  if (!titleEchoesEl || !canvas) return;
+  if (!titleEchoesEl || !canvas || !titleEchoesEl.children.length) return;
 
   const echoRect = titleEchoesEl.getBoundingClientRect();
   const gameRect = canvas.getBoundingClientRect();
   const bottomAlignedHeight = Math.max(120, gameRect.bottom - echoRect.top);
   titleEchoesEl.style.maxHeight = `${bottomAlignedHeight}px`;
+
+  for (const letter of titleEchoesEl.querySelectorAll('.title-letter')) {
+    const letterRect = letter.getBoundingClientRect();
+    letter.classList.toggle('title-letter-clear', rectsOverlap(letterRect, gameRect));
+  }
+
+  const updatedRect = titleEchoesEl.getBoundingClientRect();
+  if (updatedRect.right >= window.innerWidth - 2) {
+    titleEchoesEl.textContent = '';
+    titleEchoClearedForTitle = lastEchoedTitle;
+  }
 }
 
 function randomTitleSymbols() {

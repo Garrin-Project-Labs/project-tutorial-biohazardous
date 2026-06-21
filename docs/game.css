@@ -175,6 +175,14 @@ canvas {
     2px 2px 0 rgba(0, 0, 0, .95);
   overflow-wrap: anywhere;
 }
+
+.title-letter {
+  display: inline-block;
+}
+.title-letter-clear {
+  opacity: 0;
+  text-shadow: none;
+}
 .game-side-panel {
   grid-column: 3;
   grid-row: 1;
