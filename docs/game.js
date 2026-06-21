@@ -8,6 +8,17 @@ const heroTitleEl = document.querySelector('.hero h1');
 const taglineEl = document.querySelector('#tagline');
 const titleEchoesEl = document.querySelector('#title-echoes');
 const gameCardEl = document.querySelector('.game-card');
+const hitSlimeEl = document.createElement('div');
+hitSlimeEl.className = 'hit-slime';
+for (let i = 0; i < 18; i++) {
+  const drip = document.createElement('i');
+  drip.style.left = `${2 + i * 5.7 + Math.random() * 1.8}%`;
+  drip.style.setProperty('--drip-length', `${54 + Math.random() * 132}px`);
+  drip.style.setProperty('--drip-delay', `${Math.random() * -2.4}s`);
+  drip.style.setProperty('--drip-duration', `${2.4 + Math.random() * 1.8}s`);
+  hitSlimeEl.append(drip);
+}
+document.body.append(hitSlimeEl);
 const statusEl = document.querySelector('#status') || { textContent: '' };
 const startBtn = document.querySelector('#start');
 const resetBtn = document.querySelector('#reset');
@@ -52,6 +63,7 @@ let fateModeUntil = 0;
 let levelSurgeUntil = 0;
 let bePreparedUntil = 0;
 let spawnPauseUntil = 0;
+let rotationSlowUntil = 0;
 let pilotSpinUntil = 0;
 let screenRotation = 0;
 let backgroundTheme = 0;
@@ -61,6 +73,7 @@ let bassMusic = null;
 let nextVoidWhisperAt = 0;
 let nextComboBellAt = 5;
 let lastEchoedTitle = heroTitleEl?.textContent || '';
+let titleEchoLayoutQueued = false;
 let random777Title = '';
 
 function resetPowerupTimers(timestamp = performance.now()) {
@@ -74,7 +87,7 @@ const speedBoostPerLevel = 0.9;
 const relicBonus = 13;
 const quietScreams = ['aah.', 'eep.', 'oh no.', 'tiny scream.', '...'];
 const voidColors = ['#9dff6e', '#ff1744', '#00f5ff', '#b388ff', '#ffffff', '#ffea00'];
-const meteorSymbols = ['☄', 'ᚱ', 'ᛉ', 'ᛟ', 'ᚦ', '✦', '✧', '✶', '✹', '✷', '☽', '☾', '✺'];
+const meteorSymbols = ['☄', 'ᚠ', 'ᚢ', 'ᚦ', 'ᚨ', 'ᚱ', 'ᚲ', 'ᚷ', 'ᚹ', 'ᚺ', 'ᚾ', 'ᛁ', 'ᛃ', 'ᛇ', 'ᛈ', 'ᛉ', 'ᛋ', 'ᛏ', 'ᛒ', 'ᛖ', 'ᛗ', 'ᛚ', 'ᛜ', 'ᛞ', 'ᛟ', 'ᛝ', '✦', '✧', '✶', '✹', '✷', '☽', '☾', '✺'];
 const titleSymbols = ['☄', 'ᚱ', 'ᛉ', 'ᛟ', 'ᚦ', '✦', '✧', '✶', '✹', '✷', '☽', '☾', '✺', '⛧', '🜏', '☠'];
 const deathSymbols = ['⛧', '🜏', '☠', 'ᛉ', 'ᛟ', 'ᚦ', 'ᚱ', '☽', '☾', '✹', '✺', '✶', '✷'];
 const backgroundThemes = [
@@ -93,6 +106,7 @@ function reset() {
     animationFrameId = null;
   }
   hideWelcomeHome();
+  hideSlimeDrips();
   pilot.x = canvas.width / 2 - pilot.w / 2;
   meteors = [];
   popups = [];
@@ -110,6 +124,7 @@ function reset() {
   levelSurgeUntil = 0;
   bePreparedUntil = 0;
   spawnPauseUntil = 0;
+  rotationSlowUntil = 0;
   pilotSpinUntil = 0;
   screenRotation = 0;
   backgroundTheme = 0;
@@ -160,13 +175,56 @@ function updateHud() {
 }
 
 function addTitleEcho(title) {
-  if (!titleEchoesEl || title === lastEchoedTitle) return;
+  if (!titleEchoesEl || !title) return;
 
-  const echo = document.createElement('div');
-  echo.className = 'title-echo';
-  echo.textContent = title;
-  titleEchoesEl.appendChild(echo);
-  lastEchoedTitle = title;
+  titleEchoesEl.dataset.echoTitle = title;
+  if (title !== lastEchoedTitle) lastEchoedTitle = title;
+  scheduleTitleEchoLayout();
+}
+
+function scheduleTitleEchoLayout() {
+  if (titleEchoLayoutQueued || !titleEchoesEl) return;
+
+  titleEchoLayoutQueued = true;
+  requestAnimationFrame(layoutTitleEchoes);
+}
+
+function touchesGameCanvas(rect) {
+  const gameRect = canvas.getBoundingClientRect();
+  return rect.left < gameRect.right &&
+    rect.right > gameRect.left &&
+    rect.top < gameRect.bottom &&
+    rect.bottom > gameRect.top;
+}
+
+function layoutTitleEchoes() {
+  titleEchoLayoutQueued = false;
+  if (!titleEchoesEl) return;
+
+  const title = titleEchoesEl.dataset.echoTitle || heroTitleEl?.textContent || '';
+  if (!title) return;
+
+  titleEchoesEl.textContent = '';
+  const columnWidth = Math.max(146, Math.min(230, window.innerWidth * 0.14));
+  const maxHeight = window.innerHeight;
+
+  for (let x = 10; x < window.innerWidth; x += columnWidth) {
+    let y = 10;
+
+    while (y < maxHeight) {
+      const echo = document.createElement('div');
+      echo.className = 'title-echo';
+      echo.textContent = title;
+      echo.style.left = `${x}px`;
+      echo.style.top = `${y}px`;
+      echo.style.width = `${columnWidth - 18}px`;
+      titleEchoesEl.appendChild(echo);
+
+      const rect = echo.getBoundingClientRect();
+      if (touchesGameCanvas(rect)) echo.classList.add('title-echo-clear');
+      y += Math.max(34, rect.height + 10);
+    }
+  }
 }
 
 function randomTitleSymbols() {
@@ -244,32 +302,46 @@ function hideWelcomeHome() {
   }
 }
 
+function showSlimeDrips() {
+  hitSlimeEl.classList.add('active');
+}
+
+function hideSlimeDrips() {
+  hitSlimeEl.classList.remove('active');
+}
+
 function updateHeroText() {
   if (!heroEl || !heroTitleEl || !taglineEl) return;
 
   if (score >= 777 && !random777Title) random777Title = randomTitleSymbols();
 
   const fade = Math.max(0, 1 - Math.min(score, 13) / 13);
-  const nextTitle = score >= 999
-    ? 'NINE NETHERES NEVER NEAR...'
-    : score >= 888
-      ? '13 13 13 13 13 13 13 13 13 13 13 13 13...'
-      : score >= 777
-        ? random777Title
-        : score >= 666
-          ? 'Demonic...'
-          : combo >= 69
-            ? 'x69. Nice...'
-            : score >= 333
-              ? 'Good Job...'
-              : score >= 131
-                ? 'Just Breathe...'
-                : score >= 13
-                  ? "You Can't Run..."
-                  : 'You can not run from your sins. They watch.';
+  const nextTitle = score >= 4313
+    ? 'We Will Observe...'
+    : score >= 2313
+      ? "It's Ok To Give In..."
+      : score >= 1313
+        ? 'Once they slept...'
+        : score >= 999
+          ? 'NINE NETHERES NEVER NEAR...'
+          : score >= 888
+            ? '13 13 13 13 13 13 13 13 13 13 13 13 13...'
+            : score >= 777
+              ? random777Title
+              : score >= 666
+                ? 'Demonic...'
+                : combo >= 69
+                  ? 'x69. Nice...'
+                  : score >= 333
+                    ? 'Good Job...'
+                    : score >= 131
+                      ? 'Just Breathe...'
+                      : score >= 13
+                        ? "You Can't Run..."
+                        : 'You can not run from your sins. They watch.';
 
-  heroEl.classList.toggle('doom-message', score >= 13 && score < 999);
-  heroEl.classList.toggle('rainbow-message', score >= 999);
+  heroEl.classList.toggle('doom-message', (score >= 13 && score < 999) || score >= 1313);
+  heroEl.classList.toggle('rainbow-message', score >= 999 && score < 1313);
   heroTitleEl.textContent = nextTitle;
   addTitleEcho(nextTitle);
 
@@ -334,7 +406,8 @@ function awardPoints(basePoints) {
 function spawnMeteor() {
   const size = 26 + Math.random() * 22;
   const baseSpeed = 2.7 + Math.random() * 1.3;
-  const levelSpeedBoost = (speedLevel - 1) * speedBoostPerLevel;
+  const effectiveSpeedLevel = performance.now() < rotationSlowUntil ? Math.max(1, speedLevel - 2) : speedLevel;
+  const levelSpeedBoost = (effectiveSpeedLevel - 1) * speedBoostPerLevel;
   meteors.push({
     x: Math.random() * (canvas.width - size),
     y: -size,
@@ -715,6 +788,61 @@ function playThunderCrash() {
   playNoiseBurst(0.72, 0.16, 1800, 70);
 }
 
+function playBitCrushedBePrepared() {
+  const audio = getAudioContext();
+
+  if ('speechSynthesis' in window) {
+    const utterance = new SpeechSynthesisUtterance('be prepared.');
+    utterance.rate = 0.68;
+    utterance.pitch = 0.28;
+    utterance.volume = 0.85;
+    window.speechSynthesis.speak(utterance);
+  }
+
+  if (!audio) return;
+
+  const now = audio.currentTime;
+  const output = audio.createGain();
+  const crusher = audio.createWaveShaper();
+  const filter = audio.createBiquadFilter();
+  const curve = new Float32Array(256);
+
+  for (let i = 0; i < curve.length; i++) {
+    const x = i / (curve.length - 1) * 2 - 1;
+    curve[i] = Math.round(x * 7) / 7;
+  }
+
+  crusher.curve = curve;
+  crusher.oversample = 'none';
+  filter.type = 'bandpass';
+  filter.frequency.setValueAtTime(720, now);
+  filter.Q.value = 6;
+  output.gain.setValueAtTime(0.0001, now);
+  output.gain.exponentialRampToValueAtTime(0.16, now + 0.035);
+  output.gain.exponentialRampToValueAtTime(0.0001, now + 0.95);
+  output.connect(crusher);
+  crusher.connect(filter);
+  filter.connect(audio.destination);
+
+  [0, 0.14, 0.3, 0.48, 0.62].forEach((offset, index) => {
+    const voice = audio.createOscillator();
+    const gate = audio.createGain();
+    const start = now + offset;
+    voice.type = index % 2 ? 'square' : 'sawtooth';
+    voice.frequency.setValueAtTime([132, 98, 118, 86, 72][index], start);
+    voice.detune.setValueAtTime(index % 2 ? -18 : 18, start);
+    gate.gain.setValueAtTime(0.0001, start);
+    gate.gain.exponentialRampToValueAtTime(0.34, start + 0.018);
+    gate.gain.exponentialRampToValueAtTime(0.0001, start + 0.16);
+    voice.connect(gate);
+    gate.connect(output);
+    voice.start(start);
+    voice.stop(start + 0.19);
+  });
+
+  playNoiseBurst(0.22, 0.06, 2600, 300);
+}
+
 function playRelicPunch() {
   const audio = getAudioContext();
   if (!audio) return;
@@ -909,12 +1037,14 @@ function countSuccessfulDodges(timestamp) {
         levelSurgeUntil = timestamp + 3600;
         bePreparedUntil = timestamp + 3000;
         spawnPauseUntil = timestamp + 5000;
+        rotationSlowUntil = timestamp + 9000;
         screenRotation = (screenRotation + 90) % 360;
         backgroundTheme = 1 + Math.floor(Math.random() * (backgroundThemes.length - 1));
         clearMeteorsForRotation = true;
         lastSpawn = timestamp + 5000;
         resetPowerupTimers(timestamp);
         playThunderCrash();
+        playBitCrushedBePrepared();
         statusEl.textContent = `Level ${level}: fate surge awakened.`;
       }
     }
@@ -1076,6 +1206,7 @@ function step(timestamp, token = runToken) {
       playEvilLaugh();
       statusEl.textContent = `Bonked! ${whisperScream()} Try again.`;
       animationFrameId = null;
+      showSlimeDrips();
       showWelcomeHome();
       draw();
       return;
@@ -1287,6 +1418,7 @@ function startGame() {
   getAudioContext();
   if (running) return;
   hideWelcomeHome();
+  hideSlimeDrips();
   resetPowerupTimers();
   running = true;
   runToken++;
@@ -1324,6 +1456,8 @@ window.addEventListener('keyup', event => {
 });
 
 startBtn.addEventListener('click', startGame);
+window.addEventListener('resize', scheduleTitleEchoLayout);
+
 resetBtn.addEventListener('click', () => {
   stopBassMusic();
   reset();

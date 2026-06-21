@@ -457,3 +457,72 @@ body.text-shake main {
   84% { transform: translate(72vw, 76vh); }
   100% { transform: translate(4vw, 8vh); }
 }
+
+.hit-slime {
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 42vh;
+  z-index: 30;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .45s ease;
+  background:
+    linear-gradient(180deg, rgba(72, 255, 0, .64), rgba(72, 255, 0, .16) 18%, transparent 78%),
+    radial-gradient(ellipse at 12% 0%, rgba(157, 255, 110, .9), transparent 18%),
+    radial-gradient(ellipse at 48% 0%, rgba(67, 180, 0, .72), transparent 20%),
+    radial-gradient(ellipse at 82% 0%, rgba(157, 255, 110, .82), transparent 16%);
+  filter: drop-shadow(0 0 14px rgba(98, 255, 0, .72));
+}
+.hit-slime.active { opacity: 1; }
+.hit-slime i {
+  position: absolute;
+  top: -8px;
+  width: clamp(8px, 1.4vw, 18px);
+  height: var(--drip-length, 96px);
+  border-radius: 0 0 999px 999px;
+  background:
+    linear-gradient(180deg, rgba(190, 255, 126, .96), rgba(72, 255, 0, .76) 45%, rgba(23, 80, 0, .16));
+  box-shadow:
+    0 0 12px rgba(157, 255, 110, .82),
+    inset 0 -12px 18px rgba(0, 40, 0, .35);
+  transform-origin: top center;
+  animation: slimeDrip var(--drip-duration, 3s) ease-in-out var(--drip-delay, 0s) infinite;
+}
+.hit-slime i::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -7px;
+  width: 20px;
+  height: 20px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: rgba(157, 255, 110, .88);
+  box-shadow: 0 0 14px rgba(157, 255, 110, .78);
+}
+@keyframes slimeDrip {
+  0%, 100% { transform: scaleY(.72) translateY(-18px); opacity: .66; }
+  50% { transform: scaleY(1.12) translateY(12px); opacity: 1; }
+}
+
+.title-echoes {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  padding: 0;
+  min-height: 100vh;
+}
+.title-echo {
+  position: fixed;
+  margin: 0;
+  opacity: .82;
+}
+.title-echo-clear {
+  opacity: .08;
+  text-shadow: none;
+}
+.shell, .game-layout, .hero, .game-card, .game-side-panel, .instructions {
+  position: relative;
+  z-index: 1;
+}
