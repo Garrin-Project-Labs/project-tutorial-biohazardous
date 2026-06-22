@@ -84,12 +84,14 @@ let transcendX = 210;
 let transcendVx = 0.62;
 let nextTranscendLetterAt = 0;
 let transcendAnimation = null;
-const branchThresholds = { gameLies: 3, eyeBoss: 5, whiteVoid: 7 };
+const branchThresholds = { gameLies: 3, eyeBoss: 5, whiteVoid: 7, newGamePlus: 9 };
 let activeBranches = { gameLies: false, eyeBoss: false, whiteVoid: false };
 let gameLiesUntil = 0;
 let nextEyeBossShotAt = 0;
 let whiteVoidStartedAt = 0;
 let eyeBossDefeated = false;
+let newGamePlusActive = false;
+let newGamePlusStartedAt = 0;
 let relic = null;
 let eyePowerup = null;
 let pentagramPowerup = null;
@@ -238,6 +240,11 @@ function reset() {
   stopDeadEchoRewrite();
   hitExplosion = null;
   pilotVisible = true;
+  pilot.emoji = '🚀';
+  pilot.w = 34;
+  pilot.h = 30;
+  pilot.hitInsetX = 7;
+  pilot.hitInsetY = 6;
   pilot.x = canvas.width / 2 - pilot.w / 2;
   meteors = [];
   popups = [];
@@ -262,6 +269,8 @@ function reset() {
   nextEyeBossShotAt = 0;
   whiteVoidStartedAt = 0;
   eyeBossDefeated = false;
+  newGamePlusActive = false;
+  newGamePlusStartedAt = 0;
   relic = null;
   eyePowerup = null;
   pentagramPowerup = null;
@@ -341,6 +350,65 @@ function resetEyeBossPhase() {
   eyeBlinkUntil = 0;
 }
 
+
+function resetLoopForNewGamePlus(timestamp) {
+  activeBranches = { gameLies: false, eyeBoss: false, whiteVoid: false };
+  gameLiesUntil = 0;
+  eyeBossDefeated = false;
+  eyeBossShots = [];
+  whiteVoidStartedAt = 0;
+  transcendenceCount = 0;
+  transcendFilled = Array(transcendWord.length).fill(false);
+  transcendRuneSlots = randomTranscendRuneSlots();
+  transcendLetters = [];
+  transcendSpitLetters = [];
+  transcendCollectedLetters = [];
+  transcendSpitQueue = [];
+  transcendAnimation = null;
+  nextTranscendLetterAt = timestamp + 1600;
+  meteors = [];
+  relic = null;
+  eyePowerup = null;
+  pentagramPowerup = null;
+  blackHolePowerup = null;
+  level = 1;
+  speedLevel = 2;
+  dodges = 0;
+  lastSpawn = timestamp;
+  spawnPauseUntil = timestamp + 1200;
+  rotationSlowUntil = timestamp + 1600;
+  blackHoleUntil = 0;
+  blackHoleCooldownUntil = 0;
+  resetPowerupTimers(timestamp);
+  resetCanvasRotation();
+}
+
+function enterNewGamePlus(timestamp) {
+  if (newGamePlusActive) return;
+
+  newGamePlusActive = true;
+  newGamePlusStartedAt = timestamp;
+  pilot.emoji = '👄';
+  pilot.w = 42;
+  pilot.h = 34;
+  pilot.hitInsetX = 10;
+  pilot.hitInsetY = 8;
+  pilot.x = Math.max(0, Math.min(canvas.width - pilot.w, pilot.x));
+  pilot.y = Math.max(0, Math.min(canvas.height - 34 - pilot.h, pilot.y));
+  resetLoopForNewGamePlus(timestamp);
+  popups.push({ text: 'NEW GAME+ THE LOOP REMEMBERS', x: canvas.width / 2 - 148, y: 180, born: timestamp });
+  statusEl.textContent = 'NEW GAME+: the loop remembers. You are the mouth now. Score x3.';
+  playMonsterDeathSound();
+  playTranscendJackpot();
+  updateHud();
+}
+
+function maybeEnterNewGamePlus(timestamp) {
+  if (newGamePlusActive || !activeBranches.whiteVoid) return;
+  const survivedWhiteVoid = timestamp - whiteVoidStartedAt >= 26000;
+  if (transcendenceCount >= branchThresholds.newGamePlus && survivedWhiteVoid) enterNewGamePlus(timestamp);
+}
+
 function isEyeClosed(timestamp = performance.now()) {
   if (timestamp >= eyeBlinkUntil) return false;
 
@@ -389,6 +457,7 @@ function maybeUnlockTranscendBranches(timestamp) {
 }
 
 function branchStatusText() {
+  if (newGamePlusActive) return 'NEW GAME+';
   if (activeBranches.whiteVoid) return 'WHITE VOID';
   if (activeBranches.eyeBoss) return 'EYE BOSS';
   if (activeBranches.gameLies) return 'THE GAME LIES';
@@ -817,7 +886,9 @@ function addCombo(amount) {
 }
 
 function scoreMultiplier() {
-  return activeBranches.whiteVoid ? 10 : 1;
+  if (activeBranches.whiteVoid) return 10;
+  if (newGamePlusActive) return 3;
+  return 1;
 }
 
 function addScore(points) {
@@ -832,7 +903,7 @@ function awardPoints(basePoints) {
 function spawnMeteor() {
   const whiteVoid = activeBranches.whiteVoid;
   const size = Math.max(pilot.w, pilot.h) + Math.random() * (whiteVoid ? 32 : 24);
-  const baseSpeed = (whiteVoid ? 3.0 : 2.1) + Math.random() * (whiteVoid ? 1.35 : 0.95);
+  const baseSpeed = (whiteVoid ? 3.0 : (newGamePlusActive ? 2.65 : 2.1)) + Math.random() * (whiteVoid ? 1.35 : (newGamePlusActive ? 1.15 : 0.95));
   const effectiveSpeedLevel = performance.now() < rotationSlowUntil ? Math.max(1, speedLevel - 2) : speedLevel;
   const levelSpeedBoost = (effectiveSpeedLevel - 1) * speedBoostPerLevel;
   meteors.push({
@@ -909,7 +980,7 @@ function setPaused(nextPaused) {
   } else {
     resumeGameAudio();
   }
-  statusEl.textContent = paused ? 'Paused' : (activeBranches.whiteVoid ? 'White Void mode!' : activeBranches.eyeBoss ? 'The eye watches.' : activeBranches.gameLies ? 'The game lies.' : 'Dodging!');
+  statusEl.textContent = paused ? 'Paused' : (newGamePlusActive ? 'NEW GAME+: the loop remembers.' : activeBranches.whiteVoid ? 'White Void mode!' : activeBranches.eyeBoss ? 'The eye watches.' : activeBranches.gameLies ? 'The game lies.' : 'Dodging!');
 }
 
 function playNoiseBurst(duration, gainPeak, filterStart, filterEnd) {
@@ -2308,10 +2379,12 @@ function step(timestamp, token = runToken) {
   pilot.y = Math.max(0, Math.min(canvas.height - mouthHeight - pilot.h, pilot.y));
   updateTranscendSystem(timestamp, delta);
   maybeUnlockTranscendBranches(timestamp);
+  maybeEnterNewGamePlus(timestamp);
   scheduleEyeBossShot(timestamp);
   const transcendLockout = isTranscendAnimating(timestamp);
 
-  if (!transcendLockout && timestamp >= spawnPauseUntil && timestamp - lastSpawn > normalMeteorSpawnDelay) {
+  const meteorSpawnDelay = newGamePlusActive ? normalMeteorSpawnDelay * 0.82 : normalMeteorSpawnDelay;
+  if (!transcendLockout && timestamp >= spawnPauseUntil && timestamp - lastSpawn > meteorSpawnDelay) {
     spawnMeteor();
     lastSpawn = timestamp;
   }
@@ -2831,6 +2904,11 @@ function draw() {
   glowText(`TRANSCENDENCE ${transcendenceCount}`, 22, 48, activeBranches.whiteVoid ? '#050006' : '#ffcf33', 10, 2, activeBranches.whiteVoid ? '#ffffff' : '#050006');
   const branchText = branchStatusText();
   if (branchText) glowText(branchText, 22, 68, activeBranches.whiteVoid ? '#050006' : '#ff1744', 10, 2, activeBranches.whiteVoid ? '#ffffff' : '#050006');
+  if (activeBranches.whiteVoid) {
+    const surviveLeft = Math.max(0, 26 - (now - whiteVoidStartedAt) / 1000);
+    glowText(`VOID SURVIVE ${surviveLeft.toFixed(1)}s`, 22, 88, '#050006', 10, 2, '#ffffff');
+  }
+  if (newGamePlusActive) glowText('LOOP BONUS x3', 22, 88, '#b388ff', 10, 2, '#050006');
   ctx.restore();
   ctx.restore();
 
@@ -2847,13 +2925,13 @@ function draw() {
   }
 
   if (pilotVisible) {
-    ctx.font = '34px serif';
+    ctx.font = newGamePlusActive ? '40px serif' : '34px serif';
     ctx.save();
     const steeringTilt = (keys.ArrowLeft || keys.a ? -0.28 : 0) + (keys.ArrowRight || keys.d ? 0.28 : 0);
     ctx.translate(pilot.x + pilot.w / 2, pilot.y + pilot.h / 2);
-    ctx.rotate(-Math.PI / 4 + steeringTilt + (pilotSpin ? frame * 0.28 : 0));
-    ctx.filter = 'invert(1) hue-rotate(180deg)';
-    glowText(pilot.emoji, -pilot.w / 2, pilot.h / 2, '#ff1744', 24, 6, '#ffffff');
+    ctx.rotate((newGamePlusActive ? 0 : -Math.PI / 4) + steeringTilt + (pilotSpin ? frame * 0.28 : 0));
+    if (!newGamePlusActive) ctx.filter = 'invert(1) hue-rotate(180deg)';
+    glowText(pilot.emoji, -pilot.w / 2, pilot.h / 2, newGamePlusActive ? '#050006' : '#ff1744', newGamePlusActive ? 30 : 24, 6, newGamePlusActive ? '#b388ff' : '#ffffff');
     ctx.restore();
   }
 
@@ -3053,6 +3131,20 @@ function draw() {
     ctx.globalAlpha = 1;
   }
 
+  if (newGamePlusActive && now - newGamePlusStartedAt < 7000) {
+    const age = now - newGamePlusStartedAt;
+    const fade = Math.max(0, 1 - Math.max(0, age - 5600) / 1400);
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.globalAlpha = fade;
+    ctx.font = '900 42px Georgia, serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    glowText('NEW GAME+ — THE LOOP REMEMBERS', canvas.width / 2, canvas.height / 2 - 120, '#b388ff', 34, 6, '#050006');
+    glowText('YOU ARE THE MOUTH', canvas.width / 2, canvas.height / 2 - 72, '#050006', 26, 5, '#b388ff');
+    ctx.restore();
+  }
+
   if (activeBranches.whiteVoid && now - whiteVoidStartedAt < 7000) {
     const age = now - whiteVoidStartedAt;
     const blast = Math.min(1, age / 500);
@@ -3148,7 +3240,7 @@ function startGame() {
   runToken++;
   const token = runToken;
   startBassMusic();
-  statusEl.textContent = activeBranches.whiteVoid ? 'White Void mode!' : activeBranches.eyeBoss ? 'The eye watches.' : activeBranches.gameLies ? 'The game lies.' : 'Dodging!';
+  statusEl.textContent = newGamePlusActive ? 'NEW GAME+: the loop remembers.' : activeBranches.whiteVoid ? 'White Void mode!' : activeBranches.eyeBoss ? 'The eye watches.' : activeBranches.gameLies ? 'The game lies.' : 'Dodging!';
   animationFrameId = requestAnimationFrame(timestamp => step(timestamp, token));
 }
 
