@@ -382,6 +382,16 @@ canvas {
   max-width: 100%;
   transition: background .45s ease, border-color .45s ease, box-shadow .45s ease, color .45s ease;
 }
+.hud-new-game-plus {
+  color: #d9c1ff;
+  border-color: rgba(179, 136, 255, .58);
+  background:
+    linear-gradient(135deg, rgba(0, 0, 0, .92), rgba(38, 0, 66, .82));
+  box-shadow:
+    0 0 18px rgba(179, 136, 255, .26),
+    inset 0 0 14px rgba(0, 0, 0, .86);
+}
+.hud-new-game-plus strong { color: #ffffff; }
 .hud-level.level-danger {
   color: #fff1f1;
   background:

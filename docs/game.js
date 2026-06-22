@@ -3,6 +3,7 @@ const ctx = canvas.getContext('2d');
 const scoreEl = document.querySelector('#score');
 const levelEl = document.querySelector('#level');
 const highScoreEl = document.querySelector('#high-score');
+const newGamePlusEl = document.querySelector('#new-game-plus');
 const scoreBoxEl = scoreEl?.closest('.hud-score');
 const levelBoxEl = levelEl?.closest('.hud-level');
 const heroEl = document.querySelector('.hero');
@@ -398,7 +399,7 @@ function enterNewGamePlus(timestamp) {
   pilot.y = Math.max(0, Math.min(canvas.height - 34 - pilot.h, pilot.y));
   resetLoopForNewGamePlus(timestamp);
   popups.push({ text: `NEW GAME+ ${newGamePlusCount}`, x: canvas.width / 2 - 54, y: 180, born: timestamp });
-  statusEl.textContent = `NEW GAME+ ${newGamePlusCount}: the loop remembers. You are the mouth now. Score x3.`;
+  statusEl.textContent = `NEW GAME+ ${newGamePlusCount}: the loop remembers. You are the mouth now. Score x${newGamePlusBonus()}.`;
   playMonsterDeathSound();
   playTranscendJackpot();
   updateHud();
@@ -535,6 +536,7 @@ function updateHud() {
   scoreEl.textContent = gameLiesActive ? '???' : Math.floor(score);
   levelEl.textContent = gameLiesActive ? 'RUN' : level;
   if (highScoreEl) highScoreEl.textContent = Math.floor(highScore);
+  if (newGamePlusEl) newGamePlusEl.textContent = newGamePlusCount;
   if (scoreBoxEl) {
     const goldR = Math.round(12 + 178 * highScoreProgress);
     const goldG = Math.round(24 + 123 * highScoreProgress);
@@ -886,9 +888,13 @@ function addCombo(amount) {
   }
 }
 
+function newGamePlusBonus() {
+  return Math.max(0, newGamePlusCount) * 3;
+}
+
 function scoreMultiplier() {
   if (activeBranches.whiteVoid) return 10;
-  if (newGamePlusActive) return 3;
+  if (newGamePlusActive) return Math.max(1, newGamePlusBonus());
   return 1;
 }
 
@@ -981,7 +987,7 @@ function setPaused(nextPaused) {
   } else {
     resumeGameAudio();
   }
-  statusEl.textContent = paused ? 'Paused' : (newGamePlusActive ? 'NEW GAME+: the loop remembers.' : activeBranches.whiteVoid ? 'White Void mode!' : activeBranches.eyeBoss ? 'The eye watches.' : activeBranches.gameLies ? 'The game lies.' : 'Dodging!');
+  statusEl.textContent = paused ? 'Paused' : (newGamePlusActive ? `NEW GAME+ ${newGamePlusCount}: loop bonus x${newGamePlusBonus()}.` : activeBranches.whiteVoid ? 'White Void mode!' : activeBranches.eyeBoss ? 'The eye watches.' : activeBranches.gameLies ? 'The game lies.' : 'Dodging!');
 }
 
 function playNoiseBurst(duration, gainPeak, filterStart, filterEnd) {
@@ -2949,7 +2955,7 @@ function draw() {
     const surviveLeft = Math.max(0, 26 - (now - whiteVoidStartedAt) / 1000);
     glowText(`VOID SURVIVE ${surviveLeft.toFixed(1)}s`, 22, 88, '#050006', 10, 2, '#ffffff');
   }
-  if (newGamePlusActive) glowText(`LOOP ${newGamePlusCount} BONUS x3`, 22, activeBranches.whiteVoid ? 108 : 88, '#b388ff', 10, 2, '#050006');
+  if (newGamePlusActive) glowText(`NG+ ${newGamePlusCount}  LOOP BONUS x${newGamePlusBonus()}`, 22, activeBranches.whiteVoid ? 108 : 88, '#b388ff', 10, 2, '#050006');
   ctx.restore();
   ctx.restore();
 
@@ -3182,27 +3188,27 @@ function draw() {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
-    ctx.fillStyle = 'rgba(0, 0, 0, .72)';
-    ctx.strokeStyle = 'rgba(179, 136, 255, .75)';
-    ctx.lineWidth = 3;
-    ctx.shadowColor = '#050006';
-    ctx.shadowBlur = 28;
-    ctx.fillRect(54, canvas.height / 2 - 178, canvas.width - 108, 174);
-    ctx.strokeRect(62, canvas.height / 2 - 170, canvas.width - 124, 158);
+    ctx.fillStyle = 'rgba(0, 0, 0, .88)';
+    ctx.shadowColor = '#b388ff';
+    ctx.shadowBlur = 34;
+    ctx.fillRect(42, canvas.height / 2 - 184, canvas.width - 84, 198);
+    ctx.shadowBlur = 0;
 
     ctx.save();
-    ctx.translate(canvas.width / 2, canvas.height / 2 - 132);
+    ctx.translate(canvas.width / 2, canvas.height / 2 - 136);
     ctx.scale(pulse, pulse);
-    ctx.font = '900 34px Georgia, serif';
-    glowText(`NEW GAME+ ${newGamePlusCount}`, 0, 0, '#b388ff', 30, 6, '#050006');
+    ctx.font = '900 36px Georgia, serif';
+    glowText(`NEW GAME+ ${newGamePlusCount}`, 0, 0, '#ffffff', 34, 7, '#3b0066');
     ctx.restore();
 
-    ctx.font = '900 25px Georgia, serif';
-    glowText('THE LOOP REMEMBERS', canvas.width / 2, canvas.height / 2 - 86, '#ffffff', 24, 5, '#050006');
+    ctx.font = '900 26px Georgia, serif';
+    glowText('THE LOOP REMEMBERS', canvas.width / 2, canvas.height / 2 - 88, '#b388ff', 30, 6, '#050006');
     ctx.font = '900 23px Georgia, serif';
-    glowText('YOU ARE THE MOUTH', canvas.width / 2, canvas.height / 2 - 48, '#050006', 22, 5, '#b388ff');
-    ctx.font = 'bold 15px monospace';
-    glowText('meteors paused while the loop opens', canvas.width / 2, canvas.height / 2 - 18, '#ffcf33', 14, 3, '#050006');
+    glowText('YOU ARE THE MOUTH', canvas.width / 2, canvas.height / 2 - 48, '#ffffff', 28, 6, '#050006');
+    ctx.font = 'bold 18px monospace';
+    glowText(`LOOP BONUS x${newGamePlusBonus()}`, canvas.width / 2, canvas.height / 2 - 18, '#ffcf33', 22, 4, '#050006');
+    ctx.font = 'bold 13px monospace';
+    glowText('meteors paused while the loop opens', canvas.width / 2, canvas.height / 2 + 6, '#ffffff', 14, 3, '#050006');
     ctx.restore();
   }
 
@@ -3301,7 +3307,7 @@ function startGame() {
   runToken++;
   const token = runToken;
   startBassMusic();
-  statusEl.textContent = newGamePlusActive ? 'NEW GAME+: the loop remembers.' : activeBranches.whiteVoid ? 'White Void mode!' : activeBranches.eyeBoss ? 'The eye watches.' : activeBranches.gameLies ? 'The game lies.' : 'Dodging!';
+  statusEl.textContent = newGamePlusActive ? `NEW GAME+ ${newGamePlusCount}: loop bonus x${newGamePlusBonus()}.` : activeBranches.whiteVoid ? 'White Void mode!' : activeBranches.eyeBoss ? 'The eye watches.' : activeBranches.gameLies ? 'The game lies.' : 'Dodging!';
   animationFrameId = requestAnimationFrame(timestamp => step(timestamp, token));
 }
 
