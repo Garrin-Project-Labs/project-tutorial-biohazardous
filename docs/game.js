@@ -162,57 +162,58 @@ const meteorSymbols = ['☄', 'ᚠ', 'ᚢ', 'ᚦ', 'ᚨ', 'ᚱ', 'ᚲ', 'ᚷ', '
 const titleSymbols = ['☄', 'ᚱ', 'ᛉ', 'ᛟ', 'ᚦ', '✦', '✧', '✶', '✹', '✷', '☽', '☾', '✺', '⛧', '🜏', '☠'];
 const deathSymbols = ['⛧', '🜏', '☠', 'ᛉ', 'ᛟ', 'ᚦ', 'ᚱ', '☽', '☾', '✹', '✺', '✶', '✷'];
 const asciiEyeArts = [
-  `  .-^^^^-.
- /  >   <  \\
-|   \___/   |
-|  WATCHING |
- \\  ___  /
-  '-...-'`,
-  ` .--------.
-|  ◣    ◢  |
-|    ▾     |
-|  ANGRY   |
- '--------'`,
-  `  /\\___/\\
- |  ◉   ◉  |
- |   ╲_╱   |
- |  HATE   |
-  \\_____/`,
+  `  .-"""-.
+ /  ◉ ◉  \
+|    ─    |
+ \  ___  /
+  \`-...-\``,
+  `  /\_/\
+ (  o o  )
+  >  ^  <`,
+  ` .-------.
+|  O   O  |
+|    ∩    |
+ '-------'`,
   `   .---.
-  / #   # \\
- |   ___   |
- |  /___\\  |
-  \\_____/`,
-  `  <\\   />
-   (◣ ◢)
-  /  ▽  \\
- /  STARE\\
- \\______/`,
-  ` .:::::::.
-(::  ◉ ◉  ::)
- ::  ╲_╱  ::
-  :: EVIL ::
-   ':::::'`,
-  `  .-===-.
- /  ◥   ◤  \\
-|    ___    |
-|   /___\\   |
- \\_______/`,
-  `  /-----\\
- |  🔥  🔥  |
- |    ∩    |
- |  FURY   |
-  \\_____/`,
+  / ◐ ◑ \
+ |   ▽   |
+  \_._./`,
+  `  <\   />
+   (• •)
+  /  V  \
+  \_____/`,
+  `  .-^-.
+ / 0 0 \
+|   -   |
+ \_===_/`,
+  `  .oOOo.
+ (  @ @  )
+  \  =  /
+   '---'`,
+  `  /-----\
+ |  -   -  |
+ |    o    |
+  \_____/`,
   `   _   _
-  (\\_/ )
-  (◣ ◢ )
-   \\_=/
-  DON'T BLINK`,
-  `  ._____ .
- /  ◉   ◉ \\
-|    ╳     |
-|  YOU     |
- \\_______/`
+  (\_/ )
+  (◌ ◌ )
+   \_=/`,
+  `  .-...-.
+ /  < >  \
+|    ^    |
+ \  ---  /`,
+  `  .:::::.
+ (::o o::)
+  :: v ::
+   ':::'`,
+  `  /\___/\
+ |  ◍ ◍  |
+ |   W   |
+  \_____/`,
+  `  ._____.
+ /  ◒ ◓  \
+|    ~    |
+ \__-__/`
 ];
 const backgroundThemes = [
   { base: '#030006', mist: 'rgba(157, 255, 110, .42)', alt: '#00f5ff', nebula: '#2b0038' },
@@ -306,7 +307,7 @@ function summonVoidWhisper() {
   whisper.textContent = showVoidText ? 'The Void Watches' : asciiEyeArts[Math.floor(Math.random() * asciiEyeArts.length)];
   whisper.style.left = `${Math.random() * 82 + 6}vw`;
   whisper.style.top = `${Math.random() * 78 + 8}vh`;
-  whisper.style.color = showVoidText ? (Math.random() < 0.5 ? '#050006' : '#1a0000') : (Math.random() < 0.5 ? '#ff1744' : '#050006');
+  whisper.style.color = showVoidText ? (Math.random() < 0.5 ? '#050006' : '#1a0000') : ['#ff1744', '#ff6a00', '#b388ff', '#050006'][Math.floor(Math.random() * 4)];
   whisper.style.transform = `rotate(${Math.random() * 18 - 9}deg)`;
   document.body.appendChild(whisper);
   setTimeout(() => whisper.remove(), 1500);
