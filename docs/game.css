@@ -55,7 +55,7 @@ body::before {
   margin: 0 auto;
   padding: 18px 0 24px;
 }
-.hero { text-align: center; margin-bottom: 14px; }
+.hero { text-align: center; margin-bottom: 30px; }
 .eyebrow {
   color: var(--accent);
   text-transform: uppercase;
@@ -78,6 +78,9 @@ h1 {
     6px 6px 0 rgba(0, 0, 0, .96);
 }
 #tagline {
+  position: relative;
+  top: -10px;
+  margin: 0 0 18px;
   color: #e0e0e0;
   font-family: "Old English Text MT", "UnifrakturMaguntia", "Blackletter", "Cinzel Decorative", Georgia, serif;
   font-size: 1.35rem;

@@ -320,7 +320,7 @@ function maybeUnlockTranscendBranches(timestamp) {
     shakePageText();
     playRecordScratch();
     popups.push({ text: 'THE GAME LIES', x: canvas.width / 2 - 76, y: 110, born: timestamp });
-    statusEl.textContent = 'TRANSCEDENCE 3: the game starts lying.';
+    statusEl.textContent = 'TRANSCENDENCE 3: the game starts lying.';
   }
 
   if (!activeBranches.eyeBoss && transcendenceCount >= branchThresholds.eyeBoss) {
@@ -328,7 +328,7 @@ function maybeUnlockTranscendBranches(timestamp) {
     nextEyeBossShotAt = timestamp + 1500;
     eyeBlinkUntil = timestamp + 2600;
     popups.push({ text: 'THE EYE WATCHES', x: canvas.width / 2 - 82, y: 150, born: timestamp });
-    statusEl.textContent = 'TRANSCEDENCE 5: boss phase — the eye watches.';
+    statusEl.textContent = 'TRANSCENDENCE 5: boss phase — the eye watches.';
   }
 
   if (!activeBranches.whiteVoid && transcendenceCount >= branchThresholds.whiteVoid) {
@@ -337,7 +337,7 @@ function maybeUnlockTranscendBranches(timestamp) {
     spawnPauseUntil = Math.max(spawnPauseUntil, timestamp + 900);
     meteors = [];
     popups.push({ text: 'WHITE VOID MODE', x: canvas.width / 2 - 78, y: 190, born: timestamp });
-    statusEl.textContent = 'TRANSCEDENCE 7: White Void mode. Survive the black meteors.';
+    statusEl.textContent = 'TRANSCENDENCE 7: White Void mode. Survive the black meteors.';
     playTranscendJackpot();
   }
 }
@@ -2597,7 +2597,7 @@ function draw() {
 
   ctx.save();
   ctx.font = 'bold 12px "Cinzel Decorative", Georgia, serif';
-  glowText(`TRANSCEDENCE ${transcendenceCount}`, 22, 48, activeBranches.whiteVoid ? '#050006' : '#ffcf33', 10, 2, activeBranches.whiteVoid ? '#ffffff' : '#050006');
+  glowText(`TRANSCENDENCE ${transcendenceCount}`, 22, 48, activeBranches.whiteVoid ? '#050006' : '#ffcf33', 10, 2, activeBranches.whiteVoid ? '#ffffff' : '#050006');
   const branchText = branchStatusText();
   if (branchText) glowText(branchText, 22, 68, activeBranches.whiteVoid ? '#050006' : '#ff1744', 10, 2, activeBranches.whiteVoid ? '#ffffff' : '#050006');
   ctx.restore();

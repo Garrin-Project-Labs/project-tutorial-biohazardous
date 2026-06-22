@@ -25,11 +25,14 @@
           <span>Score: <strong id="score">0</strong></span>
           <span>Level: <strong id="level">1</strong></span>
         </div>
-        <div class="powerup-preview" aria-label="Powerup previews">
-          <span><strong class="sprite-preview relic-preview">☢</strong> Relic: +13 score +5 combo, or +313 score × combo at max combo</span>
-          <span><strong class="sprite-preview eye-preview">👁️</strong> Inverted eye: reset speed</span>
-          <span><strong class="sprite-preview blackhole-preview">🕳</strong> Black hole: pulls powerups for 13s</span>
-          <span><strong class="sprite-preview pentagram-preview">⛧</strong> Pentagram: reset rotation + clears meteors</span>
+        <div class="powerup-preview" aria-label="Game info and powerups">
+          <span><strong class="sprite-preview relic-preview">☢</strong> Relic: +13 score and +5 combo; at max combo, +313 score × combo.</span>
+          <span><strong class="sprite-preview eye-preview">👁️</strong> Inverted eye: resets meteor speed and makes TRANSCEND letters fall faster.</span>
+          <span><strong class="sprite-preview blackhole-preview">🕳</strong> Black hole: pulls powerups toward you for 13 seconds, then cools down.</span>
+          <span><strong class="sprite-preview pentagram-preview">⛧</strong> Pentagram: appears after rotation, resets the canvas angle, and clears meteors.</span>
+          <span><strong>3</strong> The Game Lies: score and warnings become untrustworthy for a moment.</span>
+          <span><strong>5</strong> Eye Boss: the giant eye aims warning lines, then fires lasers.</span>
+          <span><strong>7</strong> White Void: the world turns white and black meteors hit harder.</span>
         </div>
         <div class="controls">
           <button id="start">Prepare To Die</button>
@@ -40,15 +43,15 @@
       <aside class="instructions" aria-label="Game instructions">
         <h2>How to survive</h2>
         <p>Press <strong>Prepare To Die</strong> to start, or press <strong>R</strong> to reset and instantly restart.</p>
-        <p><strong class="sprite-preview rocket-preview">🚀</strong> Use arrow keys or WASD to move the rocket.</p>
-        <p>Dodge the spinning runes: <strong class="sprite-preview rune-preview">☄ ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ᚷ ᛉ ᛟ ✹ ☽</strong></p>
-        <p>Near misses give +1. Meteor dodges are worth +1 more each level.</p>
-        <p>Every 3 level-ups rotates the game screen, slows the next meteor wave for a moment, changes the outside tentacles, and warns: “be prepared.”</p>
-        <p><strong class="sprite-preview relic-preview">☢</strong> Relic: +13 score, +5 combo, and reveals fate text. At max combo it gives +313 score multiplied by your combo instead.</p>
-        <p><strong class="sprite-preview eye-preview">👁️</strong> Inverted eye: resets game speed until the next level, without changing your level.</p>
-        <p><strong class="sprite-preview blackhole-preview">🕳</strong> Black hole: plays a space sound, pulls powerups toward you for 13 seconds, then waits 26 seconds before spawning again.</p>
-        <p><strong class="sprite-preview pentagram-preview">⛧</strong> Pentagram: appears after rotation, resets the canvas angle, and clears meteors.</p>
-        <p><strong>TRANSCEDENCE branches:</strong> at 3 the game lies, at 5 the eye becomes a boss, and at 7 White Void mode begins.</p>
+        <p><strong class="sprite-preview rocket-preview">🚀</strong> Use arrow keys or WASD to move the rocket. Stay above the mouth.</p>
+        <p>Dodge the spinning runes and meteors: <strong class="sprite-preview rune-preview">☄ ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ᚷ ᛉ ᛟ ✹ ☽</strong></p>
+        <p>Near misses give +1. Meteor dodges are worth more as the level rises.</p>
+        <p>Catch falling <strong>TRANSCEND</strong> letters with the mouth to fill the word. If the player touches those letters, the mouth rejects them and spits them back out as hazards.</p>
+        <p>When TRANSCEND completes, the word flies up black, slams into the mouth as rainbow text, and raises your <strong>TRANSCENDENCE</strong> counter.</p>
+        <p>Every 3 level-ups rotates the screen, slows the next meteor wave, changes the rune border, and warns: “be prepared.”</p>
+        <p><strong>TRANSCENDENCE 3:</strong> The Game Lies — the HUD and warnings become untrustworthy for a moment.</p>
+        <p><strong>TRANSCENDENCE 5:</strong> Eye Boss — dodge the eye’s warning lines before they become damaging lasers.</p>
+        <p><strong>TRANSCENDENCE 7:</strong> White Void — survive the white-out world with black meteors and faster boss lasers.</p>
       </aside>
 
     </div>
