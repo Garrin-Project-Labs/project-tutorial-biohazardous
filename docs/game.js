@@ -2543,7 +2543,7 @@ function draw() {
     ctx.globalAlpha = 0.72;
     ctx.font = 'bold 24px monospace';
     ctx.textAlign = 'center';
-    glowText('SCORE SAFE   METEORS FRIENDLY   MOUTH CLOSED', canvas.width / 2, 86, '#ff1744', 18, 4, '#050006');
+    glowText('SCORE SAFE   RUNES FRIENDLY   MOUTH CLOSED', canvas.width / 2, 86, '#ffffff', 18, 4, '#050006');
     ctx.restore();
   }
 
