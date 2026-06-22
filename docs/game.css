@@ -516,25 +516,35 @@ button:hover {
   position: fixed;
   z-index: 20;
   pointer-events: none;
+  padding: .12em .28em;
+  font-family: "Old English Text MT", "UnifrakturMaguntia", "Blackletter", "Cinzel Decorative", Georgia, serif;
   font-weight: 900;
-  font-size: clamp(1.2rem, 3vw, 3.8rem);
-  letter-spacing: .08em;
+  font-size: clamp(1.4rem, 3.4vw, 4.4rem);
+  letter-spacing: .03em;
   text-transform: uppercase;
+  background: rgba(255, 255, 255, .72);
+  border: 3px solid rgba(5, 0, 6, .9);
+  color: #050006;
   text-shadow:
-    0 0 10px currentColor,
-    3px 3px 0 #050006,
-    -3px -3px 0 #050006;
-  animation: voidBlinkOut 1.5s steps(2, end) forwards;
+    2px 2px 0 rgba(255, 255, 255, .72),
+    -2px 1px 0 #6b0000,
+    5px 5px 0 rgba(0, 0, 0, .96),
+    0 16px 22px rgba(0, 0, 0, .88);
+  box-shadow:
+    0 0 0 4px rgba(0, 0, 0, .78),
+    0 22px 44px rgba(0, 0, 0, .72);
+  animation: voidHorrorPop 1.5s steps(2, end) forwards;
 }
 
-@keyframes voidBlinkOut {
-  0% { opacity: 0; filter: blur(2px); }
-  12% { opacity: 1; filter: blur(0); }
-  32% { opacity: .18; }
-  48% { opacity: 1; }
-  68% { opacity: .08; }
-  82% { opacity: .9; }
-  100% { opacity: 0; filter: blur(8px); }
+@keyframes voidHorrorPop {
+  0% { opacity: 0; transform: scale(.42) rotate(-8deg); filter: blur(5px) contrast(2); }
+  8% { opacity: 1; transform: scale(1.28) rotate(2deg); filter: blur(0) contrast(2.8); }
+  18% { transform: scale(.92) translate(9px, -7px) rotate(-3deg); }
+  31% { opacity: .05; transform: scale(1.05) translate(-14px, 6px) rotate(4deg); }
+  42% { opacity: 1; transform: scale(1.18) translate(4px, -2px) rotate(-1deg); }
+  57% { opacity: .16; transform: scale(.86) translate(-7px, 8px) rotate(5deg); }
+  74% { opacity: .96; transform: scale(1.04) rotate(-2deg); }
+  100% { opacity: 0; transform: scale(1.7) rotate(7deg); filter: blur(9px) contrast(3); }
 }
 
 .void-eye {
@@ -544,6 +554,13 @@ button:hover {
   text-align: center;
   letter-spacing: .02em;
   text-transform: none;
+  background: rgba(0, 0, 0, .82);
+  color: #ff1744 !important;
+  border-color: #ff1744;
+  text-shadow:
+    0 0 2px #fff,
+    0 0 12px #ff1744,
+    4px 4px 0 #050006;
 }
 
 @keyframes scoreRainbowFlash {
