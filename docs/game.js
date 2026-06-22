@@ -67,6 +67,7 @@ const keys = { ArrowLeft: false, ArrowRight: false, ArrowUp: false, ArrowDown: f
 let meteors = [];
 let popups = [];
 let levelLaserShots = [];
+let eyeBossShots = [];
 const transcendWord = 'TRANSCEND';
 let transcendLetters = [];
 let transcendSpitLetters = [];
@@ -82,6 +83,11 @@ let transcendX = 210;
 let transcendVx = 0.62;
 let nextTranscendLetterAt = 0;
 let transcendAnimation = null;
+const branchThresholds = { gameLies: 3, eyeBoss: 5, whiteVoid: 7 };
+let activeBranches = { gameLies: false, eyeBoss: false, whiteVoid: false };
+let gameLiesUntil = 0;
+let nextEyeBossShotAt = 0;
+let whiteVoidStartedAt = 0;
 let relic = null;
 let eyePowerup = null;
 let pentagramPowerup = null;
@@ -229,6 +235,7 @@ function reset() {
   meteors = [];
   popups = [];
   levelLaserShots = [];
+  eyeBossShots = [];
   transcendLetters = [];
   transcendSpitLetters = [];
   transcendCollectedLetters = [];
@@ -243,6 +250,10 @@ function reset() {
   transcendVx = 0.62;
   nextTranscendLetterAt = performance.now() + 1800;
   transcendAnimation = null;
+  activeBranches = { gameLies: false, eyeBoss: false, whiteVoid: false };
+  gameLiesUntil = 0;
+  nextEyeBossShotAt = 0;
+  whiteVoidStartedAt = 0;
   relic = null;
   eyePowerup = null;
   pentagramPowerup = null;
@@ -257,6 +268,7 @@ function reset() {
   resetPowerupTimers();
   lastMoveSoundAt = 0;
   fateModeUntil = 0;
+  gameLiesUntil = 0;
   levelSurgeUntil = 0;
   bePreparedUntil = 0;
   spawnPauseUntil = 0;
@@ -300,14 +312,91 @@ function maybeSummonVoidWhisper(timestamp) {
   nextVoidWhisperAt = timestamp + 4200 + Math.random() * 6200;
 }
 
+
+function maybeUnlockTranscendBranches(timestamp) {
+  if (!activeBranches.gameLies && transcendenceCount >= branchThresholds.gameLies) {
+    activeBranches.gameLies = true;
+    gameLiesUntil = timestamp + 9000;
+    shakePageText();
+    playRecordScratch();
+    popups.push({ text: 'THE GAME LIES', x: canvas.width / 2 - 76, y: 110, born: timestamp });
+    statusEl.textContent = 'TRANSCEDENCE 3: the game starts lying.';
+  }
+
+  if (!activeBranches.eyeBoss && transcendenceCount >= branchThresholds.eyeBoss) {
+    activeBranches.eyeBoss = true;
+    nextEyeBossShotAt = timestamp + 1500;
+    eyeBlinkUntil = timestamp + 2600;
+    popups.push({ text: 'THE EYE WATCHES', x: canvas.width / 2 - 82, y: 150, born: timestamp });
+    statusEl.textContent = 'TRANSCEDENCE 5: boss phase — the eye watches.';
+  }
+
+  if (!activeBranches.whiteVoid && transcendenceCount >= branchThresholds.whiteVoid) {
+    activeBranches.whiteVoid = true;
+    whiteVoidStartedAt = timestamp;
+    spawnPauseUntil = Math.max(spawnPauseUntil, timestamp + 900);
+    meteors = [];
+    popups.push({ text: 'WHITE VOID MODE', x: canvas.width / 2 - 78, y: 190, born: timestamp });
+    statusEl.textContent = 'TRANSCEDENCE 7: White Void mode. Survive the black meteors.';
+    playTranscendJackpot();
+  }
+}
+
+function branchStatusText() {
+  if (activeBranches.whiteVoid) return 'WHITE VOID';
+  if (activeBranches.eyeBoss) return 'EYE BOSS';
+  if (activeBranches.gameLies) return 'THE GAME LIES';
+  return null;
+}
+
+function scheduleEyeBossShot(timestamp) {
+  if (!activeBranches.eyeBoss || isTranscendAnimating(timestamp) || timestamp < nextEyeBossShotAt) return;
+
+  const eyeX = canvas.width / 2;
+  const eyeY = canvas.height / 2;
+  const targetX = pilot.x + pilot.w / 2;
+  const targetY = pilot.y + pilot.h / 2;
+  const angle = Math.atan2(targetY - eyeY, targetX - eyeX);
+  const length = canvas.width * 0.82;
+  const warningMs = activeBranches.whiteVoid ? 520 : 680;
+  eyeBossShots.push({
+    x1: eyeX,
+    y1: eyeY,
+    x2: eyeX + Math.cos(angle) * length,
+    y2: eyeY + Math.sin(angle) * length,
+    born: timestamp,
+    warningMs,
+    width: activeBranches.whiteVoid ? 18 : 14
+  });
+  nextEyeBossShotAt = timestamp + (activeBranches.whiteVoid ? 1450 : 1900);
+}
+
+function distancePointToSegment(px, py, x1, y1, x2, y2) {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  if (!dx && !dy) return Math.hypot(px - x1, py - y1);
+  const t = Math.max(0, Math.min(1, ((px - x1) * dx + (py - y1) * dy) / (dx * dx + dy * dy)));
+  return Math.hypot(px - (x1 + dx * t), py - (y1 + dy * t));
+}
+
+function eyeBossLaserHitsPilot(shot, timestamp) {
+  const age = timestamp - shot.born;
+  if (age < shot.warningMs || age > shot.warningMs + 260) return false;
+
+  const cx = pilot.x + pilot.w / 2;
+  const cy = pilot.y + pilot.h / 2;
+  return distancePointToSegment(cx, cy, shot.x1, shot.y1, shot.x2, shot.y2) < shot.width / 2 + 9;
+}
+
 function updateHud() {
   if (score > highScore) {
     highScore = score;
     localStorage.setItem('meteorHighScore', highScore);
   }
 
-  scoreEl.textContent = Math.floor(score);
-  levelEl.textContent = level;
+  const gameLiesActive = activeBranches.gameLies && performance.now() < gameLiesUntil;
+  scoreEl.textContent = gameLiesActive ? '???' : Math.floor(score);
+  levelEl.textContent = gameLiesActive ? 'RUN' : level;
   if (highScoreEl) highScoreEl.textContent = highScore;
   updateTentacleClass();
   updateHeroText();
@@ -511,7 +600,10 @@ function updateHeroText() {
   if (score >= 777 && !random777Title) random777Title = randomTitleSymbols();
 
   const fade = Math.max(0, 1 - Math.min(score, 13) / 13);
-  const nextTitle = score >= 4313
+  const branchText = branchStatusText();
+  const nextTitle = branchText
+    ? branchText
+    : score >= 4313
     ? 'We Will Observe...'
     : score >= 2313
       ? "It's Ok To Give In..."
@@ -602,8 +694,9 @@ function awardPoints(basePoints) {
 }
 
 function spawnMeteor() {
-  const size = Math.max(pilot.w, pilot.h) + Math.random() * 24;
-  const baseSpeed = 2.1 + Math.random() * 0.95;
+  const whiteVoid = activeBranches.whiteVoid;
+  const size = Math.max(pilot.w, pilot.h) + Math.random() * (whiteVoid ? 32 : 24);
+  const baseSpeed = (whiteVoid ? 3.0 : 2.1) + Math.random() * (whiteVoid ? 1.35 : 0.95);
   const effectiveSpeedLevel = performance.now() < rotationSlowUntil ? Math.max(1, speedLevel - 2) : speedLevel;
   const levelSpeedBoost = (effectiveSpeedLevel - 1) * speedBoostPerLevel;
   meteors.push({
@@ -618,8 +711,8 @@ function spawnMeteor() {
     spin: Math.random() * Math.PI * 2,
     spinSpeed: (Math.random() < 0.5 ? -1 : 1) * (0.018 + Math.random() * 0.017),
     flashOffset: Math.random() * Math.PI * 2,
-    symbol: meteorSymbols[Math.floor(Math.random() * meteorSymbols.length)],
-    color: '#ffffff',
+    symbol: whiteVoid ? ['●', '◆', '✦', '☄'][Math.floor(Math.random() * 4)] : meteorSymbols[Math.floor(Math.random() * meteorSymbols.length)],
+    color: whiteVoid ? '#050006' : '#ffffff',
     mouthTouched: false
   });
 }
@@ -1840,6 +1933,7 @@ function updateTranscendSystem(timestamp, delta) {
 
   if (transcendFilled.every(Boolean) && !transcendAnimation) {
     transcendenceCount++;
+    maybeUnlockTranscendBranches(timestamp);
     transcendAnimation = { born: timestamp, startX: transcendX, startY: wordY };
     playTranscendJackpot();
     meteors = [];
@@ -1983,6 +2077,8 @@ function step(timestamp, token = runToken) {
   const mouthHeight = 34;
   pilot.y = Math.max(0, Math.min(canvas.height - mouthHeight - pilot.h, pilot.y));
   updateTranscendSystem(timestamp, delta);
+  maybeUnlockTranscendBranches(timestamp);
+  scheduleEyeBossShot(timestamp);
   const transcendLockout = isTranscendAnimating(timestamp);
 
   if (!transcendLockout && timestamp >= spawnPauseUntil && timestamp - lastSpawn > normalMeteorSpawnDelay) {
@@ -2046,6 +2142,7 @@ function step(timestamp, token = runToken) {
   }
   popups = popups.filter(popup => timestamp - popup.born < 900);
   levelLaserShots = levelLaserShots.filter(shot => timestamp - shot.born < 420);
+  eyeBossShots = eyeBossShots.filter(shot => timestamp - shot.born < shot.warningMs + 420);
   awardNearMisses(timestamp);
   countSuccessfulDodges(timestamp);
 
@@ -2119,6 +2216,13 @@ function step(timestamp, token = runToken) {
       statusEl.textContent = 'Black hole collected: powerups are pulled toward you for 13 seconds.';
     } else if (blackHolePowerup.y > canvas.height + blackHolePowerup.size) {
       blackHolePowerup = null;
+    }
+  }
+
+  for (const shot of eyeBossShots) {
+    if (eyeBossLaserHitsPilot(shot, timestamp)) {
+      triggerPlayerHit(timestamp, 'The eye watched too closely. Try again.');
+      return;
     }
   }
 
@@ -2408,14 +2512,19 @@ function draw() {
   const levelSurge = now < levelSurgeUntil;
   const pilotSpin = now < pilotSpinUntil;
   const bg = backgroundThemes[backgroundTheme] || backgroundThemes[0];
-  if (transcendAnimatingNow) {
+  if (transcendAnimatingNow || activeBranches.whiteVoid) {
     drawTranscendWhiteWarp();
+    if (!transcendAnimatingNow) {
+      ctx.fillStyle = 'rgba(255, 255, 255, .22)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
   } else {
     ctx.fillStyle = bg.base;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     drawGiantBlinkingEye(bg);
     drawFlyingSpace(bg);
   }
+  if (activeBranches.eyeBoss && !transcendAnimatingNow) drawGiantBlinkingEye(bg);
   drawGiantMouth();
   drawTranscendSystem(now);
 
@@ -2427,6 +2536,15 @@ function draw() {
   if (levelSurge && !transcendAnimatingNow) {
     ctx.fillStyle = `rgba(255, 255, 255, ${0.10 + Math.abs(Math.sin(frame * 0.18)) * 0.08})`;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
+
+  if (activeBranches.gameLies && now < gameLiesUntil && Math.floor(frame / 9) % 3 === 0) {
+    ctx.save();
+    ctx.globalAlpha = 0.72;
+    ctx.font = 'bold 24px monospace';
+    ctx.textAlign = 'center';
+    glowText('SCORE SAFE   METEORS FRIENDLY   MOUTH CLOSED', canvas.width / 2, 86, '#ff1744', 18, 4, '#050006');
+    ctx.restore();
   }
 
   if (now < bePreparedUntil && Math.floor(frame / 8) % 2 === 0) {
@@ -2479,7 +2597,9 @@ function draw() {
 
   ctx.save();
   ctx.font = 'bold 12px "Cinzel Decorative", Georgia, serif';
-  glowText(`TRANSCEDENCE ${transcendenceCount}`, 22, 48, '#ffcf33', 10, 2, '#050006');
+  glowText(`TRANSCEDENCE ${transcendenceCount}`, 22, 48, activeBranches.whiteVoid ? '#050006' : '#ffcf33', 10, 2, activeBranches.whiteVoid ? '#ffffff' : '#050006');
+  const branchText = branchStatusText();
+  if (branchText) glowText(branchText, 22, 68, activeBranches.whiteVoid ? '#050006' : '#ff1744', 10, 2, activeBranches.whiteVoid ? '#ffffff' : '#050006');
   ctx.restore();
   ctx.restore();
 
@@ -2563,16 +2683,34 @@ function draw() {
     ctx.restore();
   }
 
+  for (const shot of eyeBossShots) {
+    const age = now - shot.born;
+    const firing = age >= shot.warningMs;
+    const fade = firing ? Math.max(0, 1 - (age - shot.warningMs) / 360) : 0.45 + Math.abs(Math.sin(frame * 0.5)) * 0.35;
+
+    ctx.save();
+    ctx.globalAlpha = fade;
+    ctx.strokeStyle = firing ? '#ff1744' : '#ffffff';
+    ctx.lineWidth = firing ? shot.width : 3;
+    ctx.shadowColor = firing ? '#ff1744' : '#ffffff';
+    ctx.shadowBlur = firing ? 32 : 18;
+    ctx.beginPath();
+    ctx.moveTo(shot.x1, shot.y1);
+    ctx.lineTo(shot.x2, shot.y2);
+    ctx.stroke();
+    ctx.restore();
+  }
+
   for (const meteor of meteors) {
     const flash = 0.55 + Math.abs(Math.sin(frame * 0.16 + meteor.flashOffset)) * 0.45;
 
     ctx.save();
-    ctx.globalAlpha = flash;
+    ctx.globalAlpha = activeBranches.whiteVoid ? Math.min(1, flash + 0.2) : flash;
     ctx.fillStyle = meteor.color || '#ffffff';
     ctx.font = `bold ${meteor.size}px serif`;
     ctx.translate(meteor.x + meteor.size / 2, meteor.y + meteor.size / 2);
     ctx.rotate(meteor.spin);
-    glowText(meteor.symbol, -meteor.size / 2, meteor.size / 2, meteor.color || '#ffffff', 18 + flash * 10, 7, '#050006');
+    glowText(meteor.symbol, -meteor.size / 2, meteor.size / 2, meteor.color || '#ffffff', 18 + flash * 10, 7, activeBranches.whiteVoid ? '#ffffff' : '#050006');
     ctx.restore();
   }
 
@@ -2687,7 +2825,7 @@ function startGame() {
   runToken++;
   const token = runToken;
   startBassMusic();
-  statusEl.textContent = 'Dodging!';
+  statusEl.textContent = activeBranches.whiteVoid ? 'White Void mode!' : activeBranches.eyeBoss ? 'The eye watches.' : activeBranches.gameLies ? 'The game lies.' : 'Dodging!';
   animationFrameId = requestAnimationFrame(timestamp => step(timestamp, token));
 }
 
