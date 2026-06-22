@@ -3,6 +3,7 @@ const ctx = canvas.getContext('2d');
 const scoreEl = document.querySelector('#score');
 const levelEl = document.querySelector('#level');
 const highScoreEl = document.querySelector('#high-score');
+const scoreBoxEl = scoreEl?.closest('.hud-score');
 const heroEl = document.querySelector('.hero');
 const heroTitleEl = document.querySelector('.hero h1');
 const taglineEl = document.querySelector('#tagline');
@@ -94,7 +95,8 @@ let pentagramPowerup = null;
 let blackHolePowerup = null;
 let score = 0;
 let combo = 0;
-let highScore = Number(localStorage.getItem('meteorHighScore') || 0);
+const highScoreStorageKey = 'meteorHighScore.v2';
+let highScore = Number(localStorage.getItem(highScoreStorageKey) || 0);
 let dodges = 0;
 let level = 1;
 let speedLevel = 1;
@@ -389,15 +391,37 @@ function eyeBossLaserHitsPilot(shot, timestamp) {
 }
 
 function updateHud() {
+  const previousHighScore = highScore;
+  const hasPreviousHighScore = previousHighScore > 0;
+  const highScoreProgress = hasPreviousHighScore ? Math.max(0, Math.min(1, score / previousHighScore)) : 0;
+  const isNewHighScore = hasPreviousHighScore && score > previousHighScore;
+
   if (score > highScore) {
     highScore = score;
-    localStorage.setItem('meteorHighScore', highScore);
+    localStorage.setItem(highScoreStorageKey, highScore);
   }
 
   const gameLiesActive = activeBranches.gameLies && performance.now() < gameLiesUntil;
   scoreEl.textContent = gameLiesActive ? '???' : Math.floor(score);
   levelEl.textContent = gameLiesActive ? 'RUN' : level;
-  if (highScoreEl) highScoreEl.textContent = highScore;
+  if (highScoreEl) highScoreEl.textContent = Math.floor(highScore);
+  if (scoreBoxEl) {
+    const goldR = Math.round(12 + 178 * highScoreProgress);
+    const goldG = Math.round(24 + 123 * highScoreProgress);
+    const borderR = Math.round(157 + 98 * highScoreProgress);
+    const borderG = Math.round(255 - 40 * highScoreProgress);
+    const borderB = Math.round(110 - 90 * highScoreProgress);
+    const glowAlpha = 0.08 + 0.34 * highScoreProgress;
+    const glowSize = 12 + 18 * highScoreProgress;
+    scoreBoxEl.style.setProperty('--score-gold-r', goldR);
+    scoreBoxEl.style.setProperty('--score-gold-g', goldG);
+    scoreBoxEl.style.setProperty('--score-border-r', borderR);
+    scoreBoxEl.style.setProperty('--score-border-g', borderG);
+    scoreBoxEl.style.setProperty('--score-border-b', borderB);
+    scoreBoxEl.style.setProperty('--score-glow-alpha', glowAlpha.toFixed(3));
+    scoreBoxEl.style.setProperty('--score-glow-size', `${glowSize.toFixed(1)}px`);
+    scoreBoxEl.classList.toggle('score-new-record', isNewHighScore);
+  }
   updateTentacleClass();
   updateHeroText();
 }

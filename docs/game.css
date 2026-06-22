@@ -352,13 +352,40 @@ canvas {
     inset 0 0 12px rgba(0, 0, 0, .8);
   clip-path: polygon(0 6px, 6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px));
 }
+.hud-score {
+  --score-gold-r: 12;
+  --score-gold-g: 24;
+  --score-border-r: 157;
+  --score-border-g: 255;
+  --score-border-b: 110;
+  --score-glow-alpha: .08;
+  --score-glow-size: 12px;
+  background:
+    linear-gradient(135deg,
+      rgba(0, 0, 0, .88),
+      rgba(var(--score-gold-r), var(--score-gold-g), 0, .78));
+  border-color: rgba(var(--score-border-r), var(--score-border-g), var(--score-border-b), .52);
+  box-shadow:
+    0 0 var(--score-glow-size) rgba(255, 215, 0, var(--score-glow-alpha)),
+    inset 0 0 12px rgba(0, 0, 0, .8);
+  transition: background .8s ease, border-color .8s ease, box-shadow .8s ease;
+}
+.hud-score.score-new-record {
+  animation: scoreRainbowFlash .8s linear infinite;
+}
+.hud-level {
+  align-self: flex-start;
+  width: max-content;
+  max-width: 100%;
+}
 .info-columns {
   display: grid;
-  grid-template-columns: minmax(150px, .9fr) minmax(170px, 1.1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
-  align-items: start;
+  align-items: stretch;
 }
 .powerup-preview, .transcend-preview {
+  height: 100%;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -405,11 +432,20 @@ canvas {
   margin-right: 6px;
   text-shadow: 0 0 16px rgba(179, 136, 255, .95), 2px 2px 0 #050006;
 }
+.powerup-preview span {
+  color: #d9c1ff;
+  border-color: rgba(179, 136, 255, .54);
+  background:
+    linear-gradient(135deg, rgba(0, 0, 0, .94), rgba(32, 0, 56, .82));
+  box-shadow:
+    0 0 16px rgba(179, 136, 255, .22),
+    inset 0 0 14px rgba(0, 0, 0, .88);
+}
 .powerup-preview strong {
   color: #fff;
   font-size: 1.35rem;
   margin-right: 6px;
-  text-shadow: 0 0 14px rgba(255, 23, 68, .7);
+  text-shadow: 0 0 16px rgba(179, 136, 255, .95), 2px 2px 0 #050006;
 }
 button {
   border: 1px solid rgba(157, 255, 110, .62);
@@ -480,6 +516,15 @@ button:hover {
   text-align: center;
   letter-spacing: .02em;
   text-transform: none;
+}
+
+@keyframes scoreRainbowFlash {
+  0% { background: linear-gradient(135deg, #ff1744, #2a0000); border-color: #ff1744; box-shadow: 0 0 24px rgba(255, 23, 68, .65), inset 0 0 14px rgba(0,0,0,.8); }
+  20% { background: linear-gradient(135deg, #ffea00, #3a2c00); border-color: #ffea00; box-shadow: 0 0 26px rgba(255, 234, 0, .65), inset 0 0 14px rgba(0,0,0,.8); }
+  40% { background: linear-gradient(135deg, #9dff6e, #0b2a00); border-color: #9dff6e; box-shadow: 0 0 26px rgba(157, 255, 110, .65), inset 0 0 14px rgba(0,0,0,.8); }
+  60% { background: linear-gradient(135deg, #00f5ff, #00282a); border-color: #00f5ff; box-shadow: 0 0 26px rgba(0, 245, 255, .65), inset 0 0 14px rgba(0,0,0,.8); }
+  80% { background: linear-gradient(135deg, #b388ff, #200038); border-color: #b388ff; box-shadow: 0 0 26px rgba(179, 136, 255, .65), inset 0 0 14px rgba(0,0,0,.8); }
+  100% { background: linear-gradient(135deg, #ff1744, #2a0000); border-color: #ff1744; box-shadow: 0 0 24px rgba(255, 23, 68, .65), inset 0 0 14px rgba(0,0,0,.8); }
 }
 
 @media (max-width: 980px) {
