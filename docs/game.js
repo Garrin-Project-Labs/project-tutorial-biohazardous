@@ -330,7 +330,6 @@ function resetEyeBossPhase() {
 }
 
 function isEyeClosed(timestamp = performance.now()) {
-  if (activeBranches.eyeBoss && !activeBranches.whiteVoid) return false;
   if (timestamp >= eyeBlinkUntil) return false;
 
   const blinkProgress = 1 - (eyeBlinkUntil - timestamp) / 2200;
@@ -356,7 +355,7 @@ function maybeUnlockTranscendBranches(timestamp) {
     activeBranches.eyeBoss = true;
     nextEyeBossShotAt = timestamp + 1500;
     eyeBlinkUntil = 0;
-    nextEyeBlinkAt = timestamp + 999999;
+    nextEyeBlinkAt = timestamp + 1200;
     popups.push({ text: 'THE EYE WATCHES', x: canvas.width / 2 - 82, y: 150, born: timestamp });
     statusEl.textContent = 'TRANSCENDENCE 5: boss phase — the eye watches.';
   }
@@ -2270,7 +2269,7 @@ function step(timestamp, token = runToken) {
   }
   popups = popups.filter(popup => timestamp - popup.born < 900);
   levelLaserShots = levelLaserShots.filter(shot => timestamp - shot.born < 420);
-  eyeBossShots = eyeBossShots.filter(shot => timestamp - shot.born < shot.warningMs + 420);
+  eyeBossShots = eyeBossShots.filter(shot => !shot.cancelled && timestamp - shot.born < shot.warningMs + 420);
   awardNearMisses(timestamp);
   countSuccessfulDodges(timestamp);
 
@@ -2349,6 +2348,11 @@ function step(timestamp, token = runToken) {
 
   for (const shot of eyeBossShots) {
     if (!shot.fired && timestamp - shot.born >= shot.warningMs) {
+      if (isEyeClosed(timestamp)) {
+        shot.cancelled = true;
+        nextEyeBossShotAt = timestamp + 600;
+        continue;
+      }
       shot.fired = true;
       playLaserCannonSound();
     }
@@ -2382,20 +2386,18 @@ function drawGiantBlinkingEye(bg) {
   const cy = canvas.height / 2;
   const now = performance.now();
 
-  if (!bossEye) {
-    if (!nextEyeBlinkAt) nextEyeBlinkAt = now + 2500 + Math.random() * 4500;
-    if (now >= nextEyeBlinkAt) {
-      eyeBlinkUntil = now + 1550 + Math.random() * 950;
-      nextEyeBlinkAt = eyeBlinkUntil + 4200 + Math.random() * 7600;
-    }
+  if (!nextEyeBlinkAt) nextEyeBlinkAt = now + 2500 + Math.random() * 4500;
+  if (now >= nextEyeBlinkAt) {
+    eyeBlinkUntil = now + (bossEye ? 700 : 1550) + Math.random() * (bossEye ? 350 : 950);
+    nextEyeBlinkAt = eyeBlinkUntil + (bossEye ? 1800 : 4200) + Math.random() * (bossEye ? 2200 : 7600);
   }
 
-  const blinkProgress = !bossEye && now < eyeBlinkUntil ? 1 - (eyeBlinkUntil - now) / 2200 : 1;
-  const closeAmount = !bossEye && now < eyeBlinkUntil ? Math.sin(Math.max(0, Math.min(1, blinkProgress)) * Math.PI) : 0;
-  const open = bossEye ? 0.58 : 0.48 - closeAmount * 0.38;
+  const blinkProgress = now < eyeBlinkUntil ? 1 - (eyeBlinkUntil - now) / 2200 : 1;
+  const closeAmount = now < eyeBlinkUntil ? Math.sin(Math.max(0, Math.min(1, blinkProgress)) * Math.PI) : 0;
+  const open = (bossEye ? 0.58 : 0.48) - closeAmount * (bossEye ? 0.50 : 0.38);
 
   ctx.save();
-  ctx.globalAlpha = bossEye ? 1 : (1 - closeAmount) * 0.22;
+  ctx.globalAlpha = bossEye ? Math.max(0.18, 1 - closeAmount * 0.72) : (1 - closeAmount) * 0.22;
   ctx.globalCompositeOperation = 'screen';
   ctx.translate(cx, cy);
   ctx.scale(1, open);
@@ -2673,15 +2675,6 @@ function draw() {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   }
 
-  if (activeBranches.gameLies && now < gameLiesUntil && Math.floor(frame / 9) % 3 === 0) {
-    ctx.save();
-    ctx.globalAlpha = 0.72;
-    ctx.font = 'bold 24px monospace';
-    ctx.textAlign = 'center';
-    glowText('SCORE SAFE   RUNES FRIENDLY   MOUTH CLOSED', canvas.width / 2, 86, '#ffffff', 18, 4, '#050006');
-    ctx.restore();
-  }
-
   if (now < bePreparedUntil && Math.floor(frame / 8) % 2 === 0) {
     ctx.fillStyle = '#ffea00';
     ctx.font = 'bold 48px Georgia, serif';
@@ -2945,6 +2938,50 @@ function draw() {
     ctx.font = popup.text === '+1' ? 'bold 24px sans-serif' : 'bold 18px sans-serif';
     glowText(popup.text, popup.x - 12, popup.y - rise, ctx.fillStyle, 18, 6);
     ctx.globalAlpha = 1;
+  }
+
+  if (activeBranches.gameLies && now < gameLiesUntil) {
+    const warningText = 'SCORE SAFE   RUNES FRIENDLY   MOUTH CLOSED';
+    const flashOn = Math.floor(frame / 6) % 2 === 0;
+    const boxWidth = canvas.width - 56;
+    const boxHeight = 58;
+    const boxX = 28;
+    const boxY = 56;
+
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.globalAlpha = 0.96;
+    ctx.fillStyle = flashOn ? '#ff8c00' : '#050006';
+    ctx.strokeStyle = flashOn ? '#050006' : '#ff8c00';
+    ctx.lineWidth = 6;
+    ctx.shadowColor = flashOn ? '#ffea00' : '#ff8c00';
+    ctx.shadowBlur = 26;
+    ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
+    ctx.strokeRect(boxX + 3, boxY + 3, boxWidth - 6, boxHeight - 6);
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(boxX, boxY, boxWidth, boxHeight);
+    ctx.clip();
+    ctx.globalAlpha = 0.28;
+    ctx.fillStyle = flashOn ? '#050006' : '#ff8c00';
+    for (let stripeX = boxX - boxHeight; stripeX < boxX + boxWidth + boxHeight; stripeX += 28) {
+      ctx.beginPath();
+      ctx.moveTo(stripeX, boxY + boxHeight);
+      ctx.lineTo(stripeX + 18, boxY + boxHeight);
+      ctx.lineTo(stripeX + boxHeight + 18, boxY);
+      ctx.lineTo(stripeX + boxHeight, boxY);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.restore();
+
+    ctx.globalAlpha = 1;
+    ctx.font = '900 26px monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    glowText(warningText, canvas.width / 2, boxY + boxHeight / 2, '#ffffff', 30, 7, '#050006');
+    ctx.restore();
   }
 
 
