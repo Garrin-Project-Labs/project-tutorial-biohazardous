@@ -25,14 +25,19 @@
           <span>Score: <strong id="score">0</strong></span>
           <span>Level: <strong id="level">1</strong></span>
         </div>
-        <div class="powerup-preview" aria-label="Game info and powerups">
-          <span><strong class="sprite-preview relic-preview">☢</strong> Relic: +13 score and +5 combo; at max combo, +313 score × combo.</span>
-          <span><strong class="sprite-preview eye-preview">👁️</strong> Inverted eye: resets meteor speed and makes TRANSCEND letters fall faster.</span>
-          <span><strong class="sprite-preview blackhole-preview">🕳</strong> Black hole: pulls powerups toward you for 13 seconds, then cools down.</span>
-          <span><strong class="sprite-preview pentagram-preview">⛧</strong> Pentagram: appears after rotation, resets the canvas angle, and clears meteors.</span>
-          <span><strong>3</strong> The Game Lies: score and warnings become untrustworthy for a moment.</span>
-          <span><strong>5</strong> Eye Boss: the giant eye aims warning lines, then fires lasers.</span>
-          <span><strong>7</strong> White Void: the world turns white and black meteors hit harder.</span>
+        <div class="info-columns" aria-label="Game info and powerups">
+          <div class="transcend-preview" aria-label="Transcendence branches">
+            <h2>Transcend</h2>
+            <span><strong>3</strong> The Game Lies: score and warnings become untrustworthy for a moment.</span>
+            <span><strong>5</strong> Eye Boss: the giant eye aims warning lines, then fires lasers.</span>
+            <span><strong>7</strong> White Void: the world turns white and black meteors hit harder.</span>
+          </div>
+          <div class="powerup-preview" aria-label="Powerups">
+            <span><strong class="sprite-preview relic-preview">☢</strong> Relic: +13 score and +5 combo; at max combo, +313 score × combo.</span>
+            <span><strong class="sprite-preview eye-preview">👁️</strong> Inverted eye: resets meteor speed and makes TRANSCEND letters fall faster.</span>
+            <span><strong class="sprite-preview blackhole-preview">🕳</strong> Black hole: pulls powerups toward you for 13 seconds, then cools down.</span>
+            <span><strong class="sprite-preview pentagram-preview">⛧</strong> Pentagram: appears after rotation, resets the canvas angle, and clears meteors.</span>
+          </div>
         </div>
         <div class="controls">
           <button id="start">Prepare To Die</button>

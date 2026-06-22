@@ -106,7 +106,7 @@ h1 {
 }
 .game-layout {
   display: grid;
-  grid-template-columns: minmax(150px, 230px) minmax(0, 1fr) minmax(150px, 230px);
+  grid-template-columns: minmax(150px, 230px) minmax(0, 1fr) minmax(320px, 520px);
   gap: 18px;
   align-items: start;
   margin: 18px 0;
@@ -341,7 +341,7 @@ canvas {
   flex-wrap: nowrap;
   margin-top: 0;
 }
-.hud span, .powerup-preview span {
+.hud span, .powerup-preview span, .transcend-preview span {
   background:
     linear-gradient(135deg, rgba(0, 0, 0, .88), rgba(12, 24, 0, .72));
   padding: 8px 12px;
@@ -352,7 +352,13 @@ canvas {
     inset 0 0 12px rgba(0, 0, 0, .8);
   clip-path: polygon(0 6px, 6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px));
 }
-.powerup-preview {
+.info-columns {
+  display: grid;
+  grid-template-columns: minmax(150px, .9fr) minmax(170px, 1.1fr);
+  gap: 12px;
+  align-items: start;
+}
+.powerup-preview, .transcend-preview {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -361,6 +367,43 @@ canvas {
   margin-top: 0;
   color: var(--muted);
   font-weight: 700;
+}
+.transcend-preview h2 {
+  margin: 0;
+  padding: 9px 12px;
+  color: #e6d2ff;
+  background:
+    linear-gradient(135deg, rgba(0, 0, 0, .96), rgba(38, 0, 66, .92)),
+    repeating-linear-gradient(45deg, rgba(179, 136, 255, .16) 0 2px, transparent 2px 9px);
+  border: 1px solid rgba(179, 136, 255, .72);
+  box-shadow:
+    0 0 22px rgba(179, 136, 255, .36),
+    inset 0 0 18px rgba(0, 0, 0, .9);
+  clip-path: polygon(0 8px, 8px 0, calc(100% - 8px) 0, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0 calc(100% - 8px));
+  font-family: "Old English Text MT", "UnifrakturMaguntia", "Blackletter", "Cinzel Decorative", Georgia, serif;
+  font-size: 1.35rem;
+  letter-spacing: .08em;
+  text-align: center;
+  text-transform: uppercase;
+  text-shadow:
+    0 0 10px rgba(179, 136, 255, .9),
+    0 0 22px rgba(0, 0, 0, 1),
+    3px 3px 0 #050006;
+}
+.transcend-preview span {
+  color: #d9c1ff;
+  border-color: rgba(179, 136, 255, .54);
+  background:
+    linear-gradient(135deg, rgba(0, 0, 0, .94), rgba(32, 0, 56, .82));
+  box-shadow:
+    0 0 16px rgba(179, 136, 255, .22),
+    inset 0 0 14px rgba(0, 0, 0, .88);
+}
+.transcend-preview strong {
+  color: #ffffff;
+  font-size: 1.35rem;
+  margin-right: 6px;
+  text-shadow: 0 0 16px rgba(179, 136, 255, .95), 2px 2px 0 #050006;
 }
 .powerup-preview strong {
   color: #fff;
@@ -443,6 +486,7 @@ button:hover {
   .game-layout { grid-template-columns: 1fr; }
   .title-echoes, .game-card, .game-side-panel, .instructions { grid-column: 1; grid-row: auto; }
   .title-echoes { order: 2; }
+  .info-columns { grid-template-columns: 1fr; }
 }
 
 @keyframes tentacleTwist {
