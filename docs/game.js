@@ -407,7 +407,7 @@ function enterNewGamePlus(timestamp) {
 function maybeEnterNewGamePlus(timestamp) {
   if (!activeBranches.whiteVoid) return;
   const survivedWhiteVoid = timestamp - whiteVoidStartedAt >= 26000;
-  if (survivedWhiteVoid && transcendenceCount >= branchThresholds.whiteVoid) enterNewGamePlus(timestamp);
+  if (survivedWhiteVoid && transcendenceCount >= branchThresholds.newGamePlus) enterNewGamePlus(timestamp);
 }
 
 function isEyeClosed(timestamp = performance.now()) {
@@ -2187,7 +2187,7 @@ function updateTranscendSystem(timestamp, delta) {
     transcendX = Math.max(12, Math.min(canvas.width - 12 - wordWidth, transcendX));
   }
 
-  if (activeBranches.whiteVoid) {
+  if (activeBranches.whiteVoid && transcendenceCount >= branchThresholds.newGamePlus) {
     transcendLetters = [];
     nextTranscendLetterAt = timestamp + 900;
   } else if (timestamp >= nextTranscendLetterAt && !transcendLetters.length && !transcendSpitQueue.length && !transcendSpitLetters.length && !transcendFilled.every(Boolean)) {
@@ -2202,7 +2202,7 @@ function updateTranscendSystem(timestamp, delta) {
         index,
         x: Math.max(32, Math.min(canvas.width - 32, slotX + (Math.random() * 64 - 32))),
         y: -24 - Math.random() * 90,
-        vy: 4.1 + Math.random() * 1.3 + transcendenceCount * 0.6 + transcendLetterSpeedBoost * 2 + newGamePlusCount * 0.18,
+        vy: 4.1 + Math.random() * 1.3 + (activeBranches.whiteVoid ? 0 : transcendenceCount * 0.6) + transcendLetterSpeedBoost * 2 + newGamePlusCount * 0.18,
         sway: Math.random() * Math.PI * 2,
         size: 30
       });
