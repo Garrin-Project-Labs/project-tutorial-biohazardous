@@ -89,6 +89,7 @@ let activeBranches = { gameLies: false, eyeBoss: false, whiteVoid: false };
 let gameLiesUntil = 0;
 let nextEyeBossShotAt = 0;
 let whiteVoidStartedAt = 0;
+let eyeBossDefeated = false;
 let relic = null;
 let eyePowerup = null;
 let pentagramPowerup = null;
@@ -256,6 +257,7 @@ function reset() {
   gameLiesUntil = 0;
   nextEyeBossShotAt = 0;
   whiteVoidStartedAt = 0;
+  eyeBossDefeated = false;
   relic = null;
   eyePowerup = null;
   pentagramPowerup = null;
@@ -315,6 +317,31 @@ function maybeSummonVoidWhisper(timestamp) {
 }
 
 
+
+function resetEyeBossPhase() {
+  activeBranches.eyeBoss = false;
+  activeBranches.whiteVoid = false;
+  eyeBossDefeated = false;
+  eyeBossShots = [];
+  nextEyeBossShotAt = 0;
+  whiteVoidStartedAt = 0;
+  nextEyeBlinkAt = performance.now() + 2500 + Math.random() * 4500;
+  eyeBlinkUntil = 0;
+}
+
+function isEyeClosed(timestamp = performance.now()) {
+  if (activeBranches.eyeBoss && !activeBranches.whiteVoid) return false;
+  if (timestamp >= eyeBlinkUntil) return false;
+
+  const blinkProgress = 1 - (eyeBlinkUntil - timestamp) / 2200;
+  const closeAmount = Math.sin(Math.max(0, Math.min(1, blinkProgress)) * Math.PI);
+  return closeAmount > 0.58;
+}
+
+function isEyeBossVisible() {
+  return activeBranches.eyeBoss && !activeBranches.whiteVoid;
+}
+
 function maybeUnlockTranscendBranches(timestamp) {
   if (!activeBranches.gameLies && transcendenceCount >= branchThresholds.gameLies) {
     activeBranches.gameLies = true;
@@ -325,21 +352,27 @@ function maybeUnlockTranscendBranches(timestamp) {
     statusEl.textContent = 'TRANSCENDENCE 3: the game starts lying.';
   }
 
-  if (!activeBranches.eyeBoss && transcendenceCount >= branchThresholds.eyeBoss) {
+  if (!eyeBossDefeated && !activeBranches.eyeBoss && transcendenceCount >= branchThresholds.eyeBoss && transcendenceCount < branchThresholds.whiteVoid) {
     activeBranches.eyeBoss = true;
     nextEyeBossShotAt = timestamp + 1500;
-    eyeBlinkUntil = timestamp + 2600;
+    eyeBlinkUntil = 0;
+    nextEyeBlinkAt = timestamp + 999999;
     popups.push({ text: 'THE EYE WATCHES', x: canvas.width / 2 - 82, y: 150, born: timestamp });
     statusEl.textContent = 'TRANSCENDENCE 5: boss phase — the eye watches.';
   }
 
   if (!activeBranches.whiteVoid && transcendenceCount >= branchThresholds.whiteVoid) {
+    const defeatedEye = activeBranches.eyeBoss && !eyeBossDefeated;
+    activeBranches.eyeBoss = false;
     activeBranches.whiteVoid = true;
+    eyeBossDefeated = true;
+    eyeBossShots = [];
     whiteVoidStartedAt = timestamp;
     spawnPauseUntil = Math.max(spawnPauseUntil, timestamp + 900);
     meteors = [];
-    popups.push({ text: 'WHITE VOID MODE', x: canvas.width / 2 - 78, y: 190, born: timestamp });
-    statusEl.textContent = 'TRANSCENDENCE 7: White Void mode. Survive the black meteors.';
+    popups.push({ text: defeatedEye ? 'THE EYE DIES' : 'WHITE VOID MODE', x: canvas.width / 2 - 78, y: 190, born: timestamp });
+    statusEl.textContent = defeatedEye ? 'TRANSCENDENCE 7: the eye dies. White Void mode begins.' : 'TRANSCENDENCE 7: White Void mode. Survive the black meteors.';
+    if (defeatedEye) playMonsterDeathSound();
     playTranscendJackpot();
   }
 }
@@ -352,7 +385,7 @@ function branchStatusText() {
 }
 
 function scheduleEyeBossShot(timestamp) {
-  if (!activeBranches.eyeBoss || isTranscendAnimating(timestamp) || timestamp < nextEyeBossShotAt) return;
+  if (!isEyeBossVisible() || isTranscendAnimating(timestamp) || timestamp < nextEyeBossShotAt || isEyeClosed(timestamp)) return;
 
   const eyeX = canvas.width / 2;
   const eyeY = canvas.height / 2;
@@ -368,9 +401,11 @@ function scheduleEyeBossShot(timestamp) {
     y2: eyeY + Math.sin(angle) * length,
     born: timestamp,
     warningMs,
-    width: activeBranches.whiteVoid ? 18 : 14
+    width: 14,
+    fired: false
   });
-  nextEyeBossShotAt = timestamp + (activeBranches.whiteVoid ? 1450 : 1900);
+  playEyeChargeSound(warningMs);
+  nextEyeBossShotAt = timestamp + 1900;
 }
 
 function distancePointToSegment(px, py, x1, y1, x2, y2) {
@@ -1090,6 +1125,74 @@ function playRocketMoveSound() {
   gain.connect(audio.destination);
   thrust.start(now);
   thrust.stop(now + 0.12);
+}
+
+
+function playEyeChargeSound(durationMs = 680) {
+  const audio = getAudioContext();
+  if (!audio) return;
+
+  const now = audio.currentTime;
+  const duration = durationMs / 1000;
+  const zap = audio.createOscillator();
+  const whine = audio.createOscillator();
+  const gain = audio.createGain();
+  const filter = audio.createBiquadFilter();
+
+  zap.type = 'sawtooth';
+  whine.type = 'square';
+  zap.frequency.setValueAtTime(120, now);
+  zap.frequency.exponentialRampToValueAtTime(980, now + duration);
+  whine.frequency.setValueAtTime(240, now);
+  whine.frequency.exponentialRampToValueAtTime(1840, now + duration);
+  filter.type = 'bandpass';
+  filter.frequency.setValueAtTime(520, now);
+  filter.frequency.exponentialRampToValueAtTime(3200, now + duration);
+  filter.Q.value = 7;
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.exponentialRampToValueAtTime(0.075, now + 0.05);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + duration + 0.05);
+  zap.connect(filter);
+  whine.connect(filter);
+  filter.connect(gain);
+  gain.connect(audio.destination);
+  zap.start(now);
+  whine.start(now);
+  zap.stop(now + duration + 0.08);
+  whine.stop(now + duration + 0.08);
+}
+
+function playMonsterDeathSound() {
+  const audio = getAudioContext();
+  if (!audio) return;
+
+  const now = audio.currentTime;
+  const growl = audio.createOscillator();
+  const throat = audio.createOscillator();
+  const gain = audio.createGain();
+  const filter = audio.createBiquadFilter();
+
+  growl.type = 'sawtooth';
+  throat.type = 'square';
+  growl.frequency.setValueAtTime(96, now);
+  growl.frequency.exponentialRampToValueAtTime(24, now + 1.2);
+  throat.frequency.setValueAtTime(54, now);
+  throat.frequency.exponentialRampToValueAtTime(18, now + 1.35);
+  filter.type = 'lowpass';
+  filter.frequency.setValueAtTime(900, now);
+  filter.frequency.exponentialRampToValueAtTime(80, now + 1.15);
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.exponentialRampToValueAtTime(0.18, now + 0.04);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.45);
+  growl.connect(filter);
+  throat.connect(filter);
+  filter.connect(gain);
+  gain.connect(audio.destination);
+  growl.start(now);
+  throat.start(now);
+  growl.stop(now + 1.5);
+  throat.stop(now + 1.5);
+  playNoiseBurst(0.9, 0.08, 520, 45);
 }
 
 function playLaserCannonSound() {
@@ -1858,6 +1961,7 @@ function startTranscendSpitOut(timestamp) {
   transcendLetters = [];
   transcendAnimation = null;
   transcendenceCount = 0;
+  resetEyeBossPhase();
   nextTranscendLetterAt = timestamp + 1400;
   nextTranscendSpitAt = timestamp;
   statusEl.textContent = 'The mouth rejected every collected TRANSCEND letter.';
@@ -2244,6 +2348,10 @@ function step(timestamp, token = runToken) {
   }
 
   for (const shot of eyeBossShots) {
+    if (!shot.fired && timestamp - shot.born >= shot.warningMs) {
+      shot.fired = true;
+      playLaserCannonSound();
+    }
     if (eyeBossLaserHitsPilot(shot, timestamp)) {
       triggerPlayerHit(timestamp, 'The eye watched too closely. Try again.');
       return;
@@ -2269,29 +2377,32 @@ function step(timestamp, token = runToken) {
 }
 
 function drawGiantBlinkingEye(bg) {
+  const bossEye = isEyeBossVisible();
   const cx = canvas.width / 2;
   const cy = canvas.height / 2;
   const now = performance.now();
 
-  if (!nextEyeBlinkAt) nextEyeBlinkAt = now + 2500 + Math.random() * 4500;
-  if (now >= nextEyeBlinkAt) {
-    eyeBlinkUntil = now + 1550 + Math.random() * 950;
-    nextEyeBlinkAt = eyeBlinkUntil + 4200 + Math.random() * 7600;
+  if (!bossEye) {
+    if (!nextEyeBlinkAt) nextEyeBlinkAt = now + 2500 + Math.random() * 4500;
+    if (now >= nextEyeBlinkAt) {
+      eyeBlinkUntil = now + 1550 + Math.random() * 950;
+      nextEyeBlinkAt = eyeBlinkUntil + 4200 + Math.random() * 7600;
+    }
   }
 
-  const blinkProgress = now < eyeBlinkUntil ? 1 - (eyeBlinkUntil - now) / 2200 : 1;
-  const closeAmount = now < eyeBlinkUntil ? Math.sin(Math.max(0, Math.min(1, blinkProgress)) * Math.PI) : 0;
-  const open = 0.48 - closeAmount * 0.38;
+  const blinkProgress = !bossEye && now < eyeBlinkUntil ? 1 - (eyeBlinkUntil - now) / 2200 : 1;
+  const closeAmount = !bossEye && now < eyeBlinkUntil ? Math.sin(Math.max(0, Math.min(1, blinkProgress)) * Math.PI) : 0;
+  const open = bossEye ? 0.58 : 0.48 - closeAmount * 0.38;
 
   ctx.save();
-  ctx.globalAlpha = (1 - closeAmount) * 0.22;
+  ctx.globalAlpha = bossEye ? 1 : (1 - closeAmount) * 0.22;
   ctx.globalCompositeOperation = 'screen';
   ctx.translate(cx, cy);
   ctx.scale(1, open);
 
   const eyeGlow = ctx.createRadialGradient(0, 0, 20, 0, 0, canvas.width * 0.48);
-  eyeGlow.addColorStop(0, 'rgba(255, 255, 255, .22)');
-  eyeGlow.addColorStop(0.35, 'rgba(160, 160, 160, .16)');
+  eyeGlow.addColorStop(0, bossEye ? 'rgba(216, 178, 255, .96)' : 'rgba(255, 255, 255, .22)');
+  eyeGlow.addColorStop(0.35, bossEye ? 'rgba(136, 42, 255, .62)' : 'rgba(160, 160, 160, .16)');
   eyeGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
   ctx.fillStyle = eyeGlow;
   ctx.beginPath();
@@ -2306,7 +2417,7 @@ function drawGiantBlinkingEye(bg) {
   ctx.closePath();
   ctx.fill();
 
-  ctx.strokeStyle = 'rgba(255, 255, 255, .24)';
+  ctx.strokeStyle = bossEye ? 'rgba(210, 160, 255, .95)' : 'rgba(255, 255, 255, .24)';
   ctx.lineWidth = 7;
   ctx.beginPath();
   ctx.moveTo(-canvas.width * 0.42, 0);
@@ -2320,7 +2431,7 @@ function drawGiantBlinkingEye(bg) {
   ctx.closePath();
   ctx.stroke();
 
-  ctx.fillStyle = 'rgba(0, 0, 0, .62)';
+  ctx.fillStyle = bossEye ? 'rgba(32, 0, 56, .92)' : 'rgba(0, 0, 0, .62)';
   ctx.beginPath();
   ctx.moveTo(0, -canvas.width * 0.09);
   ctx.lineTo(canvas.width * 0.075, 0);
@@ -2329,7 +2440,7 @@ function drawGiantBlinkingEye(bg) {
   ctx.closePath();
   ctx.fill();
 
-  ctx.strokeStyle = 'rgba(255, 255, 255, .26)';
+  ctx.strokeStyle = bossEye ? 'rgba(255, 255, 255, .82)' : 'rgba(255, 255, 255, .26)';
   ctx.lineWidth = 4;
   ctx.beginPath();
   ctx.moveTo(0, -canvas.width * 0.15);
@@ -2710,18 +2821,30 @@ function draw() {
   for (const shot of eyeBossShots) {
     const age = now - shot.born;
     const firing = age >= shot.warningMs;
-    const fade = firing ? Math.max(0, 1 - (age - shot.warningMs) / 360) : 0.45 + Math.abs(Math.sin(frame * 0.5)) * 0.35;
+    const charge = Math.max(0, Math.min(1, age / shot.warningMs));
+    const warningGreen = Math.round(255 - 90 * charge);
+    const warningBlue = Math.round(255 - 255 * charge);
+    const warningColor = `rgb(255, ${warningGreen}, ${warningBlue})`;
+    const fade = firing ? Math.max(0, 1 - (age - shot.warningMs) / 360) : 0.5 + charge * 0.35;
 
     ctx.save();
     ctx.globalAlpha = fade;
-    ctx.strokeStyle = firing ? '#ff1744' : '#ffffff';
-    ctx.lineWidth = firing ? shot.width : 3;
-    ctx.shadowColor = firing ? '#ff1744' : '#ffffff';
-    ctx.shadowBlur = firing ? 32 : 18;
+    ctx.strokeStyle = firing ? '#b388ff' : warningColor;
+    ctx.lineWidth = firing ? shot.width : 3 + charge * 3;
+    ctx.shadowColor = firing ? '#b388ff' : warningColor;
+    ctx.shadowBlur = firing ? 36 : 16 + charge * 20;
     ctx.beginPath();
     ctx.moveTo(shot.x1, shot.y1);
     ctx.lineTo(shot.x2, shot.y2);
     ctx.stroke();
+    if (firing) {
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = Math.max(2, shot.width * 0.24);
+      ctx.beginPath();
+      ctx.moveTo(shot.x1, shot.y1);
+      ctx.lineTo(shot.x2, shot.y2);
+      ctx.stroke();
+    }
     ctx.restore();
   }
 
