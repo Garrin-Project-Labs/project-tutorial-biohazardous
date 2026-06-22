@@ -90,6 +90,7 @@ let activeBranches = { gameLies: false, eyeBoss: false, whiteVoid: false };
 let gameLiesUntil = 0;
 let nextEyeBossShotAt = 0;
 let whiteVoidStartedAt = 0;
+let whiteVoidSurvivalStartedAt = 0;
 let eyeBossDefeated = false;
 let newGamePlusActive = false;
 let newGamePlusStartedAt = 0;
@@ -270,6 +271,7 @@ function reset() {
   gameLiesUntil = 0;
   nextEyeBossShotAt = 0;
   whiteVoidStartedAt = 0;
+  whiteVoidSurvivalStartedAt = 0;
   eyeBossDefeated = false;
   newGamePlusActive = false;
   newGamePlusStartedAt = 0;
@@ -349,6 +351,7 @@ function resetEyeBossPhase() {
   eyeBossShots = [];
   nextEyeBossShotAt = 0;
   whiteVoidStartedAt = 0;
+  whiteVoidSurvivalStartedAt = 0;
   nextEyeBlinkAt = performance.now() + 2500 + Math.random() * 4500;
   eyeBlinkUntil = 0;
 }
@@ -360,6 +363,7 @@ function resetLoopForNewGamePlus(timestamp) {
   eyeBossDefeated = false;
   eyeBossShots = [];
   whiteVoidStartedAt = 0;
+  whiteVoidSurvivalStartedAt = 0;
   transcendenceCount = 0;
   transcendFilled = Array(transcendWord.length).fill(false);
   transcendRuneSlots = randomTranscendRuneSlots();
@@ -407,8 +411,16 @@ function enterNewGamePlus(timestamp) {
 
 function maybeEnterNewGamePlus(timestamp) {
   if (!activeBranches.whiteVoid) return;
-  const survivedWhiteVoid = timestamp - whiteVoidStartedAt >= 26000;
-  if (survivedWhiteVoid && transcendenceCount >= branchThresholds.newGamePlus) enterNewGamePlus(timestamp);
+  if (transcendenceCount < branchThresholds.newGamePlus) {
+    whiteVoidSurvivalStartedAt = 0;
+    return;
+  }
+  if (!whiteVoidSurvivalStartedAt) {
+    whiteVoidSurvivalStartedAt = timestamp;
+    statusEl.textContent = 'TRANSCENDENCE 9: survive White Void for 26 seconds.';
+  }
+  const survivedWhiteVoid = timestamp - whiteVoidSurvivalStartedAt >= 26000;
+  if (survivedWhiteVoid) enterNewGamePlus(timestamp);
 }
 
 function isEyeClosed(timestamp = performance.now()) {
@@ -449,6 +461,7 @@ function maybeUnlockTranscendBranches(timestamp) {
     eyeBossDefeated = true;
     eyeBossShots = [];
     whiteVoidStartedAt = timestamp;
+    whiteVoidSurvivalStartedAt = 0;
     spawnPauseUntil = Math.max(spawnPauseUntil, timestamp + 900);
     meteors = [];
     popups.push({ text: defeatedEye ? 'THE EYE DIES' : 'WHITE VOID MODE', x: canvas.width / 2 - 78, y: 190, born: timestamp });
@@ -1436,7 +1449,6 @@ function fireLevelUpLasers(timestamp) {
     offset: index * 0.04
   })));
   playLaserCannonSound();
-  popups.push({ text: `lasers x${targets.length}`, x: originX - 48, y: originY - 44, born: timestamp });
   return true;
 }
 
@@ -1960,7 +1972,7 @@ function countSuccessfulDodges(timestamp) {
       shakePageText();
       fireLevelUpLasers(timestamp);
       speedLevel = level;
-      pilotSpinUntil = timestamp + 1100;
+      pilotSpinUntil = timestamp + 480;
       statusEl.textContent = `Level ${level}: the sins move faster.`;
 
       if ((level - 1) % 3 === 0) {
@@ -2320,10 +2332,10 @@ function drawTranscendSystem(now) {
     ctx.font = `900 30px 'Creepster', 'Nosifer', 'Metal Mania', 'Cinzel Decorative', Georgia, serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillStyle = '#ffcf33';
-    ctx.strokeStyle = '#050006';
+    ctx.fillStyle = activeBranches.whiteVoid ? '#ff1744' : '#ffcf33';
+    ctx.strokeStyle = activeBranches.whiteVoid ? '#ffffff' : '#050006';
     ctx.lineWidth = 5;
-    ctx.shadowColor = '#9dff6e';
+    ctx.shadowColor = activeBranches.whiteVoid ? '#050006' : '#9dff6e';
     ctx.shadowBlur = 16;
     ctx.strokeText(letter.letter, letter.x, letter.y);
     ctx.fillText(letter.letter, letter.x, letter.y);
@@ -2480,7 +2492,6 @@ function step(timestamp, token = runToken) {
       } else {
         awardPoints(relicBonus);
       }
-      popups.push({ text: hadMaxCombo ? '+313 x combo' : '+5 combo', x: pilot.x + pilot.w / 2 - 54, y: pilot.y - 34, born: timestamp });
       statusEl.textContent = hadMaxCombo ? 'Relic taken at max combo: +313 score times combo.' : 'Relic taken: +5 combo. Fate sees you.';
       updateHud();
     } else if (relic.y > canvas.height + relic.size) {
@@ -2498,7 +2509,6 @@ function step(timestamp, token = runToken) {
       playEyeSquish();
       resetMeteorSpeed();
       transcendLetterSpeedBoost += 0.18;
-      popups.push({ text: 'speed reset', x: pilot.x + pilot.w / 2 - 52, y: pilot.y - 12, born: timestamp });
       statusEl.textContent = 'Floating eye collected: game speed reset. TRANSCEND letters fall faster.';
     } else if (eyePowerup.y > canvas.height + eyePowerup.size) {
       eyePowerup = null;
@@ -2530,7 +2540,6 @@ function step(timestamp, token = runToken) {
       blackHoleUntil = timestamp + 13000;
       blackHoleCooldownUntil = timestamp + 39000;
       playBlackHoleSpaceSound();
-      popups.push({ text: 'black hole', x: pilot.x + pilot.w / 2 - 46, y: pilot.y - 16, born: timestamp });
       statusEl.textContent = 'Black hole collected: powerups are pulled toward you for 13 seconds.';
     } else if (blackHolePowerup.y > canvas.height + blackHolePowerup.size) {
       blackHolePowerup = null;
@@ -2952,8 +2961,12 @@ function draw() {
   const branchText = branchStatusText();
   if (branchText) glowText(branchText, 22, 68, activeBranches.whiteVoid ? '#050006' : '#ff1744', 10, 2, activeBranches.whiteVoid ? '#ffffff' : '#050006');
   if (activeBranches.whiteVoid) {
-    const surviveLeft = Math.max(0, 26 - (now - whiteVoidStartedAt) / 1000);
-    glowText(`VOID SURVIVE ${surviveLeft.toFixed(1)}s`, 22, 88, '#050006', 10, 2, '#ffffff');
+    if (transcendenceCount >= branchThresholds.newGamePlus && whiteVoidSurvivalStartedAt) {
+      const surviveLeft = Math.max(0, 26 - (now - whiteVoidSurvivalStartedAt) / 1000);
+      glowText(`VOID SURVIVE ${surviveLeft.toFixed(1)}s`, 22, 88, '#050006', 10, 2, '#ffffff');
+    } else {
+      glowText('REACH TRANSCENDENCE 9', 22, 88, '#ff1744', 10, 2, '#ffffff');
+    }
   }
   if (newGamePlusActive) glowText(`NG+ ${newGamePlusCount}  LOOP BONUS x${newGamePlusBonus()}`, 22, activeBranches.whiteVoid ? 108 : 88, '#b388ff', 10, 2, '#050006');
   ctx.restore();
