@@ -92,6 +92,7 @@ let whiteVoidStartedAt = 0;
 let eyeBossDefeated = false;
 let newGamePlusActive = false;
 let newGamePlusStartedAt = 0;
+let newGamePlusCount = 0;
 let relic = null;
 let eyePowerup = null;
 let pentagramPowerup = null;
@@ -271,6 +272,7 @@ function reset() {
   eyeBossDefeated = false;
   newGamePlusActive = false;
   newGamePlusStartedAt = 0;
+  newGamePlusCount = 0;
   relic = null;
   eyePowerup = null;
   pentagramPowerup = null;
@@ -384,10 +386,9 @@ function resetLoopForNewGamePlus(timestamp) {
 }
 
 function enterNewGamePlus(timestamp) {
-  if (newGamePlusActive) return;
-
   newGamePlusActive = true;
   newGamePlusStartedAt = timestamp;
+  newGamePlusCount++;
   pilot.emoji = '👄';
   pilot.w = 42;
   pilot.h = 34;
@@ -396,17 +397,17 @@ function enterNewGamePlus(timestamp) {
   pilot.x = Math.max(0, Math.min(canvas.width - pilot.w, pilot.x));
   pilot.y = Math.max(0, Math.min(canvas.height - 34 - pilot.h, pilot.y));
   resetLoopForNewGamePlus(timestamp);
-  popups.push({ text: 'NEW GAME+ THE LOOP REMEMBERS', x: canvas.width / 2 - 148, y: 180, born: timestamp });
-  statusEl.textContent = 'NEW GAME+: the loop remembers. You are the mouth now. Score x3.';
+  popups.push({ text: `NEW GAME+ ${newGamePlusCount} THE LOOP REMEMBERS`, x: canvas.width / 2 - 148, y: 180, born: timestamp });
+  statusEl.textContent = `NEW GAME+ ${newGamePlusCount}: the loop remembers. You are the mouth now. Score x3.`;
   playMonsterDeathSound();
   playTranscendJackpot();
   updateHud();
 }
 
 function maybeEnterNewGamePlus(timestamp) {
-  if (newGamePlusActive || !activeBranches.whiteVoid) return;
+  if (!activeBranches.whiteVoid) return;
   const survivedWhiteVoid = timestamp - whiteVoidStartedAt >= 26000;
-  if (transcendenceCount >= branchThresholds.newGamePlus && survivedWhiteVoid) enterNewGamePlus(timestamp);
+  if (survivedWhiteVoid && transcendenceCount >= branchThresholds.whiteVoid) enterNewGamePlus(timestamp);
 }
 
 function isEyeClosed(timestamp = performance.now()) {
@@ -457,8 +458,8 @@ function maybeUnlockTranscendBranches(timestamp) {
 }
 
 function branchStatusText() {
-  if (newGamePlusActive) return 'NEW GAME+';
   if (activeBranches.whiteVoid) return 'WHITE VOID';
+  if (newGamePlusActive) return 'NEW GAME+';
   if (activeBranches.eyeBoss) return 'EYE BOSS';
   if (activeBranches.gameLies) return 'THE GAME LIES';
   return null;
@@ -2186,20 +2187,27 @@ function updateTranscendSystem(timestamp, delta) {
     transcendX = Math.max(12, Math.min(canvas.width - 12 - wordWidth, transcendX));
   }
 
-  if (timestamp >= nextTranscendLetterAt && !transcendLetters.length && !transcendSpitQueue.length && !transcendSpitLetters.length && !transcendFilled.every(Boolean)) {
-    const index = transcendFilled.findIndex(filled => !filled);
-    if (index < 0) return;
-    const slotX = transcendX + 16 + index * 32;
-    transcendLetters.push({
-      letter: transcendWord[index],
-      index,
-      x: Math.max(32, Math.min(canvas.width - 32, slotX + (Math.random() * 48 - 24))),
-      y: -24,
-      vy: 4.1 + Math.random() * 1.3 + transcendenceCount * 0.6 + transcendLetterSpeedBoost * 2,
-      sway: Math.random() * Math.PI * 2,
-      size: 30
-    });
+  if (activeBranches.whiteVoid) {
+    transcendLetters = [];
     nextTranscendLetterAt = timestamp + 900;
+  } else if (timestamp >= nextTranscendLetterAt && !transcendLetters.length && !transcendSpitQueue.length && !transcendSpitLetters.length && !transcendFilled.every(Boolean)) {
+    const openIndexes = transcendFilled
+      .map((filled, index) => filled ? null : index)
+      .filter(index => index !== null);
+    const spawnCount = Math.min(openIndexes.length, 1 + newGamePlusCount);
+    for (const index of openIndexes.slice(0, spawnCount)) {
+      const slotX = transcendX + 16 + index * 32;
+      transcendLetters.push({
+        letter: transcendWord[index],
+        index,
+        x: Math.max(32, Math.min(canvas.width - 32, slotX + (Math.random() * 64 - 32))),
+        y: -24 - Math.random() * 90,
+        vy: 4.1 + Math.random() * 1.3 + transcendenceCount * 0.6 + transcendLetterSpeedBoost * 2 + newGamePlusCount * 0.18,
+        sway: Math.random() * Math.PI * 2,
+        size: 30
+      });
+    }
+    nextTranscendLetterAt = timestamp + Math.max(520, 900 - newGamePlusCount * 70);
   }
 
   for (const letter of transcendLetters) {
@@ -2632,45 +2640,77 @@ function drawGiantBlinkingEye(bg) {
 }
 
 function drawGiantMouth() {
-  const mouthHeight = 34;
+  const mouthHeight = 42;
   const y = canvas.height - mouthHeight;
   const pulse = Math.sin(frame * 0.08) * 2;
+  const openPulse = Math.abs(Math.sin(frame * 0.045)) * 5;
 
   ctx.save();
-  ctx.fillStyle = '#050006';
   ctx.shadowColor = '#000';
-  ctx.shadowBlur = 18;
+  ctx.shadowBlur = 24;
+
+  const maw = ctx.createLinearGradient(0, y - 16, 0, canvas.height);
+  maw.addColorStop(0, '#12000d');
+  maw.addColorStop(0.45, '#050006');
+  maw.addColorStop(1, '#000000');
+  ctx.fillStyle = maw;
   ctx.beginPath();
-  ctx.moveTo(0, y + 8 + pulse);
-  ctx.quadraticCurveTo(canvas.width / 2, y - 7 - pulse, canvas.width, y + 8 + pulse);
+  ctx.moveTo(0, y + 13 + pulse);
+  ctx.bezierCurveTo(canvas.width * 0.24, y - 18 - openPulse, canvas.width * 0.76, y - 18 - openPulse, canvas.width, y + 13 + pulse);
   ctx.lineTo(canvas.width, canvas.height);
   ctx.lineTo(0, canvas.height);
   ctx.closePath();
   ctx.fill();
 
-  ctx.strokeStyle = 'rgba(255, 255, 255, .20)';
-  ctx.lineWidth = 2;
+  ctx.shadowBlur = 0;
+  ctx.strokeStyle = 'rgba(179, 136, 255, .42)';
+  ctx.lineWidth = 3;
   ctx.beginPath();
-  ctx.moveTo(0, y + 9 + pulse);
-  ctx.quadraticCurveTo(canvas.width / 2, y - 7 - pulse, canvas.width, y + 9 + pulse);
+  ctx.moveTo(0, y + 12 + pulse);
+  ctx.bezierCurveTo(canvas.width * 0.24, y - 18 - openPulse, canvas.width * 0.76, y - 18 - openPulse, canvas.width, y + 12 + pulse);
   ctx.stroke();
 
-  ctx.fillStyle = 'rgba(255, 255, 255, .72)';
-  for (let x = 6; x < canvas.width; x += 14) {
-    const tooth = 7 + ((x / 14) % 2) * 4;
-    const curveY = px => {
-      const t = px / canvas.width;
-      const start = y + 8 + pulse;
-      const control = y - 7 - pulse;
-      return (1 - t) * (1 - t) * start + 2 * (1 - t) * t * control + t * t * start;
-    };
-    const y1 = curveY(x);
-    const y2 = curveY(x + 7);
+  const gumGlow = ctx.createLinearGradient(0, y - 20, canvas.width, y + 10);
+  gumGlow.addColorStop(0, 'rgba(255, 23, 68, .28)');
+  gumGlow.addColorStop(0.5, 'rgba(179, 136, 255, .34)');
+  gumGlow.addColorStop(1, 'rgba(255, 23, 68, .28)');
+  ctx.strokeStyle = gumGlow;
+  ctx.lineWidth = 8;
+  ctx.beginPath();
+  ctx.moveTo(0, y + 17 + pulse);
+  ctx.bezierCurveTo(canvas.width * 0.25, y - 9 - openPulse, canvas.width * 0.75, y - 9 - openPulse, canvas.width, y + 17 + pulse);
+  ctx.stroke();
+
+  const curveY = px => {
+    const t = px / canvas.width;
+    const start = y + 13 + pulse;
+    const c1 = y - 18 - openPulse;
+    const c2 = y - 18 - openPulse;
+    return Math.pow(1 - t, 3) * start + 3 * Math.pow(1 - t, 2) * t * c1 + 3 * (1 - t) * t * t * c2 + t * t * t * start;
+  };
+
+  for (let x = 8; x < canvas.width; x += 18) {
+    const topY = curveY(x);
+    const toothHeight = 9 + Math.sin(x * 0.17 + frame * 0.04) * 4 + (x % 36 === 0 ? 8 : 0);
+    const toothWidth = 5 + (x % 54 === 0 ? 4 : 0);
+    ctx.fillStyle = x % 72 === 0 ? 'rgba(255, 23, 68, .72)' : 'rgba(230, 226, 217, .82)';
+    ctx.shadowColor = '#050006';
+    ctx.shadowBlur = 8;
     ctx.beginPath();
-    ctx.moveTo(x, y1);
-    ctx.lineTo(x + 7, y2);
-    ctx.lineTo(x + 3.5, (y1 + y2) / 2 + tooth);
+    ctx.moveTo(x - toothWidth, topY + 1);
+    ctx.lineTo(x + toothWidth, topY + 1 + Math.sin(x) * 1.5);
+    ctx.lineTo(x + Math.sin(frame * 0.05 + x) * 2, topY + toothHeight);
     ctx.closePath();
+    ctx.fill();
+  }
+
+  ctx.shadowBlur = 18;
+  ctx.shadowColor = '#b388ff';
+  ctx.fillStyle = 'rgba(179, 136, 255, .18)';
+  for (let i = 0; i < 7; i++) {
+    const x = (i * 113 + frame * 1.7) % (canvas.width + 80) - 40;
+    ctx.beginPath();
+    ctx.ellipse(x, y + 28 + Math.sin(frame * 0.04 + i) * 5, 26, 5, Math.sin(i) * 0.4, 0, Math.PI * 2);
     ctx.fill();
   }
 
@@ -2908,7 +2948,7 @@ function draw() {
     const surviveLeft = Math.max(0, 26 - (now - whiteVoidStartedAt) / 1000);
     glowText(`VOID SURVIVE ${surviveLeft.toFixed(1)}s`, 22, 88, '#050006', 10, 2, '#ffffff');
   }
-  if (newGamePlusActive) glowText('LOOP BONUS x3', 22, 88, '#b388ff', 10, 2, '#050006');
+  if (newGamePlusActive) glowText(`LOOP ${newGamePlusCount} BONUS x3`, 22, activeBranches.whiteVoid ? 108 : 88, '#b388ff', 10, 2, '#050006');
   ctx.restore();
   ctx.restore();
 
@@ -3140,7 +3180,7 @@ function draw() {
     ctx.font = '900 42px Georgia, serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    glowText('NEW GAME+ — THE LOOP REMEMBERS', canvas.width / 2, canvas.height / 2 - 120, '#b388ff', 34, 6, '#050006');
+    glowText(`NEW GAME+ ${newGamePlusCount} — THE LOOP REMEMBERS`, canvas.width / 2, canvas.height / 2 - 120, '#b388ff', 34, 6, '#050006');
     glowText('YOU ARE THE MOUTH', canvas.width / 2, canvas.height / 2 - 72, '#050006', 26, 5, '#b388ff');
     ctx.restore();
   }
