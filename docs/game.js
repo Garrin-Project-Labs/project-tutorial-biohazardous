@@ -310,6 +310,11 @@ function summonVoidWhisper() {
   whisper.style.color = showVoidText ? (Math.random() < 0.5 ? '#050006' : '#1a0000') : ['#ff1744', '#ff6a00', '#b388ff', '#050006'][Math.floor(Math.random() * 4)];
   whisper.style.transform = `rotate(${Math.random() * 18 - 9}deg)`;
   document.body.appendChild(whisper);
+  requestAnimationFrame(() => {
+    const gameRect = canvas.getBoundingClientRect();
+    const whisperRect = whisper.getBoundingClientRect();
+    whisper.classList.toggle('over-game', rectsOverlap(whisperRect, gameRect));
+  });
   setTimeout(() => whisper.remove(), 1500);
 }
 
