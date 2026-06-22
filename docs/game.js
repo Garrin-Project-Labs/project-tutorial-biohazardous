@@ -139,6 +139,9 @@ let titleEchoClearedForTitle = '';
 let deadEchoInterval = null;
 let random777Title = '';
 let scoreRecordActive = false;
+let titleRevealTimer = null;
+let titleRevealText = '';
+let initialTitleRevealDone = false;
 
 function randomTranscendRuneSlots() {
   return Array.from({ length: transcendWord.length }, () => meteorSymbols[Math.floor(Math.random() * meteorSymbols.length)]);
@@ -292,6 +295,7 @@ function reset() {
   nextVoidWhisperAt = 0;
   nextComboBellAt = 5;
   random777Title = '';
+  initialTitleRevealDone = false;
   scoreRecordActive = false;
   resetHudBoxEffects();
   statusEl.textContent = 'Ready';
@@ -676,6 +680,40 @@ function hideSlimeDrips() {
   hitSlimeEl.classList.remove('active');
 }
 
+
+function setHeroTitleText(title) {
+  if (!heroTitleEl) return;
+
+  if (titleRevealTimer) {
+    clearTimeout(titleRevealTimer);
+    titleRevealTimer = null;
+  }
+  titleRevealText = title;
+  heroTitleEl.textContent = title;
+}
+
+function revealHeroTitleOneWord(title) {
+  if (!heroTitleEl) return;
+
+  if (titleRevealTimer) clearTimeout(titleRevealTimer);
+  titleRevealText = title;
+  const words = title.split(' ');
+  let index = 0;
+
+  function showNextWord() {
+    index++;
+    heroTitleEl.textContent = words.slice(0, index).join(' ');
+    if (index < words.length) {
+      titleRevealTimer = setTimeout(showNextWord, 260);
+    } else {
+      titleRevealTimer = null;
+    }
+  }
+
+  heroTitleEl.textContent = '';
+  showNextWord();
+}
+
 function updateHeroText() {
   if (!heroEl || !heroTitleEl || !taglineEl) return;
 
@@ -711,7 +749,12 @@ function updateHeroText() {
 
   heroEl.classList.toggle('doom-message', (score >= 13 && score < 999) || score >= 1313);
   heroEl.classList.toggle('rainbow-message', score >= 999 && score < 1313);
-  heroTitleEl.textContent = nextTitle;
+  if (!initialTitleRevealDone && score < 13 && nextTitle === 'You can not run from your sins. They watch.') {
+    initialTitleRevealDone = true;
+    revealHeroTitleOneWord(nextTitle);
+  } else if (nextTitle !== titleRevealText) {
+    setHeroTitleText(nextTitle);
+  }
   addTitleEcho(nextTitle);
 
   if (score >= 333) {

@@ -74,8 +74,9 @@ body::before {
 h1 {
   margin: 8px 0;
   font-family: "Old English Text MT", "UnifrakturMaguntia", "Blackletter", "Cinzel Decorative", Georgia, serif;
-  font-size: clamp(2rem, 5.8vw, 4.4rem);
-  line-height: .9;
+  font-size: clamp(1.4rem, 4.1vw, 3.15rem);
+  line-height: .95;
+  white-space: nowrap;
   color: #f5f5f5;
   letter-spacing: .035em;
   text-shadow:
