@@ -1858,6 +1858,7 @@ function drawTranscendSystem(now) {
   let y = baseY;
   let rotation = 0;
   let alpha = 1;
+  let transcendMouthHit = false;
 
   if (transcendAnimation) {
     const age = now - transcendAnimation.born;
@@ -1871,6 +1872,7 @@ function drawTranscendSystem(now) {
       y = canvas.height / 2 + (canvas.height + 80 - canvas.height / 2) * Math.pow(slam, 2.2);
       rotation = Math.PI * 2 + slam * Math.PI * 3;
       alpha = 1 - Math.max(0, (slam - 0.6) / 0.4);
+      transcendMouthHit = y >= mouthY - 20;
     }
   }
 
@@ -1887,12 +1889,15 @@ function drawTranscendSystem(now) {
   for (let i = 0; i < word.length; i++) {
     const lx = i * spacing;
     const displayChar = (transcendFilled[i] || transcendAnimation) ? word[i] : (transcendRuneSlots[i] || '?');
-    ctx.strokeStyle = '#ffcf33';
+    const rainbowHue = (now * 0.45 + i * 42) % 360;
+    ctx.strokeStyle = transcendAnimation ? (transcendMouthHit ? '#050006' : '#ffffff') : '#ffcf33';
     ctx.shadowColor = '#9dff6e';
-    ctx.shadowBlur = 12;
+    ctx.shadowBlur = transcendAnimation ? (transcendMouthHit ? 22 : 8) : 12;
     ctx.strokeText(displayChar, lx, 0);
     if (transcendFilled[i] || transcendAnimation) {
-      ctx.fillStyle = '#ffcf33';
+      ctx.fillStyle = transcendAnimation
+        ? (transcendMouthHit ? `hsl(${rainbowHue}, 100%, 58%)` : '#050006')
+        : '#ffcf33';
       ctx.fillText(displayChar, lx, 0);
     } else {
       ctx.fillStyle = 'rgba(0, 0, 0, .72)';
