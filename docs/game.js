@@ -4,6 +4,7 @@ const scoreEl = document.querySelector('#score');
 const levelEl = document.querySelector('#level');
 const highScoreEl = document.querySelector('#high-score');
 const scoreBoxEl = scoreEl?.closest('.hud-score');
+const levelBoxEl = levelEl?.closest('.hud-level');
 const heroEl = document.querySelector('.hero');
 const heroTitleEl = document.querySelector('.hero h1');
 const taglineEl = document.querySelector('#tagline');
@@ -96,7 +97,7 @@ let pentagramPowerup = null;
 let blackHolePowerup = null;
 let score = 0;
 let combo = 0;
-const highScoreStorageKey = 'meteorHighScore.v3';
+const highScoreStorageKey = 'meteorHighScore.v4';
 let highScore = Number(localStorage.getItem(highScoreStorageKey) || 0);
 let dodges = 0;
 let level = 1;
@@ -137,6 +138,7 @@ let titleEchoWrapQueued = false;
 let titleEchoClearedForTitle = '';
 let deadEchoInterval = null;
 let random777Title = '';
+let scoreRecordActive = false;
 
 function randomTranscendRuneSlots() {
   return Array.from({ length: transcendWord.length }, () => meteorSymbols[Math.floor(Math.random() * meteorSymbols.length)]);
@@ -290,6 +292,8 @@ function reset() {
   nextVoidWhisperAt = 0;
   nextComboBellAt = 5;
   random777Title = '';
+  scoreRecordActive = false;
+  resetHudBoxEffects();
   statusEl.textContent = 'Ready';
   updateHud();
   draw();
@@ -424,11 +428,25 @@ function eyeBossLaserHitsPilot(shot, timestamp) {
   return distancePointToSegment(cx, cy, shot.x1, shot.y1, shot.x2, shot.y2) < shot.width / 2 + 9;
 }
 
+function resetHudBoxEffects() {
+  scoreRecordActive = false;
+  if (scoreBoxEl) {
+    scoreBoxEl.classList.remove('score-new-record');
+    scoreBoxEl.style.setProperty('--score-gold-r', 12);
+    scoreBoxEl.style.setProperty('--score-gold-g', 24);
+    scoreBoxEl.style.setProperty('--score-border-r', 157);
+    scoreBoxEl.style.setProperty('--score-border-g', 255);
+    scoreBoxEl.style.setProperty('--score-border-b', 110);
+    scoreBoxEl.style.setProperty('--score-glow-alpha', '.08');
+    scoreBoxEl.style.setProperty('--score-glow-size', '12px');
+  }
+  if (levelBoxEl) levelBoxEl.classList.remove('level-danger');
+}
+
 function updateHud() {
   const previousHighScore = highScore;
-  const hasPreviousHighScore = previousHighScore > 0;
-  const highScoreProgress = hasPreviousHighScore ? Math.max(0, Math.min(1, score / previousHighScore)) : 0;
-  const isNewHighScore = hasPreviousHighScore && score > previousHighScore;
+  const highScoreProgress = previousHighScore > 0 ? Math.max(0, Math.min(1, score / previousHighScore)) : (score > 0 ? 1 : 0);
+  if (score > previousHighScore) scoreRecordActive = true;
 
   if (score > highScore) {
     highScore = score;
@@ -454,8 +472,9 @@ function updateHud() {
     scoreBoxEl.style.setProperty('--score-border-b', borderB);
     scoreBoxEl.style.setProperty('--score-glow-alpha', glowAlpha.toFixed(3));
     scoreBoxEl.style.setProperty('--score-glow-size', `${glowSize.toFixed(1)}px`);
-    scoreBoxEl.classList.toggle('score-new-record', isNewHighScore);
+    scoreBoxEl.classList.toggle('score-new-record', scoreRecordActive);
   }
+  if (levelBoxEl) levelBoxEl.classList.toggle('level-danger', level >= 13);
   updateTentacleClass();
   updateHeroText();
 }

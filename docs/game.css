@@ -377,6 +377,17 @@ canvas {
   align-self: flex-start;
   width: max-content;
   max-width: 100%;
+  transition: background .45s ease, border-color .45s ease, box-shadow .45s ease, color .45s ease;
+}
+.hud-level.level-danger {
+  color: #fff1f1;
+  background:
+    linear-gradient(135deg, rgba(0, 0, 0, .92), rgba(120, 0, 0, .9)),
+    repeating-linear-gradient(45deg, rgba(255, 23, 68, .18) 0 3px, transparent 3px 11px);
+  border-color: rgba(255, 23, 68, .78);
+  box-shadow:
+    0 0 24px rgba(255, 23, 68, .48),
+    inset 0 0 16px rgba(0, 0, 0, .88);
 }
 .info-columns {
   display: grid;
