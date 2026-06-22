@@ -96,7 +96,7 @@ let pentagramPowerup = null;
 let blackHolePowerup = null;
 let score = 0;
 let combo = 0;
-const highScoreStorageKey = 'meteorHighScore.v2';
+const highScoreStorageKey = 'meteorHighScore.v3';
 let highScore = Number(localStorage.getItem(highScoreStorageKey) || 0);
 let dodges = 0;
 let level = 1;
@@ -392,7 +392,7 @@ function scheduleEyeBossShot(timestamp) {
   const targetY = pilot.y + pilot.h / 2;
   const angle = Math.atan2(targetY - eyeY, targetX - eyeX);
   const length = canvas.width * 0.82;
-  const warningMs = activeBranches.whiteVoid ? 520 : 680;
+  const warningMs = 860;
   eyeBossShots.push({
     x1: eyeX,
     y1: eyeY,
@@ -404,7 +404,7 @@ function scheduleEyeBossShot(timestamp) {
     fired: false
   });
   playEyeChargeSound(warningMs);
-  nextEyeBossShotAt = timestamp + 1900;
+  nextEyeBossShotAt = timestamp + 2600;
 }
 
 function distancePointToSegment(px, py, x1, y1, x2, y2) {
@@ -746,9 +746,17 @@ function addCombo(amount) {
   }
 }
 
+function scoreMultiplier() {
+  return activeBranches.whiteVoid ? 10 : 1;
+}
+
+function addScore(points) {
+  score += Math.max(1, Math.round(points * scoreMultiplier()));
+}
+
 function awardPoints(basePoints) {
   addCombo(0.25);
-  score += Math.max(1, Math.round(basePoints * (1 + combo)));
+  addScore(basePoints * (1 + combo));
 }
 
 function spawnMeteor() {
@@ -807,6 +815,29 @@ function getAudioContext() {
   audioContext ||= new AudioContext();
   if (audioContext.state === 'suspended') audioContext.resume();
   return audioContext;
+}
+
+
+function pauseGameAudio() {
+  stopBassMusic();
+  if (audioContext && audioContext.state === 'running') audioContext.suspend();
+}
+
+function resumeGameAudio() {
+  if (audioContext && audioContext.state === 'suspended') audioContext.resume();
+  startBassMusic();
+}
+
+function setPaused(nextPaused) {
+  if (!running || paused === nextPaused) return;
+
+  paused = nextPaused;
+  if (paused) {
+    pauseGameAudio();
+  } else {
+    resumeGameAudio();
+  }
+  statusEl.textContent = paused ? 'Paused' : (activeBranches.whiteVoid ? 'White Void mode!' : activeBranches.eyeBoss ? 'The eye watches.' : activeBranches.gameLies ? 'The game lies.' : 'Dodging!');
 }
 
 function playNoiseBurst(duration, gainPeak, filterStart, filterEnd) {
@@ -2285,7 +2316,7 @@ function step(timestamp, token = runToken) {
       const hadMaxCombo = combo >= 69;
       addCombo(5);
       if (hadMaxCombo) {
-        score += Math.max(1, Math.round(313 * (1 + combo)));
+        addScore(313 * (1 + combo));
       } else {
         awardPoints(relicBonus);
       }
@@ -2350,7 +2381,7 @@ function step(timestamp, token = runToken) {
     if (!shot.fired && timestamp - shot.born >= shot.warningMs) {
       if (isEyeClosed(timestamp)) {
         shot.cancelled = true;
-        nextEyeBossShotAt = timestamp + 600;
+        nextEyeBossShotAt = timestamp + 900;
         continue;
       }
       shot.fired = true;
@@ -2940,6 +2971,32 @@ function draw() {
     ctx.globalAlpha = 1;
   }
 
+  if (activeBranches.whiteVoid && now - whiteVoidStartedAt < 7000) {
+    const age = now - whiteVoidStartedAt;
+    const blast = Math.min(1, age / 500);
+    const fade = Math.max(0, 1 - Math.max(0, age - 5600) / 1400);
+    const jitter = 6 + Math.sin(frame * 0.35) * 3;
+
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.globalAlpha = fade;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = `900 ${Math.round(42 + blast * 18)}px 'Creepster', 'Nosifer', 'Metal Mania', Georgia, serif`;
+    ctx.fillStyle = '#050006';
+    ctx.strokeStyle = 'rgba(255, 255, 255, .82)';
+    ctx.lineWidth = 5;
+    ctx.shadowColor = '#050006';
+    ctx.shadowBlur = 34;
+    for (let i = 0; i < 7; i++) {
+      const angle = (i / 7) * Math.PI * 2 + frame * 0.05;
+      ctx.fillText('Welcome To The Void', canvas.width / 2 + Math.cos(angle) * jitter, canvas.height / 2 - 120 + Math.sin(angle) * jitter);
+    }
+    ctx.strokeText('Welcome To The Void', canvas.width / 2, canvas.height / 2 - 120);
+    ctx.fillText('Welcome To The Void', canvas.width / 2, canvas.height / 2 - 120);
+    ctx.restore();
+  }
+
   if (activeBranches.gameLies && now < gameLiesUntil) {
     const warningText = 'SCORE SAFE   RUNES FRIENDLY   MOUTH CLOSED';
     const flashOn = Math.floor(frame / 6) % 2 === 0;
@@ -3020,10 +3077,7 @@ function resetAndStartGame() {
 
 window.addEventListener('keydown', event => {
   if (event.code === 'Space') {
-    if (running) {
-      paused = !paused;
-      statusEl.textContent = paused ? 'Paused' : 'Dodging!';
-    }
+    if (running) setPaused(!paused);
     event.preventDefault();
     return;
   }

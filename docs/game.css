@@ -380,12 +380,12 @@ canvas {
 }
 .info-columns {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  align-items: stretch;
+  grid-template-columns: minmax(0, .92fr) minmax(0, 1.08fr);
+  gap: 14px;
+  align-items: start;
+  perspective: 900px;
 }
 .powerup-preview, .transcend-preview {
-  height: 100%;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -394,6 +394,15 @@ canvas {
   margin-top: 0;
   color: var(--muted);
   font-weight: 700;
+}
+.transcend-preview {
+  transform: scale(.96) rotate(-.7deg);
+  transform-origin: top right;
+}
+.powerup-preview {
+  transform: scale(1.02) rotate(.5deg);
+  transform-origin: top left;
+  padding-top: 14px;
 }
 .transcend-preview h2 {
   margin: 0;
@@ -441,6 +450,14 @@ canvas {
     0 0 16px rgba(179, 136, 255, .22),
     inset 0 0 14px rgba(0, 0, 0, .88);
 }
+.transcend-preview span:nth-of-type(1) { transform: scale(1.04); transform-origin: top right; }
+.transcend-preview span:nth-of-type(2) { transform: translateX(-8px) scale(.96); }
+.transcend-preview span:nth-of-type(3) { transform: translateX(6px) scale(1.08); }
+.powerup-preview span:nth-child(1) { transform: translateX(4px) scale(1.05); transform-origin: top left; }
+.powerup-preview span:nth-child(2) { transform: translateX(-10px) scale(.95); }
+.powerup-preview span:nth-child(3) { transform: translateX(12px) scale(.9); }
+.powerup-preview span:nth-child(4) { transform: translateX(-4px) scale(1.02); }
+
 .powerup-preview strong {
   color: #fff;
   font-size: 1.35rem;
