@@ -301,7 +301,7 @@ function reset() {
 
 function summonVoidWhisper() {
   const whisper = document.createElement('div');
-  const showVoidText = Math.random() < 0.15;
+  const showVoidText = Math.random() < 0.11;
 
   whisper.className = showVoidText ? 'void-whisper' : 'void-whisper void-eye';
   whisper.textContent = showVoidText ? 'The Void Watches' : asciiEyeArts[Math.floor(Math.random() * asciiEyeArts.length)];
@@ -322,7 +322,7 @@ function maybeSummonVoidWhisper(timestamp) {
   if (!running || timestamp < nextVoidWhisperAt) return;
 
   summonVoidWhisper();
-  nextVoidWhisperAt = timestamp + 4200 + Math.random() * 6200;
+  nextVoidWhisperAt = timestamp + 6200 + Math.random() * 8400;
 }
 
 
@@ -801,7 +801,7 @@ function spawnMeteor() {
     spin: Math.random() * Math.PI * 2,
     spinSpeed: (Math.random() < 0.5 ? -1 : 1) * (0.018 + Math.random() * 0.017),
     flashOffset: Math.random() * Math.PI * 2,
-    glitched: Math.random() < 0.045,
+    glitched: Math.random() < 0.035,
     glitchSeed: Math.random() * Math.PI * 2,
     symbol: whiteVoid ? ['●', '◆', '✦', '☄'][Math.floor(Math.random() * 4)] : meteorSymbols[Math.floor(Math.random() * meteorSymbols.length)],
     color: whiteVoid ? '#050006' : '#ffffff',
@@ -2908,18 +2908,15 @@ function draw() {
     ctx.translate(meteor.x + meteor.size / 2, meteor.y + meteor.size / 2);
     ctx.rotate(meteor.spin);
     if (meteor.glitched) {
-      const glitch = Math.sin(frame * 0.9 + meteor.glitchSeed) * 5;
-      ctx.globalAlpha = Math.min(1, flash + 0.25);
-      glowText(meteor.symbol, -meteor.size / 2 - glitch, meteor.size / 2, '#ff1744', 16 + flash * 8, 5, activeBranches.whiteVoid ? '#ffffff' : '#050006');
-      ctx.globalAlpha = Math.min(1, flash + 0.1);
-      glowText(meteor.symbol, -meteor.size / 2 + glitch * 0.8, meteor.size / 2 + 2, '#00f5ff', 14 + flash * 7, 4, activeBranches.whiteVoid ? '#ffffff' : '#050006');
-      ctx.globalAlpha = Math.min(1, flash + 0.35);
-      if (Math.floor(frame / 4 + meteor.glitchSeed) % 3 === 0) {
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(-meteor.size / 2 - 6, -meteor.size * 0.12, meteor.size + 12, 3);
-        ctx.fillRect(-meteor.size / 2 + 4, meteor.size * 0.22, meteor.size * 0.72, 2);
-      }
+      const pulse = 0.5 + Math.abs(Math.sin(frame * 0.22 + meteor.glitchSeed)) * 0.5;
+      const shiver = Math.sin(frame * 0.45 + meteor.glitchSeed) * 2.2;
+      ctx.globalAlpha = 0.22 + pulse * 0.24;
+      glowText(meteor.symbol, -meteor.size / 2 + shiver, meteor.size / 2 - 2, '#b388ff', 18 + pulse * 12, 5, activeBranches.whiteVoid ? '#ffffff' : '#050006');
+      ctx.globalAlpha = 0.18 + pulse * 0.18;
+      glowText(meteor.symbol, -meteor.size / 2 - shiver * 0.7, meteor.size / 2 + 3, '#050006', 12 + pulse * 10, 4, '#b388ff');
+      ctx.scale(1 + Math.sin(frame * 0.12 + meteor.glitchSeed) * 0.035, 1);
     }
+    ctx.globalAlpha = activeBranches.whiteVoid ? Math.min(1, flash + 0.2) : flash;
     glowText(meteor.symbol, -meteor.size / 2, meteor.size / 2, meteor.color || '#ffffff', 18 + flash * 10, 7, activeBranches.whiteVoid ? '#ffffff' : '#050006');
     ctx.restore();
   }
