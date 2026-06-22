@@ -85,10 +85,23 @@ h1 {
     0 0 34px #000,
     6px 6px 0 rgba(0, 0, 0, .96);
 }
+.word-pop {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(.28em) scale(.82);
+  filter: blur(5px);
+  animation: wordSmoothPop .48s cubic-bezier(.18, .9, .22, 1.2) forwards;
+}
+@keyframes wordSmoothPop {
+  0% { opacity: 0; transform: translateY(.28em) scale(.82); filter: blur(5px); }
+  62% { opacity: 1; transform: translateY(-.04em) scale(1.04); filter: blur(.5px); }
+  100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+}
 #tagline {
   position: relative;
   top: -10px;
   margin: 0 0 18px;
+  white-space: nowrap;
   color: #e0e0e0;
   font-family: "Old English Text MT", "UnifrakturMaguntia", "Blackletter", "Cinzel Decorative", Georgia, serif;
   font-size: 1.35rem;

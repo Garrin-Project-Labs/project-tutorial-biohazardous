@@ -142,6 +142,9 @@ let scoreRecordActive = false;
 let titleRevealTimer = null;
 let titleRevealText = '';
 let initialTitleRevealDone = false;
+let taglineRevealTimer = null;
+let taglineRevealText = '';
+let initialTaglineRevealDone = false;
 
 function randomTranscendRuneSlots() {
   return Array.from({ length: transcendWord.length }, () => meteorSymbols[Math.floor(Math.random() * meteorSymbols.length)]);
@@ -296,6 +299,7 @@ function reset() {
   nextComboBellAt = 5;
   random777Title = '';
   initialTitleRevealDone = false;
+  initialTaglineRevealDone = false;
   scoreRecordActive = false;
   resetHudBoxEffects();
   statusEl.textContent = 'Ready';
@@ -681,37 +685,70 @@ function hideSlimeDrips() {
 }
 
 
-function setHeroTitleText(title) {
-  if (!heroTitleEl) return;
-
-  if (titleRevealTimer) {
+function clearRevealTimer(timerName) {
+  if (timerName === 'title' && titleRevealTimer) {
     clearTimeout(titleRevealTimer);
     titleRevealTimer = null;
   }
+  if (timerName === 'tagline' && taglineRevealTimer) {
+    clearTimeout(taglineRevealTimer);
+    taglineRevealTimer = null;
+  }
+}
+
+function setHeroTitleText(title) {
+  if (!heroTitleEl) return;
+
+  clearRevealTimer('title');
   titleRevealText = title;
   heroTitleEl.textContent = title;
 }
 
-function revealHeroTitleOneWord(title) {
-  if (!heroTitleEl) return;
+function setTaglineText(text) {
+  if (!taglineEl) return;
 
-  if (titleRevealTimer) clearTimeout(titleRevealTimer);
-  titleRevealText = title;
-  const words = title.split(' ');
+  clearRevealTimer('tagline');
+  taglineRevealText = text;
+  taglineEl.textContent = text;
+}
+
+function revealElementOneWord(element, text, timerName, delay = 220) {
+  if (!element) return;
+
+  clearRevealTimer(timerName);
+  if (timerName === 'title') titleRevealText = text;
+  if (timerName === 'tagline') taglineRevealText = text;
+  const words = text.split(' ');
   let index = 0;
 
   function showNextWord() {
+    const word = words[index];
+    const wordEl = document.createElement('span');
+    wordEl.className = 'word-pop';
+    wordEl.textContent = `${word}${index < words.length - 1 ? ' ' : ''}`;
+    element.appendChild(wordEl);
     index++;
-    heroTitleEl.textContent = words.slice(0, index).join(' ');
     if (index < words.length) {
-      titleRevealTimer = setTimeout(showNextWord, 260);
-    } else {
+      const timer = setTimeout(showNextWord, delay);
+      if (timerName === 'title') titleRevealTimer = timer;
+      if (timerName === 'tagline') taglineRevealTimer = timer;
+    } else if (timerName === 'title') {
       titleRevealTimer = null;
+    } else if (timerName === 'tagline') {
+      taglineRevealTimer = null;
     }
   }
 
-  heroTitleEl.textContent = '';
+  element.textContent = '';
   showNextWord();
+}
+
+function revealHeroTitleOneWord(title) {
+  revealElementOneWord(heroTitleEl, title, 'title', 240);
+}
+
+function revealTaglineOneWord(text) {
+  revealElementOneWord(taglineEl, text, 'tagline', 190);
 }
 
 function updateHeroText() {
@@ -764,8 +801,14 @@ function updateHeroText() {
     heroTitleEl.style.opacity = 1;
     taglineEl.style.opacity = 0;
   } else {
+    const taglineText = 'As you walk through the shadow of the valley of death';
     heroTitleEl.style.opacity = fade;
-    taglineEl.textContent = 'As you walk through the shadow of the valley of death';
+    if (!initialTaglineRevealDone) {
+      initialTaglineRevealDone = true;
+      revealTaglineOneWord(taglineText);
+    } else if (taglineText !== taglineRevealText) {
+      setTaglineText(taglineText);
+    }
     taglineEl.style.opacity = fade;
   }
 }
