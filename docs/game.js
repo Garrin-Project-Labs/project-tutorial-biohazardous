@@ -7,7 +7,6 @@ const scoreBoxEl = scoreEl?.closest('.hud-score');
 const levelBoxEl = levelEl?.closest('.hud-level');
 const heroEl = document.querySelector('.hero');
 const heroTitleEl = document.querySelector('.hero h1');
-const taglineEl = document.querySelector('#tagline');
 const titleEchoesEl = document.querySelector('#title-echoes');
 const gameCardEl = document.querySelector('.game-card');
 const runeBorderSymbols = ['ᚠ', 'ᚢ', 'ᚦ', 'ᚨ', 'ᚱ', 'ᚲ', 'ᚷ', 'ᚹ', 'ᚺ', 'ᚾ', 'ᛁ', 'ᛃ', 'ᛉ', 'ᛟ', '✦', '☽'];
@@ -142,9 +141,6 @@ let scoreRecordActive = false;
 let titleRevealTimer = null;
 let titleRevealText = '';
 let initialTitleRevealDone = false;
-let taglineRevealTimer = null;
-let taglineRevealText = '';
-let initialTaglineRevealDone = false;
 
 function randomTranscendRuneSlots() {
   return Array.from({ length: transcendWord.length }, () => meteorSymbols[Math.floor(Math.random() * meteorSymbols.length)]);
@@ -299,7 +295,6 @@ function reset() {
   nextComboBellAt = 5;
   random777Title = '';
   initialTitleRevealDone = false;
-  initialTaglineRevealDone = false;
   scoreRecordActive = false;
   resetHudBoxEffects();
   statusEl.textContent = 'Ready';
@@ -690,10 +685,6 @@ function clearRevealTimer(timerName) {
     clearTimeout(titleRevealTimer);
     titleRevealTimer = null;
   }
-  if (timerName === 'tagline' && taglineRevealTimer) {
-    clearTimeout(taglineRevealTimer);
-    taglineRevealTimer = null;
-  }
 }
 
 function setHeroTitleText(title) {
@@ -704,20 +695,11 @@ function setHeroTitleText(title) {
   heroTitleEl.textContent = title;
 }
 
-function setTaglineText(text) {
-  if (!taglineEl) return;
-
-  clearRevealTimer('tagline');
-  taglineRevealText = text;
-  taglineEl.textContent = text;
-}
-
 function revealElementOneWord(element, text, timerName, delay = 220) {
   if (!element) return;
 
   clearRevealTimer(timerName);
   if (timerName === 'title') titleRevealText = text;
-  if (timerName === 'tagline') taglineRevealText = text;
   const words = text.split(' ');
   let index = 0;
 
@@ -731,11 +713,8 @@ function revealElementOneWord(element, text, timerName, delay = 220) {
     if (index < words.length) {
       const timer = setTimeout(showNextWord, delay);
       if (timerName === 'title') titleRevealTimer = timer;
-      if (timerName === 'tagline') taglineRevealTimer = timer;
     } else if (timerName === 'title') {
       titleRevealTimer = null;
-    } else if (timerName === 'tagline') {
-      taglineRevealTimer = null;
     }
   }
 
@@ -747,12 +726,9 @@ function revealHeroTitleOneWord(title) {
   revealElementOneWord(heroTitleEl, title, 'title', 240);
 }
 
-function revealTaglineOneWord(text) {
-  revealElementOneWord(taglineEl, text, 'tagline', 190);
-}
 
 function updateHeroText() {
-  if (!heroEl || !heroTitleEl || !taglineEl) return;
+  if (!heroEl || !heroTitleEl) return;
 
   if (score >= 777 && !random777Title) random777Title = randomTitleSymbols();
 
@@ -794,23 +770,7 @@ function updateHeroText() {
   }
   addTitleEcho(nextTitle);
 
-  if (score >= 333) {
-    heroTitleEl.style.opacity = 1;
-    taglineEl.style.opacity = 0;
-  } else if (score >= 13) {
-    heroTitleEl.style.opacity = 1;
-    taglineEl.style.opacity = 0;
-  } else {
-    const taglineText = 'As you walk through the shadow of the valley of death';
-    heroTitleEl.style.opacity = fade;
-    if (!initialTaglineRevealDone) {
-      initialTaglineRevealDone = true;
-      revealTaglineOneWord(taglineText);
-    } else if (taglineText !== taglineRevealText) {
-      setTaglineText(taglineText);
-    }
-    taglineEl.style.opacity = fade;
-  }
+  heroTitleEl.style.opacity = score >= 13 ? 1 : fade;
 }
 
 function comboColor() {
