@@ -377,7 +377,7 @@ function resetLoopForNewGamePlus(timestamp) {
   speedLevel = 2;
   dodges = 0;
   lastSpawn = timestamp;
-  spawnPauseUntil = timestamp + 1200;
+  spawnPauseUntil = timestamp + 7600;
   rotationSlowUntil = timestamp + 1600;
   blackHoleUntil = 0;
   blackHoleCooldownUntil = 0;
@@ -397,7 +397,7 @@ function enterNewGamePlus(timestamp) {
   pilot.x = Math.max(0, Math.min(canvas.width - pilot.w, pilot.x));
   pilot.y = Math.max(0, Math.min(canvas.height - 34 - pilot.h, pilot.y));
   resetLoopForNewGamePlus(timestamp);
-  popups.push({ text: `NEW GAME+ ${newGamePlusCount} THE LOOP REMEMBERS`, x: canvas.width / 2 - 148, y: 180, born: timestamp });
+  popups.push({ text: `NEW GAME+ ${newGamePlusCount}`, x: canvas.width / 2 - 54, y: 180, born: timestamp });
   statusEl.textContent = `NEW GAME+ ${newGamePlusCount}: the loop remembers. You are the mouth now. Score x3.`;
   playMonsterDeathSound();
   playTranscendJackpot();
@@ -2391,8 +2391,9 @@ function step(timestamp, token = runToken) {
   scheduleEyeBossShot(timestamp);
   const transcendLockout = isTranscendAnimating(timestamp);
 
+  const newGamePlusIntroActive = newGamePlusActive && timestamp - newGamePlusStartedAt < 7000;
   const meteorSpawnDelay = newGamePlusActive ? normalMeteorSpawnDelay * 0.82 : normalMeteorSpawnDelay;
-  if (!transcendLockout && timestamp >= spawnPauseUntil && timestamp - lastSpawn > meteorSpawnDelay) {
+  if (!newGamePlusIntroActive && !transcendLockout && timestamp >= spawnPauseUntil && timestamp - lastSpawn > meteorSpawnDelay) {
     spawnMeteor();
     lastSpawn = timestamp;
   }
@@ -3174,14 +3175,34 @@ function draw() {
   if (newGamePlusActive && now - newGamePlusStartedAt < 7000) {
     const age = now - newGamePlusStartedAt;
     const fade = Math.max(0, 1 - Math.max(0, age - 5600) / 1400);
+    const pulse = 1 + Math.sin(frame * 0.12) * 0.035;
     ctx.save();
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.globalAlpha = fade;
-    ctx.font = '900 42px Georgia, serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    glowText(`NEW GAME+ ${newGamePlusCount} — THE LOOP REMEMBERS`, canvas.width / 2, canvas.height / 2 - 120, '#b388ff', 34, 6, '#050006');
-    glowText('YOU ARE THE MOUTH', canvas.width / 2, canvas.height / 2 - 72, '#050006', 26, 5, '#b388ff');
+
+    ctx.fillStyle = 'rgba(0, 0, 0, .72)';
+    ctx.strokeStyle = 'rgba(179, 136, 255, .75)';
+    ctx.lineWidth = 3;
+    ctx.shadowColor = '#050006';
+    ctx.shadowBlur = 28;
+    ctx.fillRect(54, canvas.height / 2 - 178, canvas.width - 108, 174);
+    ctx.strokeRect(62, canvas.height / 2 - 170, canvas.width - 124, 158);
+
+    ctx.save();
+    ctx.translate(canvas.width / 2, canvas.height / 2 - 132);
+    ctx.scale(pulse, pulse);
+    ctx.font = '900 34px Georgia, serif';
+    glowText(`NEW GAME+ ${newGamePlusCount}`, 0, 0, '#b388ff', 30, 6, '#050006');
+    ctx.restore();
+
+    ctx.font = '900 25px Georgia, serif';
+    glowText('THE LOOP REMEMBERS', canvas.width / 2, canvas.height / 2 - 86, '#ffffff', 24, 5, '#050006');
+    ctx.font = '900 23px Georgia, serif';
+    glowText('YOU ARE THE MOUTH', canvas.width / 2, canvas.height / 2 - 48, '#050006', 22, 5, '#b388ff');
+    ctx.font = 'bold 15px monospace';
+    glowText('meteors paused while the loop opens', canvas.width / 2, canvas.height / 2 - 18, '#ffcf33', 14, 3, '#050006');
     ctx.restore();
   }
 
