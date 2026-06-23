@@ -3286,18 +3286,24 @@ function draw() {
     ctx.globalAlpha = fade;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.font = `900 ${Math.round(42 + blast * 18)}px 'Creepster', 'Nosifer', 'Metal Mania', Georgia, serif`;
+    const voidWelcomeText = 'The Void Welcomes You...';
+    const maxVoidWelcomeWidth = canvas.width - 72;
+    let voidWelcomeFontSize = Math.round(42 + blast * 18);
+    do {
+      ctx.font = `900 ${voidWelcomeFontSize}px 'Creepster', 'Nosifer', 'Metal Mania', Georgia, serif`;
+      voidWelcomeFontSize -= 2;
+    } while (ctx.measureText(voidWelcomeText).width > maxVoidWelcomeWidth && voidWelcomeFontSize > 26);
     ctx.fillStyle = '#050006';
     ctx.strokeStyle = 'rgba(255, 255, 255, .82)';
-    ctx.lineWidth = 5;
+    ctx.lineWidth = Math.max(3, Math.round(voidWelcomeFontSize * 0.09));
     ctx.shadowColor = '#050006';
     ctx.shadowBlur = 34;
     for (let i = 0; i < 7; i++) {
       const angle = (i / 7) * Math.PI * 2 + frame * 0.05;
-      ctx.fillText('The Void Welcomes You...', canvas.width / 2 + Math.cos(angle) * jitter, canvas.height / 2 - 120 + Math.sin(angle) * jitter);
+      ctx.fillText(voidWelcomeText, canvas.width / 2 + Math.cos(angle) * jitter, canvas.height / 2 - 120 + Math.sin(angle) * jitter);
     }
-    ctx.strokeText('The Void Welcomes You...', canvas.width / 2, canvas.height / 2 - 120);
-    ctx.fillText('The Void Welcomes You...', canvas.width / 2, canvas.height / 2 - 120);
+    ctx.strokeText(voidWelcomeText, canvas.width / 2, canvas.height / 2 - 120);
+    ctx.fillText(voidWelcomeText, canvas.width / 2, canvas.height / 2 - 120);
     ctx.restore();
   }
 
