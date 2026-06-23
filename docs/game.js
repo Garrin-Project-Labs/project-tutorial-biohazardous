@@ -987,8 +987,7 @@ function getAudioContext() {
 
 
 function pauseGameAudio() {
-  stopBassMusic();
-  if (audioContext && audioContext.state === 'running') audioContext.suspend();
+  // Keep background music running while gameplay is paused.
 }
 
 function resumeGameAudio() {
@@ -1085,15 +1084,6 @@ function startBassMusic() {
       kickPattern: [1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0],
       snarePattern: [0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1],
       hatPattern: [1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1]
-    },
-    {
-      bassNotes: [36.7, 36.7, 55, 49, 36.7, 58.3, 41.2, 34.6, 36.7, 49, 41.2, 55, 32.7, 36.7, 49, 38.9],
-      chordRoots: [73.4, 82.4, 77.8, 98, 61.7, 87.3, 58.3, 69.3],
-      leadNotes: [293.7, 311.1, 369.9, 392, 277.2, 293.7, 466.2, 415.3, 246.9, 311.1, 392, 349.2, 233.1, 277.2, 415.3, 311.1],
-      droneNotes: [36.7, 58.3, 49, 32.7],
-      kickPattern: [1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0],
-      snarePattern: [0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0],
-      hatPattern: [1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1]
     }
   ];
   const variantLength = musicVariants[0].bassNotes.length;
