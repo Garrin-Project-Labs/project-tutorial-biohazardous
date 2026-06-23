@@ -65,6 +65,11 @@ const spaceStars = Array.from({ length: 58 }, () => ({
 }));
 
 const pilot = { x: 340, y: 360, w: 34, h: 30, hitInsetX: 7, hitInsetY: 6, emoji: '🚀', name: 'Pilot' };
+const mouthPilotTentacles = Array.from({ length: 12 }, (_, index) => ({
+  angle: (index / 12) * Math.PI * 2,
+  length: 12 + (index % 4) * 2.4,
+  wobble: index * 0.73
+}));
 const keys = { ArrowLeft: false, ArrowRight: false, ArrowUp: false, ArrowDown: false, a: false, d: false, w: false, s: false };
 let meteors = [];
 let popups = [];
@@ -417,7 +422,7 @@ function maybeEnterNewGamePlus(timestamp) {
   }
   if (!whiteVoidSurvivalStartedAt) {
     whiteVoidSurvivalStartedAt = timestamp;
-    statusEl.textContent = 'TRANSCENDENCE 9: survive White Void for 26 seconds.';
+    statusEl.textContent = 'TRANSCENDENCE 9: TRANSCENDENCE...';
   }
   const survivedWhiteVoid = timestamp - whiteVoidSurvivalStartedAt >= 26000;
   if (survivedWhiteVoid) enterNewGamePlus(timestamp);
@@ -442,7 +447,7 @@ function maybeUnlockTranscendBranches(timestamp) {
     shakePageText();
     playRecordScratch();
     popups.push({ text: 'THE GAME LIES', x: canvas.width / 2 - 76, y: 110, born: timestamp });
-    statusEl.textContent = 'TRANSCENDENCE 3: the game starts lying.';
+    statusEl.textContent = 'TRANSCENDENCE 3: Open Your Mind...';
   }
 
   if (!eyeBossDefeated && !activeBranches.eyeBoss && transcendenceCount >= branchThresholds.eyeBoss && transcendenceCount < branchThresholds.whiteVoid) {
@@ -451,7 +456,7 @@ function maybeUnlockTranscendBranches(timestamp) {
     eyeBlinkUntil = 0;
     nextEyeBlinkAt = timestamp + 1200;
     popups.push({ text: 'THE EYE WATCHES', x: canvas.width / 2 - 82, y: 150, born: timestamp });
-    statusEl.textContent = 'TRANSCENDENCE 5: boss phase — the eye watches.';
+    statusEl.textContent = 'TRANSCENDENCE 5: We See You...';
   }
 
   if (!activeBranches.whiteVoid && transcendenceCount >= branchThresholds.whiteVoid) {
@@ -465,7 +470,7 @@ function maybeUnlockTranscendBranches(timestamp) {
     spawnPauseUntil = Math.max(spawnPauseUntil, timestamp + 900);
     meteors = [];
     popups.push({ text: defeatedEye ? 'THE EYE DIES' : 'WHITE VOID MODE', x: canvas.width / 2 - 78, y: 190, born: timestamp });
-    statusEl.textContent = defeatedEye ? 'TRANSCENDENCE 7: the eye dies. White Void mode begins.' : 'TRANSCENDENCE 7: White Void mode. Survive the black meteors.';
+    statusEl.textContent = defeatedEye ? 'TRANSCENDENCE 7: The Void Welcomes You...' : 'TRANSCENDENCE 7: The Void Welcomes You...';
     if (defeatedEye) playMonsterDeathSound();
     playTranscendJackpot();
   }
@@ -2358,11 +2363,11 @@ function drawTranscendSystem(now) {
     ctx.font = `900 28px 'Creepster', 'Nosifer', 'Metal Mania', 'Cinzel Decorative', Georgia, serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillStyle = letter.effect === 'flicker' ? '#ffffff' : '#ffcf33';
-    ctx.strokeStyle = '#050006';
+    ctx.fillStyle = '#050006';
+    ctx.strokeStyle = letter.effect === 'flicker' ? '#ffffff' : '#b388ff';
     ctx.lineWidth = 5;
-    ctx.shadowColor = letter.effect === 'blur' ? '#ffffff' : '#9dff6e';
-    ctx.shadowBlur = letter.effect === 'blur' ? 28 : 18;
+    ctx.shadowColor = '#b388ff';
+    ctx.shadowBlur = letter.effect === 'blur' ? 34 : 24;
     ctx.strokeText(letter.letter, 0, 0);
     ctx.fillText(letter.letter, 0, 0);
     ctx.restore();
@@ -2822,6 +2827,54 @@ function drawTranscendWhiteWarp() {
   ctx.restore();
 }
 
+function drawTentacledMouthPilot() {
+  ctx.save();
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  for (const tentacle of mouthPilotTentacles) {
+    const wave = Math.sin(frame * 0.13 + tentacle.wobble) * 4;
+    const rootX = Math.cos(tentacle.angle) * 11;
+    const rootY = Math.sin(tentacle.angle) * 8;
+    const tipX = Math.cos(tentacle.angle) * (tentacle.length + 8) + Math.cos(tentacle.angle + Math.PI / 2) * wave;
+    const tipY = Math.sin(tentacle.angle) * (tentacle.length + 7) + Math.sin(tentacle.angle + Math.PI / 2) * wave;
+    ctx.strokeStyle = '#b388ff';
+    ctx.shadowColor = '#7b2cff';
+    ctx.shadowBlur = 10;
+    ctx.lineWidth = 3.2;
+    ctx.beginPath();
+    ctx.moveTo(rootX, rootY);
+    ctx.quadraticCurveTo(rootX * 1.5 + wave * 0.25, rootY * 1.5 - wave * 0.18, tipX, tipY);
+    ctx.stroke();
+  }
+
+  ctx.shadowColor = '#b388ff';
+  ctx.shadowBlur = 24;
+  ctx.fillStyle = '#050006';
+  ctx.strokeStyle = '#b388ff';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, 18, 13 + Math.sin(frame * 0.16) * 2, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.shadowBlur = 8;
+  ctx.fillStyle = '#ff1744';
+  ctx.beginPath();
+  ctx.ellipse(0, 2, 13, 5 + Math.abs(Math.sin(frame * 0.11)) * 2, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#f8f8f8';
+  for (let i = -2; i <= 2; i++) {
+    ctx.beginPath();
+    ctx.moveTo(i * 5 - 2, -7);
+    ctx.lineTo(i * 5 + 2, -7);
+    ctx.lineTo(i * 5, -1);
+    ctx.closePath();
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
 function drawTentacleBorder() {
   if (!tentacleBorderSvg) return;
 
@@ -2985,13 +3038,17 @@ function draw() {
   }
 
   if (pilotVisible) {
-    ctx.font = newGamePlusActive ? '40px serif' : '34px serif';
     ctx.save();
     const steeringTilt = (keys.ArrowLeft || keys.a ? -0.28 : 0) + (keys.ArrowRight || keys.d ? 0.28 : 0);
     ctx.translate(pilot.x + pilot.w / 2, pilot.y + pilot.h / 2);
     ctx.rotate((newGamePlusActive ? 0 : -Math.PI / 4) + steeringTilt + (pilotSpin ? frame * 0.28 : 0));
-    if (!newGamePlusActive) ctx.filter = 'invert(1) hue-rotate(180deg)';
-    glowText(pilot.emoji, -pilot.w / 2, pilot.h / 2, newGamePlusActive ? '#050006' : '#ff1744', newGamePlusActive ? 30 : 24, 6, newGamePlusActive ? '#b388ff' : '#ffffff');
+    if (newGamePlusActive) {
+      drawTentacledMouthPilot();
+    } else {
+      ctx.font = '34px serif';
+      ctx.filter = 'invert(1) hue-rotate(180deg)';
+      glowText(pilot.emoji, -pilot.w / 2, pilot.h / 2, '#ff1744', 24, 6, '#ffffff');
+    }
     ctx.restore();
   }
 
@@ -3162,6 +3219,8 @@ function draw() {
     ctx.globalAlpha = blink;
     ctx.translate(blackHolePowerup.x + blackHolePowerup.size / 2, blackHolePowerup.y + blackHolePowerup.size / 2);
     ctx.rotate(blackHolePowerup.spin);
+    const gravityPulse = 0.88 + Math.abs(Math.sin(frame * 0.12 + blackHolePowerup.flashOffset)) * 0.22;
+    ctx.scale(gravityPulse, gravityPulse);
     ctx.fillStyle = '#050006';
     ctx.shadowColor = '#b388ff';
     ctx.shadowBlur = 34;
@@ -3244,15 +3303,15 @@ function draw() {
     ctx.shadowBlur = 34;
     for (let i = 0; i < 7; i++) {
       const angle = (i / 7) * Math.PI * 2 + frame * 0.05;
-      ctx.fillText('Welcome To The Void', canvas.width / 2 + Math.cos(angle) * jitter, canvas.height / 2 - 120 + Math.sin(angle) * jitter);
+      ctx.fillText('The Void Welcomes You...', canvas.width / 2 + Math.cos(angle) * jitter, canvas.height / 2 - 120 + Math.sin(angle) * jitter);
     }
-    ctx.strokeText('Welcome To The Void', canvas.width / 2, canvas.height / 2 - 120);
-    ctx.fillText('Welcome To The Void', canvas.width / 2, canvas.height / 2 - 120);
+    ctx.strokeText('The Void Welcomes You...', canvas.width / 2, canvas.height / 2 - 120);
+    ctx.fillText('The Void Welcomes You...', canvas.width / 2, canvas.height / 2 - 120);
     ctx.restore();
   }
 
   if (activeBranches.gameLies && now < gameLiesUntil) {
-    const warningText = 'SCORE SAFE   RUNES FRIENDLY   MOUTH CLOSED';
+    const warningText = 'The Eye Lies... Touch The Runes...';
     const flashOn = Math.floor(frame / 6) % 2 === 0;
     const boxWidth = canvas.width - 56;
     const boxHeight = 58;
