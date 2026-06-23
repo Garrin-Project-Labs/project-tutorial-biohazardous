@@ -407,8 +407,8 @@ function enterNewGamePlus(timestamp) {
   pilot.x = Math.max(0, Math.min(canvas.width - pilot.w, pilot.x));
   pilot.y = Math.max(0, Math.min(canvas.height - 34 - pilot.h, pilot.y));
   resetLoopForNewGamePlus(timestamp);
-  popups.push({ text: `NEW GAME+ ${newGamePlusCount}`, x: canvas.width / 2 - 54, y: 180, born: timestamp });
-  statusEl.textContent = `NEW GAME+ ${newGamePlusCount}: the loop remembers. You are the mouth now. Score x${newGamePlusBonus()}.`;
+  popups.push({ text: 'The Loop Remembers...', x: canvas.width / 2 - 92, y: 180, born: timestamp });
+  statusEl.textContent = `The Loop Remembers... NG+ ${newGamePlusCount}. Loop bonus x${newGamePlusBonus()}.`;
   playMonsterDeathSound();
   playTranscendJackpot();
   updateHud();
@@ -478,7 +478,7 @@ function maybeUnlockTranscendBranches(timestamp) {
 
 function branchStatusText() {
   if (activeBranches.whiteVoid) return 'WHITE VOID';
-  if (newGamePlusActive) return 'NEW GAME+';
+  if (newGamePlusActive) return null;
   if (activeBranches.eyeBoss) return 'EYE BOSS';
   if (activeBranches.gameLies) return 'THE GAME LIES';
   return null;
@@ -1005,7 +1005,7 @@ function setPaused(nextPaused) {
   } else {
     resumeGameAudio();
   }
-  statusEl.textContent = paused ? 'Paused' : (newGamePlusActive ? `NEW GAME+ ${newGamePlusCount}: loop bonus x${newGamePlusBonus()}.` : activeBranches.whiteVoid ? 'White Void mode!' : activeBranches.eyeBoss ? 'The eye watches.' : activeBranches.gameLies ? 'The game lies.' : 'Dodging!');
+  statusEl.textContent = paused ? 'Paused' : (newGamePlusActive ? `The Loop Remembers... NG+ ${newGamePlusCount}. Loop bonus x${newGamePlusBonus()}.` : activeBranches.whiteVoid ? 'White Void mode!' : activeBranches.eyeBoss ? 'The eye watches.' : activeBranches.gameLies ? 'The game lies.' : 'Dodging!');
 }
 
 function playNoiseBurst(duration, gainPeak, filterStart, filterEnd) {
@@ -2337,11 +2337,11 @@ function drawTranscendSystem(now) {
     ctx.font = `900 30px 'Creepster', 'Nosifer', 'Metal Mania', 'Cinzel Decorative', Georgia, serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillStyle = activeBranches.whiteVoid ? '#ff1744' : '#ffcf33';
-    ctx.strokeStyle = activeBranches.whiteVoid ? '#ffffff' : '#050006';
+    ctx.fillStyle = '#050006';
+    ctx.strokeStyle = activeBranches.whiteVoid ? '#ffffff' : '#b388ff';
     ctx.lineWidth = 5;
-    ctx.shadowColor = activeBranches.whiteVoid ? '#050006' : '#9dff6e';
-    ctx.shadowBlur = 16;
+    ctx.shadowColor = '#b388ff';
+    ctx.shadowBlur = 24;
     ctx.strokeText(letter.letter, letter.x, letter.y);
     ctx.fillText(letter.letter, letter.x, letter.y);
     ctx.restore();
@@ -3021,7 +3021,7 @@ function draw() {
       glowText('REACH TRANSCENDENCE 9', 22, 88, '#ff1744', 10, 2, '#ffffff');
     }
   }
-  if (newGamePlusActive) glowText(`NG+ ${newGamePlusCount}  LOOP BONUS x${newGamePlusBonus()}`, 22, activeBranches.whiteVoid ? 108 : 88, '#b388ff', 10, 2, '#050006');
+  if (newGamePlusActive) glowText(`NG+ ${newGamePlusCount}  LOOP BONUS x${newGamePlusBonus()}`, 22, branchText ? (activeBranches.whiteVoid ? 108 : 88) : 68, '#b388ff', 10, 2, '#050006');
   ctx.restore();
   ctx.restore();
 
@@ -3267,20 +3267,11 @@ function draw() {
     ctx.shadowBlur = 0;
 
     ctx.save();
-    ctx.translate(canvas.width / 2, canvas.height / 2 - 136);
+    ctx.translate(canvas.width / 2, canvas.height / 2 - 86);
     ctx.scale(pulse, pulse);
-    ctx.font = '900 36px Georgia, serif';
-    glowText(`NEW GAME+ ${newGamePlusCount}`, 0, 0, '#ffffff', 34, 7, '#3b0066');
+    ctx.font = '900 34px Georgia, serif';
+    glowText('The Loop Remembers...', 0, 0, '#b388ff', 34, 7, '#050006');
     ctx.restore();
-
-    ctx.font = '900 26px Georgia, serif';
-    glowText('THE LOOP REMEMBERS', canvas.width / 2, canvas.height / 2 - 88, '#b388ff', 30, 6, '#050006');
-    ctx.font = '900 23px Georgia, serif';
-    glowText('YOU ARE THE MOUTH', canvas.width / 2, canvas.height / 2 - 48, '#ffffff', 28, 6, '#050006');
-    ctx.font = 'bold 18px monospace';
-    glowText(`LOOP BONUS x${newGamePlusBonus()}`, canvas.width / 2, canvas.height / 2 - 18, '#ffcf33', 22, 4, '#050006');
-    ctx.font = 'bold 13px monospace';
-    glowText('meteors paused while the loop opens', canvas.width / 2, canvas.height / 2 + 6, '#ffffff', 14, 3, '#050006');
     ctx.restore();
   }
 
@@ -3379,7 +3370,7 @@ function startGame() {
   runToken++;
   const token = runToken;
   startBassMusic();
-  statusEl.textContent = newGamePlusActive ? `NEW GAME+ ${newGamePlusCount}: loop bonus x${newGamePlusBonus()}.` : activeBranches.whiteVoid ? 'White Void mode!' : activeBranches.eyeBoss ? 'The eye watches.' : activeBranches.gameLies ? 'The game lies.' : 'Dodging!';
+  statusEl.textContent = newGamePlusActive ? `The Loop Remembers... NG+ ${newGamePlusCount}. Loop bonus x${newGamePlusBonus()}.` : activeBranches.whiteVoid ? 'White Void mode!' : activeBranches.eyeBoss ? 'The eye watches.' : activeBranches.gameLies ? 'The game lies.' : 'Dodging!';
   animationFrameId = requestAnimationFrame(timestamp => step(timestamp, token));
 }
 
