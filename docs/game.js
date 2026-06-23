@@ -2228,6 +2228,7 @@ function updateTranscendSystem(timestamp, delta) {
         y: -24 - Math.random() * 90,
         vx: (Math.random() * 2 - 1) * 0.55,
         vy: 4.1 + Math.random() * 1.3 + (activeBranches.whiteVoid ? 0 : transcendenceCount * 0.6) + transcendLetterSpeedBoost * 2 + newGamePlusCount * 0.18,
+        gravity: 0.16 + Math.random() * 0.04,
         sway: Math.random() * Math.PI * 2,
         spin: (Math.random() * 2 - 1) * 0.035,
         rotation: 0,
@@ -2239,6 +2240,9 @@ function updateTranscendSystem(timestamp, delta) {
   }
 
   for (const letter of transcendLetters) {
+    letter.vy += (letter.gravity || 0.16) * delta;
+    letter.vx = (letter.vx || 0) * Math.pow(0.985, delta);
+    if (letter.vy < -2.1) letter.vy = -2.1;
     letter.y += letter.vy * delta;
     letter.x += (letter.vx || 0) * delta + Math.sin(frame * 0.04 + letter.sway) * 0.28 * delta;
     letter.rotation = (letter.rotation || 0) + (letter.spin || 0) * delta;
@@ -2261,9 +2265,10 @@ function updateTranscendSystem(timestamp, delta) {
         const shove = minDistance - distance + 2;
         letter.x += nx * shove;
         letter.y += ny * shove;
-        letter.vx = nx * (3.2 + Math.random() * 1.8) + meteor.vx * 0.35;
-        letter.vy = Math.min(letter.vy, 6.4) * 0.45 + ny * (3.8 + Math.random() * 2.2);
-        if (ny > -0.2) letter.vy -= 2.6;
+        letter.vx = nx * (2.0 + Math.random() * 1.25) + meteor.vx * 0.2;
+        letter.vy = Math.min(letter.vy, 6.4) * 0.58 + ny * (2.1 + Math.random() * 1.2);
+        if (ny > -0.2) letter.vy -= 0.9;
+        letter.vy = Math.max(-2.1, letter.vy);
         letter.spin = (letter.spin || 0) + nx * 0.08 + (Math.random() * 0.04 - 0.02);
         letter.lastMeteorBounceAt = timestamp;
       }
