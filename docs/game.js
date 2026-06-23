@@ -2226,8 +2226,12 @@ function updateTranscendSystem(timestamp, delta) {
         index,
         x: Math.max(32, Math.min(canvas.width - 32, slotX + (Math.random() * 64 - 32))),
         y: -24 - Math.random() * 90,
+        vx: (Math.random() * 2 - 1) * 0.55,
         vy: 4.1 + Math.random() * 1.3 + (activeBranches.whiteVoid ? 0 : transcendenceCount * 0.6) + transcendLetterSpeedBoost * 2 + newGamePlusCount * 0.18,
         sway: Math.random() * Math.PI * 2,
+        spin: (Math.random() * 2 - 1) * 0.035,
+        rotation: 0,
+        lastMeteorBounceAt: 0,
         size: 30
       });
     }
@@ -2236,7 +2240,35 @@ function updateTranscendSystem(timestamp, delta) {
 
   for (const letter of transcendLetters) {
     letter.y += letter.vy * delta;
-    letter.x += Math.sin(frame * 0.04 + letter.sway) * 0.28 * delta;
+    letter.x += (letter.vx || 0) * delta + Math.sin(frame * 0.04 + letter.sway) * 0.28 * delta;
+    letter.rotation = (letter.rotation || 0) + (letter.spin || 0) * delta;
+    if (letter.x < letter.size / 2 || letter.x > canvas.width - letter.size / 2) {
+      letter.x = Math.max(letter.size / 2, Math.min(canvas.width - letter.size / 2, letter.x));
+      letter.vx = -(letter.vx || 0) * 0.82;
+      letter.spin = -(letter.spin || 0) * 1.12;
+    }
+
+    for (const meteor of meteors) {
+      const meteorX = meteor.x + meteor.size / 2;
+      const meteorY = meteor.y + meteor.size / 2;
+      const dx = letter.x - meteorX;
+      const dy = letter.y - meteorY;
+      const distance = Math.hypot(dx, dy) || 1;
+      const minDistance = letter.size * 0.42 + meteor.size * 0.44;
+      if (distance < minDistance && timestamp - (letter.lastMeteorBounceAt || 0) > 90) {
+        const nx = dx / distance;
+        const ny = dy / distance;
+        const shove = minDistance - distance + 2;
+        letter.x += nx * shove;
+        letter.y += ny * shove;
+        letter.vx = nx * (3.2 + Math.random() * 1.8) + meteor.vx * 0.35;
+        letter.vy = Math.min(letter.vy, 6.4) * 0.45 + ny * (3.8 + Math.random() * 2.2);
+        if (ny > -0.2) letter.vy -= 2.6;
+        letter.spin = (letter.spin || 0) + nx * 0.08 + (Math.random() * 0.04 - 0.02);
+        letter.lastMeteorBounceAt = timestamp;
+      }
+    }
+
     if (hit(pilot, { x: letter.x - letter.size / 2, y: letter.y - letter.size / 2, size: letter.size, hitPad: -6 })) {
       startTranscendSpitOut(timestamp);
       letter.consumed = true;
@@ -2339,8 +2371,10 @@ function drawTranscendSystem(now) {
     ctx.shadowColor = '#b388ff';
     ctx.shadowBlur = 24;
     const displayChar = letter.symbol || letter.letter;
-    ctx.strokeText(displayChar, letter.x, letter.y);
-    ctx.fillText(displayChar, letter.x, letter.y);
+    ctx.translate(letter.x, letter.y);
+    ctx.rotate(letter.rotation || 0);
+    ctx.strokeText(displayChar, 0, 0);
+    ctx.fillText(displayChar, 0, 0);
     ctx.restore();
   }
 
@@ -3256,12 +3290,6 @@ function draw() {
     ctx.globalAlpha = fade;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-
-    ctx.fillStyle = 'rgba(0, 0, 0, .88)';
-    ctx.shadowColor = '#b388ff';
-    ctx.shadowBlur = 34;
-    ctx.fillRect(42, canvas.height / 2 - 184, canvas.width - 84, 198);
-    ctx.shadowBlur = 0;
 
     ctx.save();
     ctx.translate(canvas.width / 2, canvas.height / 2 - 86);
