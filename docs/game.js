@@ -2222,6 +2222,7 @@ function updateTranscendSystem(timestamp, delta) {
       const slotX = transcendX + 16 + index * 32;
       transcendLetters.push({
         letter: transcendWord[index],
+        symbol: transcendRuneSlots[index] || transcendWord[index],
         index,
         x: Math.max(32, Math.min(canvas.width - 32, slotX + (Math.random() * 64 - 32))),
         y: -24 - Math.random() * 90,
@@ -2316,19 +2317,14 @@ function drawTranscendSystem(now) {
     const lx = i * spacing;
     const displayChar = (transcendFilled[i] || transcendAnimation) ? word[i] : (transcendRuneSlots[i] || '?');
     const rainbowHue = (now * 0.45 + i * 42) % 360;
-    ctx.strokeStyle = transcendAnimation ? (transcendMouthHit ? '#050006' : '#ffffff') : '#ffcf33';
-    ctx.shadowColor = '#9dff6e';
-    ctx.shadowBlur = transcendAnimation ? (transcendMouthHit ? 22 : 8) : 12;
+    ctx.strokeStyle = transcendAnimation ? (transcendMouthHit ? '#050006' : '#ffffff') : '#b388ff';
+    ctx.shadowColor = transcendAnimation ? '#9dff6e' : '#b388ff';
+    ctx.shadowBlur = transcendAnimation ? (transcendMouthHit ? 22 : 8) : 24;
     ctx.strokeText(displayChar, lx, 0);
-    if (transcendFilled[i] || transcendAnimation) {
-      ctx.fillStyle = transcendAnimation
-        ? (transcendMouthHit ? `hsl(${rainbowHue}, 100%, 58%)` : '#050006')
-        : '#ffcf33';
-      ctx.fillText(displayChar, lx, 0);
-    } else {
-      ctx.fillStyle = 'rgba(0, 0, 0, .72)';
-      ctx.fillText(displayChar, lx, 0);
-    }
+    ctx.fillStyle = transcendAnimation
+      ? (transcendMouthHit ? `hsl(${rainbowHue}, 100%, 58%)` : '#050006')
+      : '#050006';
+    ctx.fillText(displayChar, lx, 0);
   }
   ctx.restore();
 
@@ -2338,12 +2334,13 @@ function drawTranscendSystem(now) {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillStyle = '#050006';
-    ctx.strokeStyle = activeBranches.whiteVoid ? '#ffffff' : '#b388ff';
+    ctx.strokeStyle = '#b388ff';
     ctx.lineWidth = 5;
     ctx.shadowColor = '#b388ff';
     ctx.shadowBlur = 24;
-    ctx.strokeText(letter.letter, letter.x, letter.y);
-    ctx.fillText(letter.letter, letter.x, letter.y);
+    const displayChar = letter.symbol || letter.letter;
+    ctx.strokeText(displayChar, letter.x, letter.y);
+    ctx.fillText(displayChar, letter.x, letter.y);
     ctx.restore();
   }
 
