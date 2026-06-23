@@ -3218,18 +3218,18 @@ function draw() {
     ctx.rotate(blackHolePowerup.spin);
     const gravityPulse = 0.88 + Math.abs(Math.sin(frame * 0.12 + blackHolePowerup.flashOffset)) * 0.22;
     ctx.scale(gravityPulse, gravityPulse);
-    ctx.fillStyle = '#050006';
-    ctx.shadowColor = '#b388ff';
-    ctx.shadowBlur = 34;
+    ctx.fillStyle = '#000000';
+    ctx.shadowColor = '#ffffff';
+    ctx.shadowBlur = 30;
     ctx.beginPath();
     ctx.arc(0, 0, blackHolePowerup.size * 0.48, 0, Math.PI * 2);
     ctx.fill();
-    ctx.strokeStyle = '#b388ff';
+    ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 4;
     ctx.beginPath();
     ctx.ellipse(0, 0, blackHolePowerup.size * 0.58, blackHolePowerup.size * 0.22, 0, 0, Math.PI * 2);
     ctx.stroke();
-    ctx.strokeStyle = '#00f5ff';
+    ctx.strokeStyle = '#d8d8d8';
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.arc(0, 0, blackHolePowerup.size * 0.34, 0, Math.PI * 1.65);
@@ -3314,12 +3314,12 @@ function draw() {
 
     ctx.save();
     ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.globalAlpha = 0.96;
-    ctx.fillStyle = flashOn ? '#ff8c00' : '#050006';
-    ctx.strokeStyle = flashOn ? '#050006' : '#ff8c00';
+    ctx.globalAlpha = 0.68;
+    ctx.fillStyle = flashOn ? '#ffffff' : '#050006';
+    ctx.strokeStyle = flashOn ? '#050006' : '#ffffff';
     ctx.lineWidth = 6;
-    ctx.shadowColor = flashOn ? '#ffea00' : '#ff8c00';
-    ctx.shadowBlur = 26;
+    ctx.shadowColor = flashOn ? '#ffffff' : '#050006';
+    ctx.shadowBlur = 18;
     ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
     ctx.strokeRect(boxX + 3, boxY + 3, boxWidth - 6, boxHeight - 6);
 
@@ -3327,8 +3327,8 @@ function draw() {
     ctx.beginPath();
     ctx.rect(boxX, boxY, boxWidth, boxHeight);
     ctx.clip();
-    ctx.globalAlpha = 0.28;
-    ctx.fillStyle = flashOn ? '#050006' : '#ff8c00';
+    ctx.globalAlpha = 0.18;
+    ctx.fillStyle = flashOn ? '#050006' : '#ffffff';
     for (let stripeX = boxX - boxHeight; stripeX < boxX + boxWidth + boxHeight; stripeX += 28) {
       ctx.beginPath();
       ctx.moveTo(stripeX, boxY + boxHeight);
@@ -3340,7 +3340,7 @@ function draw() {
     }
     ctx.restore();
 
-    ctx.globalAlpha = 1;
+    ctx.globalAlpha = 0.82;
     ctx.font = '900 26px monospace';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
