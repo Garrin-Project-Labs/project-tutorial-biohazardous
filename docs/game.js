@@ -108,6 +108,14 @@ let score = 0;
 let combo = 0;
 const highScoreStorageKey = 'meteorHighScore.v4';
 let highScore = Number(localStorage.getItem(highScoreStorageKey) || 0);
+const mouthTierStorageKey = 'biohazardous-mouth-tier';
+let mouthTier = Math.max(0, Math.floor(Number(localStorage.getItem(mouthTierStorageKey) || 0)));
+let runUpgrades = {};
+let loopEchoDodges = 0;
+let runeModalOpen = false;
+let nextMouthSwallowAt = 0;
+let nextMouthEyeBeamAt = 0;
+let mouthEyeBeam = null;
 let dodges = 0;
 let level = 1;
 let speedLevel = 1;
@@ -281,6 +289,12 @@ function reset() {
   newGamePlusActive = false;
   newGamePlusStartedAt = 0;
   newGamePlusCount = 0;
+  runUpgrades = {};
+  loopEchoDodges = 0;
+  nextMouthSwallowAt = 0;
+  nextMouthEyeBeamAt = 0;
+  mouthEyeBeam = null;
+  hideRuneModal();
   relic = null;
   eyePowerup = null;
   pentagramPowerup = null;
@@ -407,11 +421,102 @@ function enterNewGamePlus(timestamp) {
   pilot.x = Math.max(0, Math.min(canvas.width - pilot.w, pilot.x));
   pilot.y = Math.max(0, Math.min(canvas.height - 34 - pilot.h, pilot.y));
   resetLoopForNewGamePlus(timestamp);
+  showRuneModal(timestamp);
+}
+
+const RUNE_CARDS = [
+  { key: 'insulatedHull', name: 'Insulated Hull', emoji: '\uD83D\uDEE1\uFE0F', desc: 'Survive your first eye-laser hit this run.' },
+  { key: 'magneticPilot', name: 'Magnetic Pilot', emoji: '\uD83E\uDDF2', desc: 'Pickups gently drift toward you.' },
+  { key: 'twinCannons',   name: 'Twin Cannons',   emoji: '\uD83D\uDC9C', desc: 'Level-up lasers strike 8 meteors instead of 5.' },
+  { key: 'eyeReader',     name: 'Eye Reader',     emoji: '\uD83D\uDC41\uFE0F', desc: 'Eye-boss beam warning is longer (1.1s).' },
+  { key: 'comboFurnace',  name: 'Combo Furnace',  emoji: '\uD83D\uDD25', desc: 'Combo cap raised from 69 to 99.' },
+  { key: 'loopEcho',      name: 'Loop Echo',      emoji: '\uD83C\uDF00', desc: 'Every 13th dodged meteor spawns a relic.' }
+];
+
+function pickThreeRuneCards() {
+  const pool = RUNE_CARDS.slice();
+  const chosen = [];
+  for (let i = 0; i < 3 && pool.length; i++) {
+    const idx = Math.floor(Math.random() * pool.length);
+    chosen.push(pool.splice(idx, 1)[0]);
+  }
+  return chosen;
+}
+
+function showRuneModal(timestamp) {
+  const modal = document.getElementById('rune-modal');
+  const cardsContainer = document.getElementById('rune-cards');
+  if (!modal || !cardsContainer) {
+    applyNewGamePlusIntro(timestamp, null);
+    return;
+  }
+
+  const cards = pickThreeRuneCards();
+  cardsContainer.innerHTML = '';
+  cards.forEach((card, index) => {
+    const symbol = runeBorderSymbols[Math.floor(Math.random() * runeBorderSymbols.length)];
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'rune-card';
+    btn.dataset.runeKey = card.key;
+    btn.innerHTML = `
+      <span class="rune-card-key">${index + 1}</span>
+      <span class="rune-card-rune" aria-hidden="true">${symbol}</span>
+      <span class="rune-card-emoji" aria-hidden="true">${card.emoji}</span>
+      <span class="rune-card-name">${card.name}</span>
+      <span class="rune-card-desc">${card.desc}</span>
+    `;
+    btn.addEventListener('click', () => chooseRune(card.key));
+    cardsContainer.appendChild(btn);
+  });
+
+  modal.classList.remove('hidden');
+  modal.setAttribute('aria-hidden', 'false');
+  runeModalOpen = true;
+  paused = true;
+  pauseGameAudio();
+  statusEl.textContent = 'Pick a Rune... the Loop offers a gift.';
+  draw();
+}
+
+function hideRuneModal() {
+  const modal = document.getElementById('rune-modal');
+  if (!modal) return;
+  modal.classList.add('hidden');
+  modal.setAttribute('aria-hidden', 'true');
+  runeModalOpen = false;
+}
+
+function chooseRune(key) {
+  if (!runeModalOpen) return;
+  if (key) runUpgrades[key] = true;
+  hideRuneModal();
+  const timestamp = performance.now();
+  applyNewGamePlusIntro(timestamp, key);
+  // Bump permanent mouth tier AFTER the rune is chosen so tier matches earned NG+ count.
+  mouthTier = Math.max(0, mouthTier) + 1;
+  try { localStorage.setItem(mouthTierStorageKey, String(mouthTier)); } catch (_) {}
+  paused = false;
+  resumeGameAudio();
+  // Reset spawn pacing so the run doesn't drop a wall of meteors immediately after the pause.
+  lastSpawn = timestamp;
+  spawnPauseUntil = Math.max(spawnPauseUntil, timestamp + 1800);
+  lastFrameTimestamp = 0;
+  updateHud();
+}
+
+function applyNewGamePlusIntro(timestamp, chosenKey) {
+  const chosen = RUNE_CARDS.find(card => card.key === chosenKey);
+  const introText = chosen
+    ? `The Loop Remembers... NG+ ${newGamePlusCount}. Rune: ${chosen.name}. Loop bonus x${newGamePlusBonus()}.`
+    : `The Loop Remembers... NG+ ${newGamePlusCount}. Loop bonus x${newGamePlusBonus()}.`;
   popups.push({ text: 'The Loop Remembers...', x: canvas.width / 2 - 92, y: 180, born: timestamp });
-  statusEl.textContent = `The Loop Remembers... NG+ ${newGamePlusCount}. Loop bonus x${newGamePlusBonus()}.`;
+  if (chosen) {
+    popups.push({ text: `${chosen.emoji} ${chosen.name}`, x: canvas.width / 2 - 96, y: 220, born: timestamp });
+  }
+  statusEl.textContent = introText;
   playMonsterDeathSound();
   playTranscendJackpot();
-  updateHud();
 }
 
 function maybeEnterNewGamePlus(timestamp) {
@@ -493,7 +598,7 @@ function scheduleEyeBossShot(timestamp) {
   const targetY = pilot.y + pilot.h / 2;
   const angle = Math.atan2(targetY - eyeY, targetX - eyeX);
   const length = canvas.width * 0.82;
-  const warningMs = 860;
+  const warningMs = runUpgrades.eyeReader ? 1100 : 860;
   eyeBossShots.push({
     x1: eyeX,
     y1: eyeY,
@@ -907,7 +1012,8 @@ function playComboBell(milestone) {
 
 function addCombo(amount) {
   const previousCombo = combo;
-  combo = Math.min(69, combo + amount);
+  const cap = runUpgrades.comboFurnace ? 99 : 69;
+  combo = Math.min(cap, combo + amount);
 
   while (nextComboBellAt <= combo && nextComboBellAt > previousCombo) {
     playComboBell(nextComboBellAt);
@@ -926,7 +1032,8 @@ function scoreMultiplier() {
 }
 
 function addScore(points) {
-  score += Math.max(1, Math.round(points * scoreMultiplier()));
+  const tierBonus = 1 + 0.05 * Math.min(Math.max(0, mouthTier), 10);
+  score += Math.max(1, Math.round(points * scoreMultiplier() * tierBonus));
 }
 
 function awardPoints(basePoints) {
@@ -1521,13 +1628,14 @@ function fireLevelUpLasers(timestamp) {
 
   const originX = pilot.x + pilot.w / 2;
   const originY = pilot.y + pilot.h / 2;
+  const targetCount = runUpgrades.twinCannons ? 8 : 5;
   const targets = [...meteors]
     .map(meteor => ({
       meteor,
       distance: Math.hypot(meteor.x + meteor.size / 2 - originX, meteor.y + meteor.size / 2 - originY)
     }))
     .sort((a, b) => a.distance - b.distance)
-    .slice(0, 5)
+    .slice(0, targetCount)
     .map(entry => entry.meteor);
 
   if (!targets.length) return false;
@@ -2062,6 +2170,14 @@ function countSuccessfulDodges(timestamp) {
     awardPoints(level);
     dodges++;
 
+    if (runUpgrades.loopEcho) {
+      loopEchoDodges++;
+      if (loopEchoDodges % 13 === 0 && !relic) {
+        spawnRelic();
+        popups.push({ text: '\uD83C\uDF00 Loop Echo', x: relic.x - 16, y: 60, born: timestamp });
+      }
+    }
+
     if (dodges % dodgesPerLevel === 0) {
       level++;
       shakePageText();
@@ -2229,7 +2345,7 @@ function spawnOneTranscendSpitLetter(letter, timestamp, index = 0) {
     y: mouthY - 4,
     vx: (Math.random() < 0.5 ? -1 : 1) * (1.6 + Math.random() * 3.8),
     vy: -(8.5 + Math.random() * 6.2),
-    gravity: 0.25 + Math.random() * 0.09,
+    gravity: (0.25 + Math.random() * 0.09) * (mouthTier >= 3 ? 0.85 : 1),
     size: 28,
     effect: effects[Math.floor(Math.random() * effects.length)],
     effectSeed: Math.random() * Math.PI * 2,
@@ -2500,12 +2616,60 @@ function drawTranscendSystem(now) {
 }
 
 function pullPowerupTowardPilot(powerup, strength = 0.018) {
-  if (!powerup || performance.now() >= blackHoleUntil) return;
+  if (!powerup) return;
+  if (runUpgrades.magneticPilot) {
+    const targetCx = pilot.x + pilot.w / 2;
+    const cx = powerup.x + powerup.size / 2;
+    const dx = targetCx - cx;
+    const sign = dx > 0 ? 1 : -1;
+    const nudge = Math.min(0.6, Math.abs(dx));
+    powerup.x += sign * nudge;
+    powerup.x = Math.max(0, Math.min(canvas.width - powerup.size, powerup.x));
+  }
+  if (performance.now() >= blackHoleUntil) return;
 
   const targetX = pilot.x + pilot.w / 2 - powerup.size / 2;
   const targetY = pilot.y + pilot.h / 2 - powerup.size / 2;
   powerup.x += (targetX - powerup.x) * strength;
   powerup.y += (targetY - powerup.y) * strength;
+}
+
+function applyMouthMemoryPerks(timestamp) {
+  if (mouthTier < 5) return;
+
+  // Tier >= 5: third eye fires a tiny purple beam roughly every 10s,
+  // destroying one random off-screen meteor.
+  if (!nextMouthEyeBeamAt) nextMouthEyeBeamAt = timestamp + 10000;
+  if (timestamp >= nextMouthEyeBeamAt) {
+    const offScreenTargets = meteors.filter(m => m.y + m.size < 0 || m.x + m.size < 0 || m.x > canvas.width);
+    if (offScreenTargets.length) {
+      const victim = offScreenTargets[Math.floor(Math.random() * offScreenTargets.length)];
+      victim.laserDestroyed = true;
+      mouthEyeBeam = {
+        x: victim.x + victim.size / 2,
+        y: Math.max(0, victim.y + victim.size / 2),
+        born: timestamp
+      };
+    }
+    nextMouthEyeBeamAt = timestamp + 10000 + Math.random() * 1500;
+  }
+
+  // Tier >= 7: mouth swallows a random meteor in the bottom half of the screen every ~10s.
+  if (mouthTier >= 7) {
+    if (!nextMouthSwallowAt) nextMouthSwallowAt = timestamp + 10000;
+    if (timestamp >= nextMouthSwallowAt) {
+      const bottomHalf = meteors.filter(m => m.y > canvas.height / 2);
+      if (bottomHalf.length) {
+        const victim = bottomHalf[Math.floor(Math.random() * bottomHalf.length)];
+        victim.laserDestroyed = true;
+        popups.push({ text: '\uD83D\uDC44 swallowed', x: victim.x, y: victim.y, born: timestamp });
+      }
+      nextMouthSwallowAt = timestamp + 10000 + Math.random() * 1800;
+    }
+  }
+
+  // Clean up destroyed meteors immediately so they vanish on the next frame.
+  meteors = meteors.filter(m => !m.laserDestroyed);
 }
 
 function step(timestamp, token = runToken) {
@@ -2603,6 +2767,7 @@ function step(timestamp, token = runToken) {
   popups = popups.filter(popup => timestamp - popup.born < 900);
   levelLaserShots = levelLaserShots.filter(shot => timestamp - shot.born < 420);
   eyeBossShots = eyeBossShots.filter(shot => !shot.cancelled && timestamp - shot.born < shot.warningMs + 420);
+  applyMouthMemoryPerks(timestamp);
   awardNearMisses(timestamp);
   countSuccessfulDodges(timestamp);
 
@@ -2664,6 +2829,14 @@ function step(timestamp, token = runToken) {
   if (blackHolePowerup) {
     blackHolePowerup.y += blackHolePowerup.speed * delta;
     blackHolePowerup.spin += blackHolePowerup.spinSpeed * delta;
+    if (runUpgrades.magneticPilot) {
+      const targetCx = pilot.x + pilot.w / 2;
+      const cx = blackHolePowerup.x + blackHolePowerup.size / 2;
+      const dx = targetCx - cx;
+      const sign = dx > 0 ? 1 : -1;
+      const nudge = Math.min(0.6, Math.abs(dx));
+      blackHolePowerup.x = Math.max(0, Math.min(canvas.width - blackHolePowerup.size, blackHolePowerup.x + sign * nudge));
+    }
 
     if (hit(pilot, blackHolePowerup)) {
       blackHolePowerup = null;
@@ -2687,6 +2860,16 @@ function step(timestamp, token = runToken) {
       playEyeLaserBeamSound();
     }
     if (eyeBossLaserHitsPilot(shot, timestamp)) {
+      if (runUpgrades.insulatedHull && !runUpgrades.hullUsed) {
+        runUpgrades.hullUsed = true;
+        shot.cancelled = true;
+        hitExplosion = { x: pilot.x + pilot.w / 2, y: pilot.y + pilot.h / 2, born: timestamp };
+        setTimeout(() => { hitExplosion = null; }, 320);
+        popups.push({ text: '\uD83D\uDEE1\uFE0F SHIELD BREAK', x: pilot.x - 30, y: pilot.y - 18, born: timestamp });
+        statusEl.textContent = 'Insulated Hull absorbed the beam!';
+        playMonsterDeathSound();
+        continue;
+      }
       triggerPlayerHit(timestamp, 'The eye watched too closely. Try again.');
       return;
     }
@@ -2839,7 +3022,15 @@ function drawGiantMouth() {
     const topY = curveY(x);
     const toothHeight = 9 + Math.sin(x * 0.17 + frame * 0.04) * 4 + (x % 36 === 0 ? 8 : 0);
     const toothWidth = 5 + (x % 54 === 0 ? 4 : 0);
-    ctx.fillStyle = x % 72 === 0 ? 'rgba(255, 23, 68, .72)' : 'rgba(230, 226, 217, .82)';
+    let toothFill = 'rgba(230, 226, 217, .82)';
+    if (mouthTier >= 1) {
+      const goldRatio = Math.min(1, mouthTier / 5);
+      const tr = Math.round(230 + 25 * goldRatio);
+      const tg = Math.round(226 - 19 * goldRatio);
+      const tb = Math.round(217 - 166 * goldRatio);
+      toothFill = `rgba(${tr}, ${tg}, ${tb}, .9)`;
+    }
+    ctx.fillStyle = x % 72 === 0 ? 'rgba(255, 23, 68, .72)' : toothFill;
     ctx.shadowColor = '#050006';
     ctx.shadowBlur = 8;
     ctx.beginPath();
@@ -2860,7 +3051,77 @@ function drawGiantMouth() {
     ctx.fill();
   }
 
+  drawMouthMemoryFlourishes(y);
+
   ctx.restore();
+}
+
+function drawMouthMemoryFlourishes(mouthTop) {
+  if (mouthTier < 1) return;
+  const cx = canvas.width / 2;
+  const now = performance.now();
+
+  // Tier >= 3: faint slowly-rotating rune halo above the mouth.
+  if (mouthTier >= 3) {
+    const haloY = mouthTop - 38;
+    const haloRadius = 58;
+    const runeCount = 6;
+    ctx.save();
+    ctx.translate(cx, haloY);
+    ctx.rotate(now * 0.00025);
+    ctx.globalAlpha = 0.45;
+    ctx.font = '700 18px "Cinzel Decorative", Georgia, serif';
+    ctx.fillStyle = '#b388ff';
+    ctx.shadowColor = '#7b2cff';
+    ctx.shadowBlur = 12;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    for (let i = 0; i < runeCount; i++) {
+      const angle = (i / runeCount) * Math.PI - Math.PI;
+      const rx = Math.cos(angle) * haloRadius;
+      const ry = Math.sin(angle) * haloRadius * 0.45;
+      const sym = runeBorderSymbols[(i + Math.floor(now / 1800)) % runeBorderSymbols.length];
+      ctx.fillText(sym, rx, ry);
+    }
+    ctx.restore();
+  }
+
+  // Tier >= 5: third eye above the mouth that occasionally blinks.
+  if (mouthTier >= 5) {
+    const eyeY = mouthTop - 64;
+    const blinkPulse = (Math.sin(now * 0.0021) + 1) / 2; // 0..1 slow
+    const blink = blinkPulse < 0.08 ? blinkPulse / 0.08 : 1;
+    ctx.save();
+    ctx.globalAlpha = 0.55 * blink;
+    ctx.font = '28px serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.shadowColor = '#b388ff';
+    ctx.shadowBlur = 14;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText('\uD83D\uDC41', cx, eyeY);
+    ctx.restore();
+
+    // Tier >= 7: tiny purple beam from the third eye that occasionally zaps an off-screen meteor.
+    if (mouthTier >= 7 && mouthEyeBeam) {
+      const beamAge = now - mouthEyeBeam.born;
+      if (beamAge < 360) {
+        ctx.save();
+        ctx.globalAlpha = 0.85 * (1 - beamAge / 360);
+        ctx.strokeStyle = '#b388ff';
+        ctx.shadowColor = '#b388ff';
+        ctx.shadowBlur = 16;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(cx, eyeY);
+        ctx.lineTo(mouthEyeBeam.x, mouthEyeBeam.y);
+        ctx.stroke();
+        ctx.restore();
+      } else {
+        mouthEyeBeam = null;
+      }
+    }
+  }
 }
 
 function drawFlyingSpace(bg) {
@@ -3147,6 +3408,10 @@ function draw() {
     }
   }
   if (newGamePlusActive) glowText(`NG+ ${newGamePlusCount}  LOOP BONUS x${newGamePlusBonus()}`, 22, branchText ? (activeBranches.whiteVoid ? 108 : 88) : 68, '#b388ff', 10, 2, '#050006');
+  if (mouthTier > 0) {
+    const baseY = newGamePlusActive ? (branchText ? (activeBranches.whiteVoid ? 128 : 108) : 88) : (branchText ? (activeBranches.whiteVoid ? 108 : 88) : 68);
+    glowText(`MOUTH TIER ${mouthTier}`, 22, baseY, '#ffcf33', 10, 2, '#050006');
+  }
   ctx.restore();
   ctx.restore();
 
@@ -3505,6 +3770,23 @@ function resetAndStartGame() {
 }
 
 window.addEventListener('keydown', event => {
+  // While the Pick-a-Rune modal is open the game is paused beneath it.
+  // Capture number keys to choose a card, and swallow Space/R so the player
+  // can't unpause or reset out from under the modal mid-choice.
+  if (runeModalOpen) {
+    if (event.key === '1' || event.key === '2' || event.key === '3') {
+      const cardButtons = document.querySelectorAll('#rune-cards .rune-card');
+      const btn = cardButtons[Number(event.key) - 1];
+      if (btn) btn.click();
+      event.preventDefault();
+      return;
+    }
+    if (event.code === 'Space' || event.key.toLowerCase() === 'r') {
+      event.preventDefault();
+      return;
+    }
+  }
+
   if (event.code === 'Space') {
     if (running) setPaused(!paused);
     event.preventDefault();

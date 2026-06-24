@@ -728,3 +728,145 @@ body.text-shake main {
   0%, 100% { transform: scaleY(.72) translateY(-18px); opacity: .66; }
   50% { transform: scaleY(1.12) translateY(12px); opacity: 1; }
 }
+
+/* ===== Pick-a-Rune modal ===== */
+.rune-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Cinzel Decorative", "Cinzel", Georgia, serif;
+  color: var(--text);
+}
+.rune-modal.hidden {
+  display: none;
+}
+.rune-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, rgba(35, 0, 60, .72), rgba(5, 0, 6, .88) 70%);
+  backdrop-filter: blur(6px) saturate(140%);
+  -webkit-backdrop-filter: blur(6px) saturate(140%);
+  animation: runeBackdropPulse 4s ease-in-out infinite;
+}
+@keyframes runeBackdropPulse {
+  0%, 100% { background: radial-gradient(ellipse at center, rgba(35, 0, 60, .72), rgba(5, 0, 6, .88) 70%); }
+  50%      { background: radial-gradient(ellipse at center, rgba(60, 0, 90, .82), rgba(5, 0, 6, .92) 70%); }
+}
+.rune-modal-panel {
+  position: relative;
+  padding: 28px 32px 24px;
+  max-width: min(720px, 92vw);
+  text-align: center;
+  border: 2px solid rgba(179, 136, 255, .55);
+  border-radius: 18px;
+  background: linear-gradient(160deg, rgba(20, 0, 30, .92), rgba(5, 0, 6, .94));
+  box-shadow:
+    0 0 28px rgba(179, 136, 255, .45),
+    0 0 56px rgba(255, 23, 68, .25),
+    inset 0 0 24px rgba(179, 136, 255, .18);
+  animation: runePanelFloat 5s ease-in-out infinite;
+}
+@keyframes runePanelFloat {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+.rune-modal-title {
+  margin: 0 0 6px;
+  font-size: clamp(28px, 4vw, 40px);
+  letter-spacing: .12em;
+  color: #b388ff;
+  text-shadow: 0 0 12px rgba(179, 136, 255, .8), 0 0 24px rgba(123, 44, 255, .6);
+}
+.rune-modal-subtitle {
+  margin: 0 0 18px;
+  font-size: 14px;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: #ff9aae;
+}
+.rune-modal-hint {
+  margin: 14px 0 0;
+  font-size: 12px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: rgba(255, 241, 244, .6);
+}
+.rune-modal-hint strong {
+  color: #ffcf33;
+}
+.rune-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(140px, 1fr));
+  gap: 16px;
+}
+@media (max-width: 620px) {
+  .rune-cards { grid-template-columns: 1fr; }
+}
+.rune-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 18px 14px 16px;
+  border: 2px solid rgba(179, 136, 255, .55);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(40, 0, 60, .85), rgba(15, 0, 25, .92));
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+  box-shadow:
+    0 0 14px rgba(179, 136, 255, .25),
+    inset 0 0 18px rgba(255, 23, 68, .12);
+}
+.rune-card:hover, .rune-card:focus-visible {
+  transform: translateY(-4px) scale(1.03);
+  border-color: #ffcf33;
+  box-shadow:
+    0 0 22px rgba(255, 207, 51, .55),
+    0 0 36px rgba(179, 136, 255, .45),
+    inset 0 0 22px rgba(255, 23, 68, .22);
+  outline: none;
+}
+.rune-card-rune {
+  font-family: "Cinzel Decorative", Georgia, serif;
+  font-size: 42px;
+  color: #b388ff;
+  text-shadow: 0 0 10px rgba(179, 136, 255, .85), 0 0 22px rgba(123, 44, 255, .55);
+  animation: runeCardSpin 12s linear infinite;
+}
+@keyframes runeCardSpin {
+  0%   { transform: rotate(-6deg); }
+  50%  { transform: rotate(6deg); }
+  100% { transform: rotate(-6deg); }
+}
+.rune-card-emoji {
+  font-size: 28px;
+  filter: drop-shadow(0 0 6px rgba(255, 207, 51, .5));
+}
+.rune-card-name {
+  font-size: 16px;
+  letter-spacing: .1em;
+  color: #ffcf33;
+  text-shadow: 0 0 8px rgba(255, 207, 51, .55);
+}
+.rune-card-desc {
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: 12px;
+  line-height: 1.35;
+  color: rgba(255, 241, 244, .82);
+  min-height: 32px;
+}
+.rune-card-key {
+  position: absolute;
+  top: 6px;
+  left: 8px;
+  font-size: 11px;
+  letter-spacing: .14em;
+  color: rgba(255, 207, 51, .8);
+  font-family: monospace;
+}
