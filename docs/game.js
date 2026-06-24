@@ -516,9 +516,18 @@ function distancePointToSegment(px, py, x1, y1, x2, y2) {
   return Math.hypot(px - (x1 + dx * t), py - (y1 + dy * t));
 }
 
+// Small grace window so the laser is visibly purple for at least one rendered frame
+// before it can kill the pilot. The step() loop checks hits before calling draw(), so
+// without this delay the player can be killed on the same frame the beam first turns
+// purple and never actually see the purple beam.
+const EYE_LASER_PURPLE_GRACE_MS = 80;
+const EYE_LASER_LETHAL_DURATION_MS = 260;
+
 function eyeBossLaserHitsPilot(shot, timestamp) {
   const age = timestamp - shot.born;
-  if (age < shot.warningMs || age > shot.warningMs + 260) return false;
+  const lethalStart = shot.warningMs + EYE_LASER_PURPLE_GRACE_MS;
+  const lethalEnd = lethalStart + EYE_LASER_LETHAL_DURATION_MS;
+  if (age < lethalStart || age > lethalEnd) return false;
 
   const cx = pilot.x + pilot.w / 2;
   const cy = pilot.y + pilot.h / 2;
@@ -1350,6 +1359,62 @@ function playRocketMoveSound() {
   thrust.stop(now + 0.12);
 }
 
+
+function playEyeLaserBeamSound() {
+  const audio = getAudioContext();
+  if (!audio) return;
+
+  const now = audio.currentTime;
+  const duration = 0.34;
+  const carrier = audio.createOscillator();
+  const buzz = audio.createOscillator();
+  const lfo = audio.createOscillator();
+  const lfoGain = audio.createGain();
+  const filter = audio.createBiquadFilter();
+  const gain = audio.createGain();
+
+  carrier.type = 'sawtooth';
+  buzz.type = 'square';
+  lfo.type = 'square';
+
+  // High electric-arc tone falling into a sizzling buzz.
+  carrier.frequency.setValueAtTime(1480, now);
+  carrier.frequency.exponentialRampToValueAtTime(680, now + duration);
+  buzz.frequency.setValueAtTime(2960, now);
+  buzz.frequency.exponentialRampToValueAtTime(940, now + duration);
+
+  // Fast square-wave LFO modulates both oscillators to give it that crackling AC-arc shimmer.
+  lfo.frequency.setValueAtTime(72, now);
+  lfo.frequency.exponentialRampToValueAtTime(28, now + duration);
+  lfoGain.gain.value = 360;
+  lfo.connect(lfoGain);
+  lfoGain.connect(carrier.frequency);
+  lfoGain.connect(buzz.frequency);
+
+  filter.type = 'bandpass';
+  filter.frequency.setValueAtTime(2200, now);
+  filter.frequency.exponentialRampToValueAtTime(880, now + duration);
+  filter.Q.value = 9;
+
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.exponentialRampToValueAtTime(0.18, now + 0.008);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + duration + 0.04);
+
+  carrier.connect(filter);
+  buzz.connect(filter);
+  filter.connect(gain);
+  gain.connect(audio.destination);
+
+  carrier.start(now);
+  buzz.start(now);
+  lfo.start(now);
+  carrier.stop(now + duration + 0.06);
+  buzz.stop(now + duration + 0.06);
+  lfo.stop(now + duration + 0.06);
+
+  // Bright crackling noise burst layered on top for the spark.
+  playNoiseBurst(0.26, 0.08, 4200, 1800);
+}
 
 function playEyeChargeSound(durationMs = 680) {
   const audio = getAudioContext();
@@ -2620,7 +2685,7 @@ function step(timestamp, token = runToken) {
         continue;
       }
       shot.fired = true;
-      playLaserCannonSound();
+      playEyeLaserBeamSound();
     }
     if (eyeBossLaserHitsPilot(shot, timestamp)) {
       triggerPlayerHit(timestamp, 'The eye watched too closely. Try again.');
