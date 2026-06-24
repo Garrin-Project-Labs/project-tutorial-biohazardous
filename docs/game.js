@@ -2373,7 +2373,6 @@ function updateTranscendSystem(timestamp, delta) {
       transcendFilled[letter.index] = true;
       transcendCollectedLetters.push(letter.letter);
       letter.consumed = true;
-      popups.push({ text: letter.letter, x: letter.x - 6, y: mouthY - 18, born: timestamp });
     }
   }
   transcendLetters = transcendLetters.filter(letter => !letter.consumed && letter.y < canvas.height + 30);
