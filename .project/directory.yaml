@@ -2,6 +2,7 @@ directory:
   listed: true
   title: "Biohazardous Dodge the Meteors"
   description: "Beginner tutorial meteor-dodge game with boss mechanics."
+  thumbnail: "docs/assets/thumbnails/tutorial-biohazardous.png"
   tags: [game, tutorial]
   status: "live"
   sortOrder: 1000
