@@ -14,8 +14,17 @@
     <div class="game-layout">
       <aside class="title-echoes" id="title-echoes" aria-label="Past title changes"></aside>
 
-      <section class="game-card" aria-label="Cosmic horror Dodge the Meteors game">
+      <section class="game-card" aria-label="Cosmic horror Dodge the Runes game">
         <canvas id="game" width="720" height="720"></canvas>
+        <div id="rune-modal" class="rune-modal hidden" role="dialog" aria-modal="true" aria-labelledby="rune-modal-title" aria-hidden="true">
+          <div class="rune-modal-backdrop"></div>
+          <div class="rune-modal-panel">
+            <h2 id="rune-modal-title" class="rune-modal-title">Pick a Rune</h2>
+            <p class="rune-modal-subtitle">The Loop offers three gifts. Choose one.</p>
+            <div class="rune-cards" id="rune-cards"></div>
+            <p class="rune-modal-hint">Click a card or press <strong>1</strong>, <strong>2</strong>, or <strong>3</strong>.</p>
+          </div>
+        </div>
       </section>
 
       <aside class="game-side-panel" aria-label="Game controls and info">
@@ -50,28 +59,21 @@
         <h2>How to survive</h2>
         <p>Press <strong>Prepare To Die</strong> to start, or press <strong>R</strong> to reset and instantly restart.</p>
         <p><strong class="sprite-preview rocket-preview">🚀</strong> Use arrow keys or WASD to move the rocket. Stay above the mouth.</p>
-        <p>Dodge the spinning runes and meteors: <strong class="sprite-preview rune-preview">☄ ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ᚷ ᛉ ᛟ ✹ ☽</strong></p>
-        <p>Near misses give +1. Meteor dodges are worth more as the level rises.</p>
+        <p>Dodge the spinning runes: <strong class="sprite-preview rune-preview">☄ ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ᚷ ᛉ ᛟ ✹ ☽</strong></p>
+        <p>Near misses give +1. Rune dodges are worth more as the level rises.</p>
+        <p>Grab the <strong>☢ relic</strong> for +5 combo. At a full combo meter it instead pays out big and vaporizes up to 3 runes on screen.</p>
         <p>Catch falling <strong>TRANSCEND</strong> letters with the mouth to fill the word. If the player touches those letters, the mouth rejects them and spits them back out as hazards.</p>
         <p>When TRANSCEND completes, the word flies up black, slams into the mouth as rainbow text, and raises your <strong>TRANSCENDENCE</strong> counter.</p>
-        <p>Every 3 level-ups rotates the screen, slows the next meteor wave, changes the rune border, and warns: “be prepared.”</p>
+        <p>Every 3 level-ups rotates the screen, slows the next rune wave, changes the rune border, and warns: “be prepared.”</p>
         <p><strong>TRANSCENDENCE 3:</strong> The Game Lies — the HUD and warnings become untrustworthy for a moment.</p>
         <p><strong>TRANSCENDENCE 5:</strong> Eye Boss — the eye turns purple, blinks, charges white warning lines to orange, then fires purple lasers.</p>
         <p><strong>TRANSCENDENCE 7:</strong> the evil eye dies and White Void begins. Scores are worth x10 while you keep catching red TRANSCEND letters toward 9.</p>
-        <p><strong>TRANSCENDENCE 9:</strong> Red TRANSCEND letters keep spawning in White Void until you reach 9. Then the 26-second survival timer starts and letters stop; survive to enter New Game+.</p>
+        <p><strong>TRANSCENDENCE 9:</strong> Red TRANSCEND letters keep spawning in White Void until you reach 9. Then the 13-second survival timer starts and letters stop; survive to enter New Game+.</p>
+        <p><strong>New Game+:</strong> each loop opens a <strong>Pick a Rune</strong> choice (click a card or press 1/2/3) that buffs the rest of the run, and permanently levels up the <strong>Mouth</strong> for lasting perks shown as your Mouth Tier.</p>
       </aside>
 
     </div>
   </main>
-  <div id="rune-modal" class="rune-modal hidden" role="dialog" aria-modal="true" aria-labelledby="rune-modal-title" aria-hidden="true">
-    <div class="rune-modal-backdrop"></div>
-    <div class="rune-modal-panel">
-      <h2 id="rune-modal-title" class="rune-modal-title">Pick a Rune</h2>
-      <p class="rune-modal-subtitle">The Loop offers three gifts. Choose one.</p>
-      <div class="rune-cards" id="rune-cards"></div>
-      <p class="rune-modal-hint">Click a card or press <strong>1</strong>, <strong>2</strong>, or <strong>3</strong>.</p>
-    </div>
-  </div>
   <script src="game.js"></script>
 </body>
 </html>

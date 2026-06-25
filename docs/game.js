@@ -529,7 +529,7 @@ function maybeEnterNewGamePlus(timestamp) {
     whiteVoidSurvivalStartedAt = timestamp;
     statusEl.textContent = 'TRANSCENDENCE 9: TRANSCENDENCE...';
   }
-  const survivedWhiteVoid = timestamp - whiteVoidSurvivalStartedAt >= 26000;
+  const survivedWhiteVoid = timestamp - whiteVoidSurvivalStartedAt >= 13000;
   if (survivedWhiteVoid) enterNewGamePlus(timestamp);
 }
 
@@ -2780,14 +2780,29 @@ function step(timestamp, token = runToken) {
       relic = null;
       playRelicPunch();
       fateModeUntil = timestamp + 1200;
-      const hadMaxCombo = combo >= 69;
+      const comboCap = runUpgrades.comboFurnace ? 99 : 69;
+      const hadMaxCombo = combo >= comboCap;
       addCombo(5);
+      let vaporizedCount = 0;
       if (hadMaxCombo) {
         addScore(313 * (1 + combo));
+        // Full combo meter: the relic vaporizes up to 3 runes currently on screen.
+        const onScreen = meteors.filter(m => m.y + m.size > 0 && m.y < canvas.height && !m.laserDestroyed);
+        onScreen.slice(0, 3).forEach(m => {
+          m.laserDestroyed = true;
+          vaporizedCount++;
+          popups.push({ text: '\u2737', x: m.x + m.size / 2 - 6, y: m.y + m.size / 2, born: timestamp });
+        });
+        if (vaporizedCount) {
+          meteors = meteors.filter(m => !m.laserDestroyed);
+          playBottomExplosion();
+        }
       } else {
         awardPoints(relicBonus);
       }
-      statusEl.textContent = hadMaxCombo ? 'Relic taken at max combo: +313 score times combo.' : 'Relic taken: +5 combo. Fate sees you.';
+      statusEl.textContent = hadMaxCombo
+        ? `Relic taken at max combo: +313 score times combo${vaporizedCount ? `, ${vaporizedCount} rune${vaporizedCount > 1 ? 's' : ''} vaporized!` : '.'}`
+        : 'Relic taken: +5 combo. Fate sees you.';
       updateHud();
     } else if (relic.y > canvas.height + relic.size) {
       relic = null;
@@ -3401,7 +3416,7 @@ function draw() {
   if (branchText) glowText(branchText, 22, 68, activeBranches.whiteVoid ? '#050006' : '#ff1744', 10, 2, activeBranches.whiteVoid ? '#ffffff' : '#050006');
   if (activeBranches.whiteVoid) {
     if (transcendenceCount >= branchThresholds.newGamePlus && whiteVoidSurvivalStartedAt) {
-      const surviveLeft = Math.max(0, 26 - (now - whiteVoidSurvivalStartedAt) / 1000);
+      const surviveLeft = Math.max(0, 13 - (now - whiteVoidSurvivalStartedAt) / 1000);
       glowText(`VOID SURVIVE ${surviveLeft.toFixed(1)}s`, 22, 88, '#050006', 10, 2, '#ffffff');
     } else {
       glowText('REACH TRANSCENDENCE 9', 22, 88, '#ff1744', 10, 2, '#ffffff');
@@ -3795,6 +3810,13 @@ window.addEventListener('keydown', event => {
 
   if (event.key.toLowerCase() === 'r') {
     resetAndStartGame();
+    event.preventDefault();
+    return;
+  }
+
+  // [DEV] N advances one New Game+ cycle to test NG+ features. Remove before release.
+  if (event.key.toLowerCase() === 'n') {
+    if (running && !runeModalOpen) enterNewGamePlus(performance.now());
     event.preventDefault();
     return;
   }
