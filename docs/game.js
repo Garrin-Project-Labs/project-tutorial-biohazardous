@@ -461,10 +461,14 @@ function showRuneModal(timestamp) {
     btn.dataset.runeKey = card.key;
     btn.innerHTML = `
       <span class="rune-card-key">${index + 1}</span>
-      <span class="rune-card-rune" aria-hidden="true">${symbol}</span>
-      <span class="rune-card-emoji" aria-hidden="true">${card.emoji}</span>
-      <span class="rune-card-name">${card.name}</span>
-      <span class="rune-card-desc">${card.desc}</span>
+      <span class="rune-card-glyph">
+        <span class="rune-card-rune" aria-hidden="true">${symbol}</span>
+        <span class="rune-card-emoji" aria-hidden="true">${card.emoji}</span>
+      </span>
+      <span class="rune-card-text">
+        <span class="rune-card-name">${card.name}</span>
+        <span class="rune-card-desc">${card.desc}</span>
+      </span>
     `;
     btn.addEventListener('click', () => chooseRune(card.key));
     cardsContainer.appendChild(btn);
